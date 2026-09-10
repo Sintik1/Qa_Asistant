@@ -1,0 +1,15 @@
+---
+description: Enforce Figma design-to-code and project UI skills for qa-assistant frontend
+globs: qa-assistant/src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# UI / Figma workflow
+
+When changing files under `qa-assistant/src/`:
+
+1. Prefer project skill `qa-assistant-ui`.
+2. For any work from a Figma URL or mockup, load `figma-design-to-code` first and call `get_design_context` before coding.
+3. Reuse `src/components/**`; match Tailwind patterns already in the repo.
+4. Keep TZ error strings from `src/utils/constants.ts`.
+5. Stage tracking: GitHub Issues + `development_report.md` (`.cursorrules` §10–11).
