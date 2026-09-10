@@ -1,0 +1,38 @@
+---
+description: ALWAYS track every project stage in GitHub Issues and development_report.md (highest priority)
+alwaysApply: true
+---
+
+# ALWAYS: stage tracking (`.cursorrules` §10–11)
+
+These rules apply to **every** task in this repo. Do not skip them.
+
+## GitHub Issues
+
+- Create or update an Issue for each stage/milestone **in the same work cycle**.
+- Comment with decisions, blockers, and commit links.
+- Do not mark a stage done without an Issue trail.
+- Close only after user approval when a gate is required.
+
+Repo (default): `Sintik1/Qa_Asistant`
+
+## `development_report.md`
+
+Update root `development_report.md` on **every** stage with:
+
+1. описание процесса разработки  
+2. применённые техники работы с AI  
+3. примеры промптов и результатов  
+4. описание проблем и их решений  
+5. выводы и рекомендации  
+6. журнал стадий со ссылками на Issues  
+
+Commit/push the report with the stage deliverable when the stage includes git changes.
+
+## Before the final reply for a stage
+
+- [ ] Issue created/updated  
+- [ ] `development_report.md` updated  
+- [ ] User reply includes Issue link + note that the report was updated  
+
+Related skill: `qa-assistant-process`.

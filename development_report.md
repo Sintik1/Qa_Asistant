@@ -14,8 +14,9 @@
 2. Публикация в GitHub — **done**
 3. Структура UI по Figma + ТЗ — **done** (согласовано: Settings + каркас промтов/шаблонов)
 4. Установка Cursor Skills — **done** (Figma + UI/React + backend + data + API + testing + process)
+5. Усиление ALWAYS-правил трекинга (Issues + `development_report.md`) — **done** (см. [#5](https://github.com/Sintik1/Qa_Asistant/issues/5))
 
-Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На каждом шаге: GitHub Issue + обновление этого отчёта.
+Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
 ---
 
@@ -25,7 +26,8 @@
 |--------|------------------|
 | Пошаговый план + gate согласования | Шаги 1→2→3→4; стоп после каждого шага |
 | Уточняющие вопросы | Стек (только frontend), папка, npm, TS, GitHub, Figma URL |
-| Workspace rules (`.cursorrules`) | UI React/Tailwind; п. 10–11 — Issues + этот отчёт |
+| Workspace rules (`.cursorrules`) | UI React/Tailwind; §10–11 вынесены в ALWAYS + `alwaysApply` rule |
+| Always-on process rule | `.cursor/rules/process-tracking.mdc` |
 | Design-to-code (Figma MCP) | `get_metadata` → `get_design_context` по макету |
 | Project Skills | `.cursor/skills/*` + rule `ui-figma-workflow.mdc` |
 | Проверка 3 раза | понимание → выполнение → verify (build/URL/git) |
@@ -85,6 +87,12 @@
 
 **Результат:** Issue #4 closed; план инициализации (шаги 1–4) завершён.
 
+### Промпт: усилить правила трекинга
+
+**Запрос:** улучшить `.cursorrules`, чтобы п. 10–11 применялись всегда.
+
+**Результат:** секция ALWAYS в `.cursorrules`; `process-tracking.mdc` (`alwaysApply: true`); обновлён `qa-assistant-process`; Issue [#5](https://github.com/Sintik1/Qa_Asistant/issues/5).
+
 ---
 
 ## 4. Проблемы и решения
@@ -97,7 +105,7 @@
 | Макет Figma — flat PNG | Структура из screenshot + ТЗ; reference PNG в repo |
 | `.cursorrules` Flask vs задача React | По 1A — только frontend |
 | П. 10–11 не велись с шага 1 | Issues + отчёт; далее — на каждом шаге |
-| Plugin skills не версионировались в repo | Скопированы в `.cursor/skills/` + personal `~/.cursor/skills/` |
+| П. 10–11 были короткими и легко пропускались | Вынесены в ALWAYS + Cursor rule `alwaysApply: true` + чеклист |
 
 ---
 
@@ -108,7 +116,8 @@
 3. Issues + `development_report.md` обновлять сразу при закрытии шага.
 4. Перед детальной вёрсткой: Figma MCP auth + skill `figma-design-to-code`.
 5. Skills покрывают весь цикл: UI, API, backend, data, тесты, процесс.
-6. Следующая работа после закрытия шага 4: pixel-perfect HomePage и/или каркас Flask-backend.
+6. Следующая работа: pixel-perfect HomePage и/или каркас Flask-backend.
+7. Трекинг стадий теперь enforced через ALWAYS-секцию и `alwaysApply` rule — не полагаться только на краткий пункт в середине файла.
 
 ---
 
@@ -120,6 +129,7 @@
 | Шаг 2 — GitHub репозиторий | [#2](https://github.com/Sintik1/Qa_Asistant/issues/2) | completed (closed) |
 | Шаг 3 — Структура UI (Figma + ТЗ) | [#3](https://github.com/Sintik1/Qa_Asistant/issues/3) | completed (closed) |
 | Шаг 4 — Установка Skills | [#4](https://github.com/Sintik1/Qa_Asistant/issues/4) | completed (closed) |
+| Шаг 5 — ALWAYS трекинг (Issues + отчёт) | [#5](https://github.com/Sintik1/Qa_Asistant/issues/5) | completed (closed) |
 
 ---
 
@@ -135,7 +145,7 @@
 | `qa-assistant-data` | Repository / UoW / SQL |
 | `qa-assistant-api` | FE↔BE контракт |
 | `qa-assistant-testing` | Pytest / quality |
-| `qa-assistant-process` | Issues + отчёт |
+| `qa-assistant-process` | Issues + отчёт (ALWAYS) |
 
 ### Figma (project)
 
@@ -143,6 +153,7 @@
 
 ### Rules
 
+- `.cursor/rules/process-tracking.mdc` — **alwaysApply: true** (§10–11)
 - `.cursor/rules/ui-figma-workflow.mdc`
 - `.cursor/rules/backend-data-workflow.mdc`
 
@@ -154,6 +165,7 @@
 
 ```bash
 ls .cursor/skills
+ls .cursor/rules
 ```
 
-GitHub: https://github.com/Sintik1/Qa_Asistant/tree/main/.cursor/skills
+GitHub: https://github.com/Sintik1/Qa_Asistant/tree/main/.cursor
