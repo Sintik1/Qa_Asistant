@@ -13,7 +13,7 @@
 1. Инициализация фронтенда (Vite + React + TypeScript + Tailwind) — **done**
 2. Публикация в GitHub — **done**
 3. Структура UI по Figma + ТЗ — **done** (согласовано: Settings + каркас промтов/шаблонов)
-4. Установка Cursor Skills — **расширено**: Figma + UI/React + backend + data + API + testing + process (ожидает согласования)
+4. Установка Cursor Skills — **done** (Figma + UI/React + backend + data + API + testing + process)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На каждом шаге: GitHub Issue + обновление этого отчёта.
 
@@ -77,7 +77,13 @@
 
 **Запрос:** ставить в проект; добавить то, что пригодится для разработки приложения; формат под наш проект.
 
-**Результат:** добавлены project-skills: `qa-assistant-react`, `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`, `qa-assistant-process` + rule `backend-data-workflow.mdc`.
+**Результат:** добавлены `qa-assistant-react`, `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`, `qa-assistant-process` + rule `backend-data-workflow.mdc`.
+
+### Промпт: согласование шага 4
+
+**Запрос:** `ок`  
+
+**Результат:** Issue #4 closed; план инициализации (шаги 1–4) завершён.
 
 ---
 
@@ -113,7 +119,7 @@
 | Шаг 1 — Инициализация фронтенда | [#1](https://github.com/Sintik1/Qa_Asistant/issues/1) | completed (closed) |
 | Шаг 2 — GitHub репозиторий | [#2](https://github.com/Sintik1/Qa_Asistant/issues/2) | completed (closed) |
 | Шаг 3 — Структура UI (Figma + ТЗ) | [#3](https://github.com/Sintik1/Qa_Asistant/issues/3) | completed (closed) |
-| Шаг 4 — Установка Skills | [#4](https://github.com/Sintik1/Qa_Asistant/issues/4) | awaiting approval (open) |
+| Шаг 4 — Установка Skills | [#4](https://github.com/Sintik1/Qa_Asistant/issues/4) | completed (closed) |
 
 ---
 
