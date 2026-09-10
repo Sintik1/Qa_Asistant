@@ -4,15 +4,36 @@ React + TypeScript + Vite + Tailwind CSS frontend for **QA Assistant**.
 
 ## Requirements
 
-- Node.js 20+ (recommended)
-- npm 10+
+- Node.js 20+ (recommended) **или** Docker Desktop
+- npm 10+ (если без Docker)
 
-## Setup
+## Запуск в Docker (рекомендуется)
+
+Из корня репозитория (`ДЗ/`):
+
+```bash
+docker compose up --build
+```
+
+Приложение: **http://localhost:8080**
+
+Остановка:
+
+```bash
+docker compose down
+```
+
+Только пересборка образа:
+
+```bash
+docker compose build --no-cache
+```
+
+## Setup (без Docker)
 
 ```bash
 cd qa-assistant
 npm install
-cp .env.example .env
 ```
 
 ## Development (HMR)
@@ -40,11 +61,13 @@ src/
     upload/           # FileUploadField, UploadSection
     form/             # TaskNameField, PromptField, ProjectSelect
     management/       # ManagementCard (prompts / templates)
+    generation/       # ChunkSettingsForm, GenerationResults
     ui/               # Button, PageHeader, ErrorMessage, ProgressBar
-  hooks/              # useFileUpload
+  hooks/              # useFileUpload, useTestCaseGeneration
+  mocks/              # mock test cases
   pages/              # HomePage, SettingsPage
   types/              # shared TS types
-  utils/              # constants, validation, formatters
+  utils/              # constants, validation, export
   App.tsx
   main.tsx
   index.css

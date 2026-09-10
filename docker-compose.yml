@@ -1,0 +1,13 @@
+# Локальный запуск QA Assistant (frontend) в Docker
+name: qa-assistant
+
+services:
+  qa-assistant:
+    build:
+      context: ./qa-assistant
+      dockerfile: Dockerfile
+    image: qa-assistant:local
+    container_name: qa-assistant
+    ports:
+      - "8080:80"
+    restart: unless-stopped
