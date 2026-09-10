@@ -1,42 +1,67 @@
 import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { FileUploadField } from '../components/upload/FileUploadField'
 import { UploadSection } from '../components/upload/UploadSection'
 import { TaskNameField } from '../components/form/TaskNameField'
 import { PromptField } from '../components/form/PromptField'
 import { ProjectSelect } from '../components/form/ProjectSelect'
 import { ManagementCard } from '../components/management/ManagementCard'
+import { ChunkSettingsForm } from '../components/generation/ChunkSettingsForm'
+import { GenerationResults } from '../components/generation/GenerationResults'
 import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { ProgressBar } from '../components/ui/ProgressBar'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { useFileUpload } from '../hooks/useFileUpload'
-import { DEFAULT_PROJECT_ID } from '../utils/constants'
+import { useTestCaseGeneration } from '../hooks/useTestCaseGeneration'
+import {
+  API_TOKEN_STORAGE_KEY,
+  DEFAULT_PROJECT_ID,
+  ERROR_MESSAGES,
+} from '../utils/constants'
 
 /**
- * Main screen from Figma: «Написание тест-кейсов».
- * Structure only — generation API wiring comes later.
+ * Главный экран: загрузка (M1) → mock-генерация (M2) → экспорт CSV/DOCX (M3/S2)
+ * + перегенерация с параметрами чанкинга (S1).
  */
 export function HomePage() {
+  const navigate = useNavigate()
   const requirements = useFileUpload()
   const templates = useFileUpload()
+  const generation = useTestCaseGeneration()
   const [taskName, setTaskName] = useState('')
   const [prompt, setPrompt] = useState('')
   const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
-  const canSubmit = Boolean(requirements.file) && !isSubmitting
+  const isBusy =
+    generation.status === 'extracting' || generation.status === 'generating'
+  const canSubmit = Boolean(requirements.file) && !isBusy
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    setFormError(null)
+    generation.clearError()
+
     if (!requirements.file) {
       setFormError('Загрузите файл требований')
       return
     }
+
+    const token = localStorage.getItem(API_TOKEN_STORAGE_KEY)?.trim()
+    if (!token) {
+      setFormError(ERROR_MESSAGES.MISSING_TOKEN)
+      return
+    }
+
+    await generation.generate(requirements.file)
+  }
+
+  const handleRegenerate = async () => {
+    if (!requirements.file || isBusy) return
     setFormError(null)
-    // Placeholder: backend integration is out of scope for structure step
-    setIsSubmitting(true)
-    window.setTimeout(() => setIsSubmitting(false), 600)
+    generation.clearError()
+    await generation.generate(requirements.file)
   }
 
   return (
@@ -50,14 +75,14 @@ export function HomePage() {
         <UploadSection>
           <FileUploadField
             id="requirements-file"
-            label="Файл требований (.docx)"
+            label="Файл требований (.pdf, .docx, .doc, .md)"
             selectedFile={requirements.file}
             onFileChange={requirements.setFromFile}
             error={requirements.error ?? undefined}
           />
           <FileUploadField
             id="templates-file"
-            label="Шаблоны тестовых сценариев (.docx)"
+            label="Шаблоны тестовых сценариев (.pdf, .docx, .doc, .md)"
             selectedFile={templates.file}
             onFileChange={templates.setFromFile}
             error={templates.error ?? undefined}
@@ -79,15 +104,94 @@ export function HomePage() {
           addLabel="Добавить шаблон"
         />
 
-        {formError ? <ErrorMessage message={formError} /> : null}
-
-        {isSubmitting ? (
-          <ProgressBar label="Генерация тест-кейсов..." />
+        {generation.showChunkPanel || generation.status === 'success' ? (
+          <ChunkSettingsForm
+            value={generation.chunkSettings}
+            onChange={generation.setChunkSettings}
+            disabled={isBusy}
+          />
         ) : null}
 
-        <Button type="submit" disabled={!canSubmit}>
-          Отправить на обработку нейросетью
-        </Button>
+        {formError === ERROR_MESSAGES.MISSING_TOKEN ? (
+          <ErrorMessage
+            message={formError}
+            actionLabel="Настроить токен"
+            onAction={() => navigate('/settings')}
+          />
+        ) : formError ? (
+          <ErrorMessage message={formError} />
+        ) : null}
+
+        {generation.error ? (
+          <ErrorMessage
+            message={generation.error}
+            actionLabel={
+              generation.error === ERROR_MESSAGES.NO_REQUIREMENTS
+                ? 'Загрузить другой файл'
+                : 'Повторить'
+            }
+            onAction={() => {
+              if (generation.error === ERROR_MESSAGES.NO_REQUIREMENTS) {
+                requirements.clear()
+                generation.clearError()
+                return
+              }
+              void handleRegenerate()
+            }}
+          />
+        ) : null}
+
+        {generation.warning ? (
+          <ErrorMessage
+            message={generation.warning}
+            actionLabel="Скрыть"
+            onAction={generation.clearWarning}
+          />
+        ) : null}
+
+        {isBusy && generation.progressLabel ? (
+          <ProgressBar label={generation.progressLabel} />
+        ) : null}
+
+        {generation.result && generation.status === 'success' ? (
+          <GenerationResults
+            result={generation.result}
+            onDownloadCsv={generation.downloadResultCsv}
+            onRegenerateClick={() => generation.setShowChunkPanel(true)}
+          />
+        ) : null}
+
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" disabled={!canSubmit} className="w-auto min-w-56">
+            Генерировать тест-кейсы
+          </Button>
+          {(generation.showChunkPanel || generation.status === 'success') &&
+          requirements.file ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-auto"
+              disabled={isBusy}
+              onClick={() => {
+                generation.setShowChunkPanel(true)
+                void handleRegenerate()
+              }}
+            >
+              Применить и перегенерировать
+            </Button>
+          ) : null}
+        </div>
+
+        <p className="text-xs text-slate-500">
+          Mock-режим: API не вызывается. Имена файлов для проверки:{' '}
+          <code>empty</code>/<code>noreq</code> (нет требований),{' '}
+          <code>fail</code> (ошибка API), <code>slow</code>/<code>notify</code>{' '}
+          (уведомление &gt;30с). Токен:{' '}
+          <Link to="/settings" className="text-violet-700 underline">
+            настройки
+          </Link>
+          .
+        </p>
       </form>
     </div>
   )

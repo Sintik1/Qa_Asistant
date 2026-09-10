@@ -1,6 +1,6 @@
 import type { AllowedFileExtension } from '../types'
 
-/** Max upload size from TZ: 100 MB */
+/** Максимальный размер файла по ТЗ: 100 МБ */
 export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024
 
 export const ALLOWED_EXTENSIONS: readonly AllowedFileExtension[] = [
@@ -32,7 +32,18 @@ export const ERROR_MESSAGES = {
   MISSING_TOKEN: 'Не настроен API-токен. Перейдите в настройки.',
   INVALID_CSV:
     'Сервис вернул некорректный результат. Свяжитесь с администратором.',
+  STEPS_TRUNCATED:
+    'Некоторые шаги были усечены. Проверьте DOCX-версию.',
+  LONG_DOCUMENT:
+    'Документ длинный, обработка может занять несколько минут. Продолжить?',
+  GENERATION_DONE_NOTIFY: 'Генерация завершена. Скачать результат?',
 } as const
+
+/** Ключ localStorage для mock API-токена (до появления бэкенда). */
+export const API_TOKEN_STORAGE_KEY = 'qa_assistant_api_token'
+
+/** Порог длительности генерации для уведомления (S3). */
+export const NOTIFY_AFTER_MS = 30_000
 
 export const DEFAULT_PROJECT_ID = 'default'
 

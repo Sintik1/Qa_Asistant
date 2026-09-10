@@ -15,6 +15,7 @@
 3. Структура UI по Figma + ТЗ — **done** (согласовано: Settings + каркас промтов/шаблонов)
 4. Установка Cursor Skills — **done** (Figma + UI/React + backend + data + API + testing + process)
 5. Усиление ALWAYS-правил трекинга (Issues + `development_report.md`) — **done** (см. [#5](https://github.com/Sintik1/Qa_Asistant/issues/5))
+6. Frontend MVP с mock-генерацией (M1–M3 + S1–S3) — **in progress** (см. [#6](https://github.com/Sintik1/Qa_Asistant/issues/6); без коммита до согласования)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -32,6 +33,8 @@
 | Project Skills | `.cursor/skills/*` + rule `ui-figma-workflow.mdc` |
 | Проверка 3 раза | понимание → выполнение → verify (build/URL/git) |
 | Ограничение scope | Не добавлять экраны/библиотеки вне ТЗ и макета |
+| Prompt template (Role/Task/Context/Format) | `prompt_templates.md` §1 → Stage 6 mock frontend |
+| Mock-first без бэкенда | `mockGenerateTestCases` + токен в localStorage |
 
 ---
 
@@ -93,6 +96,19 @@
 
 **Результат:** секция ALWAYS в `.cursorrules`; `process-tracking.mdc` (`alwaysApply: true`); обновлён `qa-assistant-process`; Issue [#5](https://github.com/Sintik1/Qa_Asistant/issues/5).
 
+### Промпт: Stage 6 — frontend MVP (prompt_templates §1)
+
+**Запрос:** Senior Frontend Engineer; реализовать `user_stories.md` без бэкенда; React+TS+Tailwind; mock; без сторонних библиотек; не коммитить без согласования; проверить 3 раза.
+
+**Результат:**
+- M1: валидация PDF/DOCX/DOC/MD + превью имени/размера
+- M2: mock-генерация + прогресс «Извлечение текста.» / «Генерация тест-кейсов...»
+- M3: CSV UTF-8 BOM, имя `test_cases_YYYYMMDD_HHMMSS.csv`
+- S1: параметры чанкинга + перегенерация
+- S2: минимальный OOXML DOCX без библиотек
+- S3: Notification API при длительности >30с и скрытой вкладке
+- Issue [#6](https://github.com/Sintik1/Qa_Asistant/issues/6); код локально, коммит — после OK пользователя
+
 ---
 
 ## 4. Проблемы и решения
@@ -106,6 +122,8 @@
 | `.cursorrules` Flask vs задача React | По 1A — только frontend |
 | П. 10–11 не велись с шага 1 | Issues + отчёт; далее — на каждом шаге |
 | П. 10–11 были короткими и легко пропускались | Вынесены в ALWAYS + Cursor rule `alwaysApply: true` + чеклист |
+| DOCX без сторонних библиотек | Минимальный ZIP(store)+OOXML вручную в `docxExport.ts` |
+| Нужны негативные сценарии без API | Маркеры в имени файла: `empty`/`fail`/`corrupt`/`slow` |
 
 ---
 
@@ -118,6 +136,8 @@
 5. Skills покрывают весь цикл: UI, API, backend, data, тесты, процесс.
 6. Следующая работа: pixel-perfect HomePage и/или каркас Flask-backend.
 7. Трекинг стадий теперь enforced через ALWAYS-секцию и `alwaysApply` rule — не полагаться только на краткий пункт в середине файла.
+8. Stage 6: mock-фронт закрывает happy-path и основные ошибки ТЗ; реальный extract/AI — только после бэкенда.
+9. Перед коммитом Stage 6 дождаться явного «ок» пользователя (требование промпта).
 
 ---
 
@@ -130,6 +150,7 @@
 | Шаг 3 — Структура UI (Figma + ТЗ) | [#3](https://github.com/Sintik1/Qa_Asistant/issues/3) | completed (closed) |
 | Шаг 4 — Установка Skills | [#4](https://github.com/Sintik1/Qa_Asistant/issues/4) | completed (closed) |
 | Шаг 5 — ALWAYS трекинг (Issues + отчёт) | [#5](https://github.com/Sintik1/Qa_Asistant/issues/5) | completed (closed) |
+| Шаг 6 — Frontend MVP (mock M1–M3, S1–S3) | [#6](https://github.com/Sintik1/Qa_Asistant/issues/6) | in progress (ожидает согласования / коммита) |
 
 ---
 

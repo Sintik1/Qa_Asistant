@@ -9,7 +9,7 @@ interface UseFileUploadResult {
   clear: () => void
 }
 
-/** Local upload state + TZ validation (format / size). */
+/** Локальное состояние загрузки + валидация по ТЗ (формат / размер). */
 export function useFileUpload(): UseFileUploadResult {
   const [file, setFile] = useState<SelectedFileInfo | null>(null)
   const [error, setError] = useState<string | null>(null)

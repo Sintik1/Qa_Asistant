@@ -1,6 +1,6 @@
 interface ProgressBarProps {
   label: string
-  /** 0–100; omit for indeterminate */
+  /** 0–100; не передавать для неопределённого прогресса */
   value?: number
 }
 

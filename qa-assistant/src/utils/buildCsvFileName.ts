@@ -1,6 +1,6 @@
 /**
- * Builds download CSV name from task name or requirements file name.
- * Figma hint: «Тест кейсы_<название>.csv»
+ * Имя CSV из названия задачи или имени файла требований.
+ * Подсказка Figma: «Тест кейсы_<название>.csv»
  */
 export function buildCsvFileName(
   taskName: string,

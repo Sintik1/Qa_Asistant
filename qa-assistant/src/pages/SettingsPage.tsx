@@ -2,15 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
-import { ERROR_MESSAGES } from '../utils/constants'
+import { API_TOKEN_STORAGE_KEY, ERROR_MESSAGES } from '../utils/constants'
 
 /**
- * Settings screen from TZ §3.5 — API token configuration.
- * Not present as a separate frame in the current Figma file;
- * required by MUST HAVE acceptance criteria.
+ * Экран настроек по ТЗ §3.5 — API-токен (mock в localStorage до бэкенда).
  */
 export function SettingsPage() {
-  const [token, setToken] = useState('')
+  const [token, setToken] = useState(
+    () => localStorage.getItem(API_TOKEN_STORAGE_KEY) ?? '',
+  )
   const [savedHint, setSavedHint] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,11 +19,12 @@ export function SettingsPage() {
     if (!token.trim()) {
       setError(ERROR_MESSAGES.MISSING_TOKEN)
       setSavedHint(null)
+      localStorage.removeItem(API_TOKEN_STORAGE_KEY)
       return
     }
-    // Token persistence via backend/.env is out of scope for structure step
+    localStorage.setItem(API_TOKEN_STORAGE_KEY, token.trim())
     setError(null)
-    setSavedHint('Токен принят локально (сохранение на сервере — позже).')
+    setSavedHint('Токен сохранён локально (mock). Бэкенд/.env — на следующем этапе.')
   }
 
   return (

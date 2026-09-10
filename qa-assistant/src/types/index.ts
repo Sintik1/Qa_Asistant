@@ -1,4 +1,4 @@
-/** Shared domain types for QA Assistant UI (aligned with TZ + Figma). */
+/** Общие доменные типы UI QA Assistant (по ТЗ + Figma). */
 
 export type AllowedFileExtension = '.pdf' | '.docx' | '.doc' | '.md'
 
@@ -37,4 +37,26 @@ export type GenerationStatus =
 export interface AppErrorState {
   message: string
   actionLabel?: string
+}
+
+/** Строка CSV: колонки TestRail/Zephyr (ТЗ §6.1). */
+export interface TestCase {
+  name: string
+  status: 'Approved'
+  step: string
+  expectedResult: string
+}
+
+export type ChunkMethod = 'header' | 'fixed' | 'recursive'
+
+export interface ChunkSettings {
+  chunkSize: number
+  chunkOverlap: number
+  chunkMethod: ChunkMethod
+}
+
+export interface GenerationResult {
+  cases: TestCase[]
+  truncated: boolean
+  generatedAt: Date
 }

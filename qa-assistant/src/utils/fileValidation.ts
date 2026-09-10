@@ -17,7 +17,7 @@ export function isAllowedExtension(
   return (ALLOWED_EXTENSIONS as readonly string[]).includes(extension)
 }
 
-/** Validates file format and size per TZ acceptance criteria. */
+/** Проверяет формат и размер файла по критериям приёмки ТЗ. */
 export function validateUploadFile(file: File): FileValidationResult {
   const extension = getFileExtension(file.name)
 
