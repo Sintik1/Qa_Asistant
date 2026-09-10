@@ -13,7 +13,7 @@
 1. Инициализация фронтенда (Vite + React + TypeScript + Tailwind) — **done**
 2. Публикация в GitHub — **done**
 3. Структура UI по Figma + ТЗ — **done** (согласовано: Settings + каркас промтов/шаблонов)
-4. Установка Cursor Skills для UI/Figma-вёрстки — **done, ожидает согласования**
+4. Установка Cursor Skills — **расширено**: Figma + UI/React + backend + data + API + testing + process (ожидает согласования)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На каждом шаге: GitHub Issue + обновление этого отчёта.
 
@@ -43,7 +43,7 @@
 - Шаг 1: `qa-assistant/` (Vite/React/TS/Tailwind), HMR на http://localhost:5173
 - Шаг 2: public repo `Sintik1/Qa_Asistant`
 - Шаг 3: каркас UI в `qa-assistant/src/**` (запушен)
-- Шаг 4: skills в `.cursor/skills/` + rule (ожидает согласования)
+- Шаг 4: skills Figma + app (UI/React/backend/data/API/testing/process)
 
 ### Промпт: уточнения перед шагом 1
 
@@ -73,6 +73,12 @@
 
 **Результат:** UI закоммичен; #3 closed; выполнен шаг 4 (skills).
 
+### Промпт: расширить skills за пределы Figma
+
+**Запрос:** ставить в проект; добавить то, что пригодится для разработки приложения; формат под наш проект.
+
+**Результат:** добавлены project-skills: `qa-assistant-react`, `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`, `qa-assistant-process` + rule `backend-data-workflow.mdc`.
+
 ---
 
 ## 4. Проблемы и решения
@@ -95,7 +101,8 @@
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
 3. Issues + `development_report.md` обновлять сразу при закрытии шага.
 4. Перед детальной вёрсткой: Figma MCP auth + skill `figma-design-to-code`.
-5. Следующая работа после шага 4: pixel-perfect HomePage по макету (без новых фич).
+5. Skills покрывают весь цикл: UI, API, backend, data, тесты, процесс.
+6. Следующая работа после закрытия шага 4: pixel-perfect HomePage и/или каркас Flask-backend.
 
 ---
 
@@ -112,28 +119,35 @@
 
 ## 7. Stage 4 details — установленные skills
 
-### Project (в репозитории)
+### Application (project)
 
-```
-.cursor/skills/
-  qa-assistant-ui/
-  figma-design-to-code/
-  figma-use/
-  figma-implement-motion/
-  figma-use-motion/
-  figma-code-connect/
-  figma-generate-design/
-  README.md
-.cursor/rules/
-  ui-figma-workflow.mdc
-```
+| Skill | Domain |
+|-------|--------|
+| `qa-assistant-ui` | Карта экранов / папок |
+| `qa-assistant-react` | React/TS/Tailwind |
+| `qa-assistant-backend` | Flask / pipeline |
+| `qa-assistant-data` | Repository / UoW / SQL |
+| `qa-assistant-api` | FE↔BE контракт |
+| `qa-assistant-testing` | Pytest / quality |
+| `qa-assistant-process` | Issues + отчёт |
 
-### Personal (машина разработчика)
+### Figma (project)
 
-`~/.cursor/skills/`: `figma-design-to-code`, `figma-use`, `figma-implement-motion`, `figma-code-connect`
+`figma-design-to-code`, `figma-use`, `figma-implement-motion`, `figma-use-motion`, `figma-code-connect`, `figma-generate-design`
+
+### Rules
+
+- `.cursor/rules/ui-figma-workflow.mdc`
+- `.cursor/rules/backend-data-workflow.mdc`
+
+### Personal mirror (машина)
+
+`~/.cursor/skills/`: core Figma skills
 
 ### Как проверить
 
-1. В Cursor видны project skills в `.cursor/skills/`.
-2. Figma MCP: аутентифицирован (уже использовался на шаге 3).
-3. Файлы в GitHub: https://github.com/Sintik1/Qa_Asistant/tree/main/.cursor
+```bash
+ls .cursor/skills
+```
+
+GitHub: https://github.com/Sintik1/Qa_Asistant/tree/main/.cursor/skills

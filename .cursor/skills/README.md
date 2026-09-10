@@ -1,24 +1,35 @@
-# Cursor Skills (UI)
+# Cursor Skills (QA Assistant)
 
-Project skills for QA Assistant frontend live in `.cursor/skills/`.
+Project skills live in `.cursor/skills/`.
 
-## Installed for UI / Figma
+## Application development
 
 | Skill | Purpose |
 |-------|---------|
-| `qa-assistant-ui` | Project conventions (routes, folders, TZ messages) |
-| `figma-design-to-code` | Mandatory before implementing Figma → code |
-| `figma-use` | Programmatic edits in Figma |
-| `figma-implement-motion` | Figma motion → app code |
+| `qa-assistant-ui` | Screens, folders, Figma→UI map |
+| `qa-assistant-react` | React/TS/Tailwind engineering practices |
+| `qa-assistant-backend` | Flask layered architecture, document→AI→CSV pipeline |
+| `qa-assistant-data` | Repository, Unit of Work, SQL safety, `data/` + `uploads/` |
+| `qa-assistant-api` | Frontend↔backend contract and TZ errors |
+| `qa-assistant-testing` | Pytest + frontend quality gates |
+| `qa-assistant-process` | GitHub Issues + `development_report.md` |
+
+## Figma / design
+
+| Skill | Purpose |
+|-------|---------|
+| `figma-design-to-code` | Mandatory before implementing from Figma |
+| `figma-use` | Programmatic Figma edits |
+| `figma-implement-motion` | Motion → code |
 | `figma-use-motion` | Motion tooling in Figma |
-| `figma-code-connect` | Code Connect component mapping |
-| `figma-generate-design` | Push UI from code into Figma (on request) |
+| `figma-code-connect` | Code Connect |
+| `figma-generate-design` | Code → Figma (on request) |
+
+## Rules
+
+- `.cursor/rules/ui-figma-workflow.mdc` — UI/Figma when editing `qa-assistant/src/**`
 
 ## Prerequisites
 
-- Cursor **Figma** plugin / MCP enabled and authenticated
-- Design file access for: `hb0y0ZVRq7sBtI3K2G33Rk`
-
-## Personal copies
-
-The same core Figma skills are also mirrored to `~/.cursor/skills/` on the machine that ran Stage 4 setup.
+- Figma MCP authenticated for design work
+- Repo: https://github.com/Sintik1/Qa_Asistant

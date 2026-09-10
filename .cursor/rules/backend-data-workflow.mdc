@@ -1,0 +1,16 @@
+---
+description: Backend/data/API conventions when working on Python QA Assistant server code
+globs: "**/*.{py}"
+alwaysApply: false
+---
+
+# Backend / data workflow
+
+When changing Python files:
+
+1. Prefer skills: `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`.
+2. Keep HTTP thin; business logic in `core/` (no Flask imports in domain).
+3. Repository + Unit of Work for persistence; no string-built SQL.
+4. Secrets only in `.env`; `uploads/` gitignored.
+5. New logic → Pytest; TZ error strings stay in sync with frontend.
+6. Process: GitHub Issue + `development_report.md` (`qa-assistant-process`).
