@@ -17,6 +17,7 @@
 5. Усиление ALWAYS-правил трекинга (Issues + `development_report.md`) — **done** (см. [#5](https://github.com/Sintik1/Qa_Asistant/issues/5))
 6. Frontend MVP с mock-генерацией (M1–M3 + S1–S3) — **done** (см. [#6](https://github.com/Sintik1/Qa_Asistant/issues/6), commit `8a05e83`)
 7. Docker для frontend (`docker compose`) — **done** (см. [#7](https://github.com/Sintik1/Qa_Asistant/issues/7))
+8. README с инструкцией запуска — **done** (см. [#8](https://github.com/Sintik1/Qa_Asistant/issues/8))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -124,6 +125,17 @@
 
 ---
 
+### Промпт: Stage 8 — README запуск
+
+**Запрос:** добавить в README.md информацию по запуску приложения.
+
+**Результат:**
+- корневой `README.md` (Docker + npm + проверка UI)
+- обновлён `qa-assistant/README.md`
+- Issue [#8](https://github.com/Sintik1/Qa_Asistant/issues/8)
+
+---
+
 ## 4. Проблемы и решения
 
 | Проблема | Решение |
@@ -167,6 +179,7 @@
 | Шаг 5 — ALWAYS трекинг (Issues + отчёт) | [#5](https://github.com/Sintik1/Qa_Asistant/issues/5) | completed (closed) |
 | Шаг 6 — Frontend MVP (mock M1–M3, S1–S3) | [#6](https://github.com/Sintik1/Qa_Asistant/issues/6) | completed (closed), commit `8a05e83` |
 | Шаг 7 — Docker frontend | [#7](https://github.com/Sintik1/Qa_Asistant/issues/7) | completed (closed) |
+| Шаг 8 — README: запуск приложения | [#8](https://github.com/Sintik1/Qa_Asistant/issues/8) | completed (closed) |
 
 ---
 

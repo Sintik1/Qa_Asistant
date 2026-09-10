@@ -1,21 +1,41 @@
 # QA Assistant (frontend)
 
-React + TypeScript + Vite + Tailwind CSS frontend for **QA Assistant**.
+React + TypeScript + Vite + Tailwind CSS — UI для **QA Assistant**.
 
-## Requirements
+---
 
-- Node.js 20+ (recommended) **или** Docker Desktop
-- npm 10+ (если без Docker)
+## Требования
+
+| Способ запуска | Что нужно |
+|----------------|-----------|
+| Docker | Docker Desktop |
+| Локально | Node.js 20+, npm 10+ |
+
+---
 
 ## Запуск в Docker (рекомендуется)
 
-Из корня репозитория (`ДЗ/`):
+Команды выполняйте из **корня репозитория** (рядом с `docker-compose.yml`):
 
 ```bash
 docker compose up --build
 ```
 
-Приложение: **http://localhost:8080**
+- Приложение: **http://localhost:8080**
+- Контейнер: `qa-assistant`
+- Порт хоста: `8080` → порт контейнера `80` (nginx)
+
+Фоновый режим:
+
+```bash
+docker compose up --build -d
+```
+
+Логи:
+
+```bash
+docker compose logs -f qa-assistant
+```
 
 Остановка:
 
@@ -23,59 +43,121 @@ docker compose up --build
 docker compose down
 ```
 
-Только пересборка образа:
+Пересборка без кэша:
 
 ```bash
 docker compose build --no-cache
+docker compose up -d
 ```
 
-## Setup (без Docker)
+Файлы Docker:
+
+- `../docker-compose.yml`
+- `Dockerfile`
+- `nginx.conf`
+- `.dockerignore`
+
+---
+
+## Запуск без Docker (dev с HMR)
+
+### 1. Проверить Node.js и npm
+
+```bash
+node -v   # нужно 20+
+npm -v    # нужно 10+
+```
+
+Если не установлено: https://nodejs.org/ (LTS).  
+После установки откройте новый терминал и повторите команды выше.
+
+### 2. Перейти в папку frontend
+
+Из корня репозитория:
 
 ```bash
 cd qa-assistant
+```
+
+### 3. Скачать зависимости
+
+```bash
 npm install
 ```
 
-## Development (HMR)
+Что происходит:
+- npm читает `package.json` и `package-lock.json`;
+- скачивает зависимости проекта в `node_modules/`;
+- ставит React, Vite, Tailwind, TypeScript, react-router-dom и dev-инструменты.
+
+Если установка упала или `node_modules` повреждён:
+
+```bash
+rm -rf node_modules
+npm install
+```
+
+Обновить зависимости по lock-файлу (как в CI):
+
+```bash
+npm ci
+```
+
+### 4. Запустить dev-сервер
 
 ```bash
 npm run dev
 ```
 
-App: http://localhost:5173
+Приложение: **http://localhost:5173**  
+Остановка: `Ctrl+C`.
 
-## Build
+### 5. Production-сборка локально
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Project structure
+---
+
+## Быстрая проверка UI
+
+1. **Настройки** → сохранить любой API-токен.
+2. Загрузить файл требований (`.pdf`, `.docx`, `.doc`, `.md`).
+3. **Генерировать тест-кейсы**.
+4. **Скачать CSV** / **Скачать DOCX**.
+
+Маркеры в имени файла для негативных сценариев: `empty`, `fail`, `corrupt`, `slow`.
+
+---
+
+## Маршруты
+
+| Path | Страница | Источник |
+|------|----------|----------|
+| `/` | HomePage | Figma + ТЗ |
+| `/settings` | SettingsPage | ТЗ §3.5 |
+
+---
+
+## Структура `src/`
 
 ```
 src/
-  assets/reference/   # Figma mockup reference export
   components/
-    layout/           # Header, AppNav, AppLayout
-    upload/           # FileUploadField, UploadSection
-    form/             # TaskNameField, PromptField, ProjectSelect
-    management/       # ManagementCard (prompts / templates)
-    generation/       # ChunkSettingsForm, GenerationResults
-    ui/               # Button, PageHeader, ErrorMessage, ProgressBar
-  hooks/              # useFileUpload, useTestCaseGeneration
-  mocks/              # mock test cases
-  pages/              # HomePage, SettingsPage
-  types/              # shared TS types
-  utils/              # constants, validation, export
+    layout/        # Header, AppNav, AppLayout
+    upload/        # загрузка файлов
+    form/          # задача, промт, проект
+    management/    # промты / шаблоны
+    generation/    # результаты, чанкинг
+    ui/            # Button, ProgressBar, ErrorMessage
+  hooks/
+  mocks/
+  pages/
+  types/
+  utils/
   App.tsx
   main.tsx
   index.css
 ```
-
-### Routes
-
-| Path         | Page          | Source        |
-|--------------|---------------|---------------|
-| `/`          | HomePage      | Figma mockup  |
-| `/settings`  | SettingsPage  | TZ §3.5       |
