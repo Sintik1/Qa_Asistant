@@ -34,13 +34,25 @@ npm run preview
 
 ```
 src/
-  assets/       # static assets
-  components/   # reusable UI components (from Figma)
-  hooks/        # React hooks
-  pages/        # page-level screens
-  types/        # TypeScript types
-  utils/        # helpers
+  assets/reference/   # Figma mockup reference export
+  components/
+    layout/           # Header, AppNav, AppLayout
+    upload/           # FileUploadField, UploadSection
+    form/             # TaskNameField, PromptField, ProjectSelect
+    management/       # ManagementCard (prompts / templates)
+    ui/               # Button, PageHeader, ErrorMessage, ProgressBar
+  hooks/              # useFileUpload
+  pages/              # HomePage, SettingsPage
+  types/              # shared TS types
+  utils/              # constants, validation, formatters
   App.tsx
   main.tsx
   index.css
 ```
+
+### Routes
+
+| Path         | Page          | Source        |
+|--------------|---------------|---------------|
+| `/`          | HomePage      | Figma mockup  |
+| `/settings`  | SettingsPage  | TZ §3.5       |
