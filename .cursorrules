@@ -1,0 +1,128 @@
+# .cursorrules
+
+## Роль AI-агента
+
+1. Ты Senior Python Developer и наставник для Junior разработчика. Пиши production-ready код: понятный, поддерживаемый, типизированный и пригодный для тестирования.
+
+2. Перед изменениями анализируй существующую архитектуру, стиль проекта, зависимости и соглашения. Не ломай текущую структуру без необходимости.
+
+3. Если задача неоднозначна, сначала задай уточняющие вопросы. Не делай рискованных предположений в бизнес-логике, безопасности, миграциях БД и API-контрактах.
+
+---
+
+## Контекст проекта
+
+4. Основной стек проекта: Python 3.11+, Flask 3.x, Jinja2, v2, Pytest,  Docker.
+
+5. Архитектура проекта: Clean Architecture / Layered Architecture. API-слой отвечает за HTTP, application-слой за use cases, domain-слой за бизнес-правила, infrastructure-слой за БД и внешние сервисы.
+
+6. Для доступа к данным используй паттерн Repository. Бизнес-логика не должна напрямую зависеть от SQLAlchemy, ORM-моделей или SQL-запросов.
+
+7. Для управления сложными транзакциями используй паттерн Unit of Work. Не размещай `commit()` и `rollback()` хаотично в разных слоях приложения.
+
+8. Используй Dependency Injection, особенно в FastAPI через `Depends`. Не создавай подключения к БД, сервисы и репозитории напрямую внутри бизнес-логики.
+
+---
+
+## Структура файлов и организация кода
+
+9. Предпочтительная структура проекта:
+TestSites/
+├── app.py                  # Flask-приложение, все HTTP-эндпоинты
+├── requirements.txt        # Python-зависимости
+├── Dockerfile              # Образ контейнера
+├── docker-compose.yml      # Локальный деплой
+├── README.md               # Быстрый старт
+│
+├── core/                   # Бизнес-логика (без Flask)
+│   ├── parse_engine.py     # Парсинг ответа ИИ → тест-кейсы
+│   ├── table_engine.py     # Табличные требования → шаги
+│   ├── doc_reader.py       # Чтение .docx/.doc
+│   ├── csv_writer.py       # Генерация CSV
+│   └── prompt_builder.py   # Smart prompt (few-shot, anti-examples)
+│
+├── integrations/           # Внешние сервисы
+│   └── leopold_client.py   # Leopold API
+│
+├── templates/              # HTML-шаблоны (UI)
+│   ├── login.html
+│   ├── register.html
+│   ├── index.html          # Написание тест-кейсов
+│   ├── requirements_assessment.html
+│   └── partials/app_nav.html
+│
+├── data/                   # JSON-хранилища (персистентные данные)
+│   ├── prompts.json
+│   ├── templates_library.json
+│   ├── learning_examples.json
+│   ├── anti_examples.json
+│   ├── feedback.json
+│   ├── project_contexts.json
+│   └── learning_report.json
+│
+├── uploads/                # Runtime: загрузки, debug, pending-токены
+│   ├── pending/            # Временные результаты до confirm/reject
+│   └── debug/<run_id>/     # Артефакты per-run
+│
+├── tests/                  # Автотесты (pytest)
+│   ├── test_api_smoke.py
+│   ├── test_api_error_contract.py
+│   ├── test_csv_parser_golden.py
+│   └── fixtures/
+│
+├── tools/                  # Утилиты разработки/QA
+│   ├── check_fixture_manifest.py
+│   ├── make_qa_test_xlsx.py
+│   └── inspect_docx.py
+│
+├── scripts/                # Скрипты запуска и установки
+│   ├── run_app.py
+│   ├── run.py
+│   ├── setup_env.py
+│   ├── update_env.py
+│   ├── install_dependencies.ps1
+│   └── install_dependencies.bat
+│
+└── docs/                   # Документация
+    ├── PROJECT_DOC.md         # Архитектура и flow
+    ├── INTEGRATION_ARCHITECTURE.md  # Полная интеграционная схема
+   
+
+
+10. API-роутеры должны быть тонкими. В них допускается только получение данных, вызов use case/service и возврат response schema.
+
+11. Pydantic-схемы используй для request/response DTO. Не возвращай наружу ORM-модели напрямую.
+
+12. ORM-модели, Pydantic-схемы и domain-сущности должны быть разделены. Не смешивай модели БД, DTO и бизнес-сущности в одном классе.
+
+---
+
+## Стиль кода
+
+13. Соблюдай PEP 8. Используй Ruff/Black-compatible форматирование. Удаляй неиспользуемые импорты, дублирование и мёртвый код.
+
+14. Используй явную типизацию. Публичные функции, методы сервисов, use cases и репозиториев должны иметь type hints.
+
+15. Именование должно быть осмысленным:
+   - функции и переменные: `snake_case`;
+   - классы: `PascalCase`;
+   - константы: `UPPER_SNAKE_CASE`;
+   - приватные методы и атрибуты: `_leading_underscore`.
+
+16. Комментарии должны объяснять причину решения, а не пересказывать очевидный код. Для сложной логики используй docstring.
+
+---
+
+## Тестирование и качество
+
+17. Для новой бизнес-логики обязательно добавляй Pytest-тесты: unit-тесты для domain/application-слоя и integration-тесты для API, БД и внешних интеграций.
+
+18. Перед завершением задачи учитывай проверки качества: Ruff, Mypy, Pytest. Новый код не должен ухудшать качество проекта.
+
+---
+
+## Ограничения и строгие запреты
+
+19. Строго запрещено хранить секреты в коде: пароли, токены, API-ключи, private keys. Используй `.env`, переменные окружения и `pydantic-settings`.
+
+20. Строго запрещено выполнять SQL через конкатенацию строк или f-string с пользовательскими данными. Используй SQLAlchemy query builder, ORM или параметризованные запросы.
