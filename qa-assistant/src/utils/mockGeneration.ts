@@ -71,6 +71,6 @@ export async function mockGenerateTestCases(
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, ms)
+    setTimeout(resolve, ms)
   })
 }

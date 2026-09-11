@@ -18,6 +18,8 @@
 6. Frontend MVP с mock-генерацией (M1–M3 + S1–S3) — **done** (см. [#6](https://github.com/Sintik1/Qa_Asistant/issues/6), commit `8a05e83`)
 7. Docker для frontend (`docker compose`) — **done** (см. [#7](https://github.com/Sintik1/Qa_Asistant/issues/7))
 8. README с инструкцией запуска — **done** (см. [#8](https://github.com/Sintik1/Qa_Asistant/issues/8))
+9. Баг-хантинг UI через DevTools/CDP — **done** (см. [#9](https://github.com/Sintik1/Qa_Asistant/issues/9)): критичных P0 — **0**; high — 4
+10. Автотесты по `prompt_templates.md` §5 — **in review** (см. [#10](https://github.com/Sintik1/Qa_Asistant/issues/10)): Vitest 53 green + pytest/Selenium PO
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -35,8 +37,10 @@
 | Project Skills | `.cursor/skills/*` + rule `ui-figma-workflow.mdc` |
 | Проверка 3 раза | понимание → выполнение → verify (build/URL/git) |
 | Ограничение scope | Не добавлять экраны/библиотеки вне ТЗ и макета |
-| Prompt template (Role/Task/Context/Format) | `prompt_templates.md` §1 → Stage 6 mock frontend |
+| Prompt template (Role/Task/Context/Format) | `prompt_templates.md` §1 → Stage 6; §5 → Stage 10 tests |
 | Mock-first без бэкенда | `mockGenerateTestCases` + токен в localStorage |
+| Browser CDP bug hunt | `cursor-ide-browser` + `browser_cdp` (fallback: chrome-devtools MCP недоступен) |
+| Page Object + Fluent API + parametrize | Selenium E2E в `tests/`; Vitest unit в `qa-assistant/src/utils/*.test.ts` |
 
 ---
 
@@ -136,6 +140,32 @@
 
 ---
 
+### Промпт: Stage 9 — chrome-devtools bug hunt
+
+**Запрос:** протестировать приложение через chrome-devtools-mcp на баги; ответить сколько критичных и где.
+
+**Результат:**
+- `user-chrome-devtools` MCP: discovery error / auth timeout → fallback CDP через `cursor-ide-browser`
+- Прогон: http://localhost:5173 и http://localhost:8080
+- Happy-path OK: upload → token → generate → CSV/DOCX; негативы `empty`/`fail`/`corrupt`/zero-byte OK
+- **Критических (P0): 0**
+- High: имя CSV ≠ UI; `prompt`/`taskName`/шаблоны не влияют на генерацию; stale `generation.error`; мёртвые кнопки ManagementCard
+- Issue [#9](https://github.com/Sintik1/Qa_Asistant/issues/9)
+
+---
+
+### Промпт: Stage 10 — тесты (prompt_templates §5)
+
+**Запрос:** Senior Automation QA; pytest/Selenium; unit+API+UI; Page Object, Fluent API, parametrize; XSS/SQLi; без flaky; формат: сценарии → файлы → моки; вердикт пользователя обязателен.
+
+**Результат:**
+- Unit Vitest: 53 теста (бизнес-utils + security sanitization) — `npm test` green
+- UI/Security: `tests/` (pytest + Selenium, Page Object + Fluent API)
+- Адаптация: RestAssured/JUnit отброшены (не Java); API = mock + ERROR_MESSAGES
+- Issue [#10](https://github.com/Sintik1/Qa_Asistant/issues/10); коммит — после вердикта
+
+---
+
 ## 4. Проблемы и решения
 
 | Проблема | Решение |
@@ -150,6 +180,12 @@
 | DOCX без сторонних библиотек | Минимальный ZIP(store)+OOXML вручную в `docxExport.ts` |
 | Нужны негативные сценарии без API | Маркеры в имени файла: `empty`/`fail`/`corrupt`/`slow` |
 | Имя compose-проекта из папки `ДЗ` пустое/невалидное | Явный `name: qa-assistant` в `docker-compose.yml` |
+| chrome-devtools MCP недоступен (`spawn npx ENOENT`) | В `~/.cursor/mcp.json`: absolute `npx` + `PATH=~/.local/node/bin`; Reload MCP в Cursor |
+| UI обещает `Тест кейсы_<название>.csv`, скачивается `test_cases_*.csv` | Зафиксировано в [#9](https://github.com/Sintik1/Qa_Asistant/issues/9); `buildCsvFileName` не подключён |
+| После fail ошибка остаётся при выборе нового файла | `generation.clearError()` не вызывается из `useFileUpload` / смены файла |
+| Vitest 3 vs Vite 8: конфликт типов `defineConfig` | Отдельный `vitest.config.ts`; `vite.config.ts` без `test` |
+| Шаблон §5 тянет Java (RestAssured/JUnit) | Заменены на Vitest + pytest/Selenium под реальный стек |
+| Заявление «100% покрытие всего приложения» | Покрыта бизнес-логика utils (unit) + ключевые UI-сценарии (E2E); не каждый JSX-line |
 
 ---
 
@@ -165,6 +201,8 @@
 8. Stage 6: mock-фронт закрывает happy-path и основные ошибки ТЗ; реальный extract/AI — только после бэкенда.
 9. Stage 6 закоммичен после явного «ок фиксируй» пользователя.
 10. Для демо без Node: `docker compose up --build` → http://localhost:8080 (нужен запущенный Docker Desktop).
+11. Stage 9: P0-блокеров нет; чинить в первую очередь расхождение имени CSV с UI и очистку ошибки при смене файла.
+12. Stage 10: unit-тесты гонять в CI сразу; Selenium — после поднятого `npm run dev` / Docker; вердикт пользователя — gate перед коммитом.
 
 ---
 
@@ -180,6 +218,8 @@
 | Шаг 6 — Frontend MVP (mock M1–M3, S1–S3) | [#6](https://github.com/Sintik1/Qa_Asistant/issues/6) | completed (closed), commit `8a05e83` |
 | Шаг 7 — Docker frontend | [#7](https://github.com/Sintik1/Qa_Asistant/issues/7) | completed (closed) |
 | Шаг 8 — README: запуск приложения | [#8](https://github.com/Sintik1/Qa_Asistant/issues/8) | completed (closed) |
+| Шаг 9 — Chrome DevTools / CDP bug hunt | [#9](https://github.com/Sintik1/Qa_Asistant/issues/9) | open (результат зафиксирован; закрытие после OK) |
+| Шаг 10 — Автотесты (prompt_templates §5) | [#10](https://github.com/Sintik1/Qa_Asistant/issues/10) | open (ожидает вердикт) |
 
 ---
 
