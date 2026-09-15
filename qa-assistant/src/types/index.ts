@@ -1,5 +1,11 @@
 /** Общие доменные типы UI QA Assistant (по ТЗ + Figma). */
 
+export type {
+  BreakpointName,
+  BreakpointRange,
+  BreakpointMap,
+} from './breakpoints'
+
 export type AllowedFileExtension = '.pdf' | '.docx' | '.doc' | '.md'
 
 export type FileValidationErrorCode =

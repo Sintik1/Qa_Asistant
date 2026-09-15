@@ -23,14 +23,13 @@ export function ManagementCard({
   const showHint = !addEnabled && !refreshEnabled
 
   return (
-    <section className="rounded-md border border-violet-300 p-4">
+    <section className="rounded-md border border-violet-300 p-3 sm:p-4">
       <div className="mb-3 h-0.5 w-full bg-orange-400" aria-hidden />
       <h2 className="mb-3 text-base font-semibold text-slate-900">{title}</h2>
-      <div className="flex flex-wrap gap-3">
+      <div className="app-actions">
         <Button
           variant="secondary"
           onClick={onAdd}
-          className="w-auto"
           disabled={!addEnabled}
           title={addEnabled ? undefined : unavailableHint}
         >
@@ -39,7 +38,6 @@ export function ManagementCard({
         <Button
           variant="success"
           onClick={onRefresh}
-          className="w-auto"
           disabled={!refreshEnabled}
           title={refreshEnabled ? undefined : unavailableHint}
         >

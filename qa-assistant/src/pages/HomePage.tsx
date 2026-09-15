@@ -174,8 +174,8 @@ export function HomePage() {
           />
         ) : null}
 
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={!canSubmit} className="w-auto min-w-56">
+        <div className="app-actions">
+          <Button type="submit" disabled={!canSubmit} className="sm:min-w-56">
             Генерировать тест-кейсы
           </Button>
           {(generation.showChunkPanel || generation.status === 'success') &&
@@ -183,7 +183,6 @@ export function HomePage() {
             <Button
               type="button"
               variant="secondary"
-              className="w-auto"
               disabled={isBusy}
               onClick={() => {
                 generation.setShowChunkPanel(true)

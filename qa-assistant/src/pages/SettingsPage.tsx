@@ -34,7 +34,7 @@ export function SettingsPage() {
         description="Управление API-токеном доступа к ИИ-агенту."
       />
 
-      <form className="max-w-xl space-y-4" onSubmit={handleSave}>
+      <form className="w-full max-w-xl space-y-4" onSubmit={handleSave}>
         <div className="space-y-2">
           <label htmlFor="api-token" className="block text-sm font-medium">
             API-токен
@@ -45,7 +45,7 @@ export function SettingsPage() {
             autoComplete="off"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
             placeholder="Введите токен"
           />
         </div>
@@ -57,9 +57,11 @@ export function SettingsPage() {
           </p>
         ) : null}
 
-        <Button type="submit" variant="secondary" className="w-auto">
-          Сохранить токен
-        </Button>
+        <div className="app-actions">
+          <Button type="submit" variant="secondary">
+            Сохранить токен
+          </Button>
+        </div>
       </form>
     </div>
   )

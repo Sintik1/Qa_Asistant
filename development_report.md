@@ -22,6 +22,7 @@
 10. Автотесты по `prompt_templates.md` §5 — **done** (см. [#10](https://github.com/Sintik1/Qa_Asistant/issues/10), commit `e2f2e28`)
 11. AI-отладка: мультимодальные скриншоты + интерпретация консоли — **done** (см. [#11](https://github.com/Sintik1/Qa_Asistant/issues/11))
 12. Фикс багов B1–B7 из AI-отладки — **in review** (см. [#12](https://github.com/Sintik1/Qa_Asistant/issues/12))
+13. Адаптивный дизайн + media queries — **done** (см. [#13](https://github.com/Sintik1/Qa_Asistant/issues/13))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -45,6 +46,8 @@
 | Page Object + Fluent API + parametrize | Selenium E2E в `tests/`; Vitest unit в `qa-assistant/src/utils/*.test.ts` |
 | Мультимодальный разбор скриншотов | Stage 11: browser screenshots → visual bug hypotheses |
 | AI-интерпретация console/runtime | CDP console hook + Vite log; отличить app errors от debug-probe |
+| Prompt template §1 (адаптив) | Stage 13: план → код → типы → пример; проверка ×3; без commit без OK |
+| Mobile-first + explicit `@media` | CSS vars + `@media` в `index.css` + Tailwind + `useBreakpoint` |
 
 ---
 
@@ -75,6 +78,16 @@
 **Контекст:** `hb0y0ZVRq7sBtI3K2G33Rk`, node `1:4` (raster mockup).  
 
 **Результат:** `HomePage` + компоненты; `SettingsPage` из ТЗ.
+
+### Промпт: Stage 13 — адаптивный дизайн
+
+**Запрос:** Senior Frontend Engineer; адаптив под любые устройства + генерация media queries; формат `prompt_templates.md` (19–24); без коммита без согласования.
+
+**Результат:**
+- Issue [#13](https://github.com/Sintik1/Qa_Asistant/issues/13)
+- Breakpoints: `types/breakpoints.ts`, `utils/breakpoints.ts`, hooks `useMediaQuery` / `useBreakpoint`
+- Явные `@media` (sm/md/lg/xl, touch, print, ≤374px) в `index.css`
+- Layout/CTA/таблица: `AppLayout`, `Header`, `AppNav`, `GenerationResults` (карточки &lt; md), `Button`, формы
 
 ### Промпт: обязательные Issues + отчёт
 
@@ -225,6 +238,8 @@
 | CSV hint vs download name (B3) | `downloadCsv` переведён на `buildCsvFileName` |
 | Stale generation.error (B4) | `handleRequirementsChange` → `clearError()` |
 | Dual «Файл не выбран» + stale native name (B1/B2) | preview только при selectedFile; `input.value=''` при reject |
+| Таблица тест-кейсов ломает узкие экраны | &lt; md — карточки; md+ — таблица в `.app-table-scroll` |
+| Нужны именно media queries, не только Tailwind | CSS custom properties + `@media` в `index.css`, синхрон с `BREAKPOINTS` |
 
 ---
 
@@ -244,6 +259,7 @@
 12. Stage 10: unit-тесты гонять в CI сразу; Selenium — после поднятого `npm run dev` / Docker; вердикт пользователя — gate перед коммитом.
 13. Stage 11: для UI-багов комбинировать скрин (мультимодалка) + a11y snapshot + CDP; console alone недостаточен, если ошибки только в state.
 14. Stage 12: после AI-отладки сразу чинить high (CSV name, stale error), затем UX medium — меньше регрессий к демо.
+15. Stage 13: держать breakpoints в одном источнике (`utils/breakpoints.ts` ↔ `index.css`); на phone предпочитать карточки широким таблицам.
 
 ---
 
@@ -263,6 +279,7 @@
 | Шаг 10 — Автотесты (prompt_templates §5) | [#10](https://github.com/Sintik1/Qa_Asistant/issues/10) | completed locally (`e2f2e28`; push/close после OK) |
 | Шаг 11 — AI screenshot + console debug | [#11](https://github.com/Sintik1/Qa_Asistant/issues/11) | open (результат в комментарии; закрытие после OK) |
 | Шаг 12 — Fix B1–B7 | [#12](https://github.com/Sintik1/Qa_Asistant/issues/12) | open (ожидает вердикт/коммит) |
+| Шаг 13 — Адаптив + media queries | [#13](https://github.com/Sintik1/Qa_Asistant/issues/13) | completed (closed after push) |
 
 ---
 

@@ -37,7 +37,7 @@ export function FileUploadField({
         id={id}
         type="file"
         accept={ACCEPT_FILE_TYPES}
-        className="block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-800 hover:file:bg-slate-200"
+        className="block w-full max-w-full text-sm text-slate-700 file:mr-0 file:mb-2 file:rounded-md file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-800 hover:file:bg-slate-200 sm:file:mb-0 sm:file:mr-3"
         onChange={(event) => {
           const file = event.target.files?.[0] ?? null
           onFileChange(file)
