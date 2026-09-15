@@ -367,7 +367,7 @@
 | Шаг 15 — Fix R1/R2 + полный регресс | [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) | completed (отчёт в `docs/TESTING_REPORT.md`; commit в этом цикле) |
 | Шаг 16 — Behavior-preserving refactor | [#16](https://github.com/Sintik1/Qa_Asistant/issues/16) | completed, commit `6dc1eed` |
 | Шаг 17 — Оптимизация вёрстки (perf) | [#17](https://github.com/Sintik1/Qa_Asistant/issues/17) | completed (closed), commits `69ace4a` / `45187c4` |
-| Шаг 18 — Selenium + Vitest + RTL + docs | [#18](https://github.com/Sintik1/Qa_Asistant/issues/18) | in review (локально green; commit/close после OK) |
+| Шаг 18 — Selenium + Vitest + RTL + docs | [#18](https://github.com/Sintik1/Qa_Asistant/issues/18) | completed, commit `53e1583` (close после OK) |
 
 ---
 
