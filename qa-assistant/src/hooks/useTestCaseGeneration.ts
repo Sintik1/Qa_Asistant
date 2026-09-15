@@ -6,12 +6,19 @@ import type {
   SelectedFileInfo,
 } from '../types'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
+import { buildCsvFileName } from '../utils/buildCsvFileName'
 import { downloadCsv } from '../utils/csvExport'
 import {
   DEFAULT_CHUNK_SETTINGS,
   LONG_DOCUMENT_BYTES,
   mockGenerateTestCases,
 } from '../utils/mockGeneration'
+
+export interface GenerationContext {
+  taskName?: string
+  prompt?: string
+  requirementsFileName?: string
+}
 
 interface UseTestCaseGenerationResult {
   status: GenerationStatus
@@ -24,7 +31,10 @@ interface UseTestCaseGenerationResult {
   setShowChunkPanel: (open: boolean) => void
   warning: string | null
   clearWarning: () => void
-  generate: (file: SelectedFileInfo) => Promise<void>
+  generate: (
+    file: SelectedFileInfo,
+    context?: GenerationContext,
+  ) => Promise<void>
   downloadResultCsv: () => void
   clearError: () => void
 }
@@ -44,6 +54,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   const [warning, setWarning] = useState<string | null>(null)
   const startedAtRef = useRef<number>(0)
   const resultRef = useRef<GenerationResult | null>(null)
+  const exportContextRef = useRef<GenerationContext>({})
 
   const clearWarning = useCallback(() => setWarning(null), [])
   const clearError = useCallback(() => setError(null), [])
@@ -54,10 +65,15 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
     if (!('Notification' in window)) return
 
     const show = () => {
+      const ctx = exportContextRef.current
       const n = new Notification(ERROR_MESSAGES.GENERATION_DONE_NOTIFY)
       n.onclick = () => {
         window.focus()
-        downloadCsv(next.cases, next.generatedAt)
+        downloadCsv(next.cases, {
+          generatedAt: next.generatedAt,
+          taskName: ctx.taskName,
+          requirementsFileName: ctx.requirementsFileName,
+        })
         n.close()
       }
     }
@@ -72,8 +88,17 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   }, [])
 
   const runGeneration = useCallback(
-    async (file: SelectedFileInfo, settings: ChunkSettings) => {
+    async (
+      file: SelectedFileInfo,
+      settings: ChunkSettings,
+      context: GenerationContext,
+    ) => {
       startedAtRef.current = Date.now()
+      exportContextRef.current = {
+        taskName: context.taskName,
+        prompt: context.prompt,
+        requirementsFileName: context.requirementsFileName ?? file.name,
+      }
       setError(null)
       setWarning(null)
       setStatus('extracting')
@@ -93,7 +118,11 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
         lowerName.includes('slow') ||
         lowerName.includes('notify')
       const delayMs = slowDemo ? 32_000 : 1400
-      const outcome = await mockGenerateTestCases(file, settings, { delayMs })
+      const outcome = await mockGenerateTestCases(file, settings, {
+        delayMs,
+        taskName: context.taskName,
+        prompt: context.prompt,
+      })
 
       if (!outcome.ok) {
         setStatus('error')
@@ -123,12 +152,12 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   )
 
   const generate = useCallback(
-    async (file: SelectedFileInfo) => {
+    async (file: SelectedFileInfo, context: GenerationContext = {}) => {
       if (file.size > LONG_DOCUMENT_BYTES) {
         const ok = window.confirm(ERROR_MESSAGES.LONG_DOCUMENT)
         if (!ok) return
       }
-      await runGeneration(file, chunkSettings)
+      await runGeneration(file, chunkSettings, context)
     },
     [chunkSettings, runGeneration],
   )
@@ -136,7 +165,16 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   const downloadResultCsv = useCallback(() => {
     const current = resultRef.current
     if (!current) return
-    const built = downloadCsv(current.cases, current.generatedAt)
+    const ctx = exportContextRef.current
+    const built = downloadCsv(current.cases, {
+      generatedAt: current.generatedAt,
+      taskName: ctx.taskName,
+      requirementsFileName: ctx.requirementsFileName,
+      fileName: buildCsvFileName(
+        ctx.taskName ?? '',
+        ctx.requirementsFileName,
+      ),
+    })
     if (built.truncated) {
       setWarning(ERROR_MESSAGES.STEPS_TRUNCATED)
     }

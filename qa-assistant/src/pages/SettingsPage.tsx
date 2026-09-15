@@ -17,7 +17,7 @@ export function SettingsPage() {
   const handleSave = (event: FormEvent) => {
     event.preventDefault()
     if (!token.trim()) {
-      setError(ERROR_MESSAGES.MISSING_TOKEN)
+      setError(ERROR_MESSAGES.MISSING_TOKEN_ON_SETTINGS)
       setSavedHint(null)
       localStorage.removeItem(API_TOKEN_STORAGE_KEY)
       return
@@ -50,9 +50,7 @@ export function SettingsPage() {
           />
         </div>
 
-        {error ? (
-          <ErrorMessage message={error} actionLabel="Изменить токен" />
-        ) : null}
+        {error ? <ErrorMessage message={error} /> : null}
         {savedHint ? (
           <p className="text-sm text-green-700" role="status">
             {savedHint}

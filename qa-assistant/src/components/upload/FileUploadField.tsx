@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { ACCEPT_FILE_TYPES } from '../../utils/constants'
 import { formatFileSize } from '../../utils/formatFileSize'
 import type { SelectedFileInfo } from '../../types'
@@ -17,12 +18,22 @@ export function FileUploadField({
   onFileChange,
   error,
 }: FileUploadFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // B2: после reject/clear сбрасываем native value, иначе UI показывает старое имя файла.
+  useEffect(() => {
+    if (!selectedFile && inputRef.current) {
+      inputRef.current.value = ''
+    }
+  }, [selectedFile, error])
+
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block text-sm font-medium text-slate-800">
         {label}
       </label>
       <input
+        ref={inputRef}
         id={id}
         type="file"
         accept={ACCEPT_FILE_TYPES}
@@ -32,11 +43,12 @@ export function FileUploadField({
           onFileChange(file)
         }}
       />
-      <p className="text-sm text-slate-500">
-        {selectedFile
-          ? `${selectedFile.name} (${formatFileSize(selectedFile.size)})`
-          : 'Файл не выбран'}
-      </p>
+      {/* B1: не дублируем «Файл не выбран» — native input уже показывает статус */}
+      {selectedFile ? (
+        <p className="text-sm text-slate-500">
+          {selectedFile.name} ({formatFileSize(selectedFile.size)})
+        </p>
+      ) : null}
       {error ? (
         <p className="text-sm text-red-600" role="alert">
           {error}

@@ -19,7 +19,9 @@
 7. Docker для frontend (`docker compose`) — **done** (см. [#7](https://github.com/Sintik1/Qa_Asistant/issues/7))
 8. README с инструкцией запуска — **done** (см. [#8](https://github.com/Sintik1/Qa_Asistant/issues/8))
 9. Баг-хантинг UI через DevTools/CDP — **done** (см. [#9](https://github.com/Sintik1/Qa_Asistant/issues/9)): критичных P0 — **0**; high — 4
-10. Автотесты по `prompt_templates.md` §5 — **in review** (см. [#10](https://github.com/Sintik1/Qa_Asistant/issues/10)): Vitest 53 green + pytest/Selenium PO
+10. Автотесты по `prompt_templates.md` §5 — **done** (см. [#10](https://github.com/Sintik1/Qa_Asistant/issues/10), commit `e2f2e28`)
+11. AI-отладка: мультимодальные скриншоты + интерпретация консоли — **done** (см. [#11](https://github.com/Sintik1/Qa_Asistant/issues/11))
+12. Фикс багов B1–B7 из AI-отладки — **in review** (см. [#12](https://github.com/Sintik1/Qa_Asistant/issues/12))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -41,6 +43,8 @@
 | Mock-first без бэкенда | `mockGenerateTestCases` + токен в localStorage |
 | Browser CDP bug hunt | `cursor-ide-browser` + `browser_cdp` (fallback: chrome-devtools MCP недоступен) |
 | Page Object + Fluent API + parametrize | Selenium E2E в `tests/`; Vitest unit в `qa-assistant/src/utils/*.test.ts` |
+| Мультимодальный разбор скриншотов | Stage 11: browser screenshots → visual bug hypotheses |
+| AI-интерпретация console/runtime | CDP console hook + Vite log; отличить app errors от debug-probe |
 
 ---
 
@@ -166,6 +170,35 @@
 
 ---
 
+### Промпт: Stage 11 — AI debugging (screenshots + console)
+
+**Запрос:** применить техники отладки с AI — мультимодальный анализ скриншотов багов; AI-интерпретация ошибок консоли.
+
+**Результат:**
+- Скриншоты: `uploads/debug/ai-debug/screenshots/` (invalid format, API fail, success, upload)
+- Консоль приложения: uncaught errors **не найдены**; UI-ошибки живут в React state
+- Артефакт: `SyntaxError: import.meta` — только от debug `Runtime.evaluate`, не от app
+- Баги подтверждены визуально+DOM: CSV name mismatch, stale error, dual «Файл не выбран», Settings copy UX, dead ManagementCard, mock ignores prompt
+- Issue [#11](https://github.com/Sintik1/Qa_Asistant/issues/11)
+
+---
+
+### Промпт: Stage 12 — fix bugs from AI debug
+
+**Запрос:** `фиксируй` (B1–B7).
+
+**Результат:**
+- B3: CSV download → `Тест кейсы_<название>.csv` (`resolveDownloadCsvFileName` + `buildCsvFileName`)
+- B4: смена requirements-файла вызывает `generation.clearError()`
+- B1/B2: `FileUploadField` — без дубля empty-текста; reset `input.value` после reject
+- B5: `MISSING_TOKEN_ON_SETTINGS` на Settings
+- B6: ManagementCard buttons disabled + hint
+- B7: mock учитывает `taskName` / `prompt`
+- Vitest **56/56** green; `npm run build` OK
+- Issue [#12](https://github.com/Sintik1/Qa_Asistant/issues/12)
+
+---
+
 ## 4. Проблемы и решения
 
 | Проблема | Решение |
@@ -186,6 +219,12 @@
 | Vitest 3 vs Vite 8: конфликт типов `defineConfig` | Отдельный `vitest.config.ts`; `vite.config.ts` без `test` |
 | Шаблон §5 тянет Java (RestAssured/JUnit) | Заменены на Vitest + pytest/Selenium под реальный стек |
 | Заявление «100% покрытие всего приложения» | Покрыта бизнес-логика utils (unit) + ключевые UI-сценарии (E2E); не каждый JSX-line |
+| `DOM.setFileInputFiles` запрещён в browser CDP | Upload через `DataTransfer` + `change` event в `Runtime.evaluate` |
+| chrome-devtools MCP `list_pages` пустой | Fallback: cursor-ide-browser + CDP hooks |
+| Console «тишина» при видимых UI-ошибках | Ошибки ТЗ идут в `role=alert`, не в `console.error` — для AI-отладки нужен DOM+скрин, не только console |
+| CSV hint vs download name (B3) | `downloadCsv` переведён на `buildCsvFileName` |
+| Stale generation.error (B4) | `handleRequirementsChange` → `clearError()` |
+| Dual «Файл не выбран» + stale native name (B1/B2) | preview только при selectedFile; `input.value=''` при reject |
 
 ---
 
@@ -203,6 +242,8 @@
 10. Для демо без Node: `docker compose up --build` → http://localhost:8080 (нужен запущенный Docker Desktop).
 11. Stage 9: P0-блокеров нет; чинить в первую очередь расхождение имени CSV с UI и очистку ошибки при смене файла.
 12. Stage 10: unit-тесты гонять в CI сразу; Selenium — после поднятого `npm run dev` / Docker; вердикт пользователя — gate перед коммитом.
+13. Stage 11: для UI-багов комбинировать скрин (мультимодалка) + a11y snapshot + CDP; console alone недостаточен, если ошибки только в state.
+14. Stage 12: после AI-отладки сразу чинить high (CSV name, stale error), затем UX medium — меньше регрессий к демо.
 
 ---
 
@@ -219,7 +260,9 @@
 | Шаг 7 — Docker frontend | [#7](https://github.com/Sintik1/Qa_Asistant/issues/7) | completed (closed) |
 | Шаг 8 — README: запуск приложения | [#8](https://github.com/Sintik1/Qa_Asistant/issues/8) | completed (closed) |
 | Шаг 9 — Chrome DevTools / CDP bug hunt | [#9](https://github.com/Sintik1/Qa_Asistant/issues/9) | open (результат зафиксирован; закрытие после OK) |
-| Шаг 10 — Автотесты (prompt_templates §5) | [#10](https://github.com/Sintik1/Qa_Asistant/issues/10) | open (ожидает вердикт) |
+| Шаг 10 — Автотесты (prompt_templates §5) | [#10](https://github.com/Sintik1/Qa_Asistant/issues/10) | completed locally (`e2f2e28`; push/close после OK) |
+| Шаг 11 — AI screenshot + console debug | [#11](https://github.com/Sintik1/Qa_Asistant/issues/11) | open (результат в комментарии; закрытие после OK) |
+| Шаг 12 — Fix B1–B7 | [#12](https://github.com/Sintik1/Qa_Asistant/issues/12) | open (ожидает вердикт/коммит) |
 
 ---
 

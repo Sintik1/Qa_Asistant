@@ -37,7 +37,7 @@ class SettingsPage(BasePage):
         return self
 
     def expect_missing_token_error(self) -> "SettingsPage":
-        self.wait_text(self.ALERT, "Не настроен API-токен")
+        self.wait_text(self.ALERT, "Введите API-токен")
         return self
 
     def go_home(self) -> "SettingsPage":

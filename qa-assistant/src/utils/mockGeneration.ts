@@ -15,6 +15,12 @@ export type MockGenerationOutcome =
   | { ok: true; result: GenerationResult }
   | { ok: false; message: string }
 
+export interface MockGenerationOptions {
+  delayMs?: number
+  taskName?: string
+  prompt?: string
+}
+
 /**
  * Mock пайплайна на фронте: извлечение → чанкинг → генерация ИИ.
  * Маркеры в имени файла для негативных сценариев (ручная проверка):
@@ -26,7 +32,7 @@ export type MockGenerationOutcome =
 export async function mockGenerateTestCases(
   file: SelectedFileInfo,
   settings: ChunkSettings,
-  options?: { delayMs?: number },
+  options?: MockGenerationOptions,
 ): Promise<MockGenerationOutcome> {
   const delayMs = options?.delayMs ?? 1200
   await wait(delayMs)
@@ -45,6 +51,9 @@ export async function mockGenerateTestCases(
     return { ok: false, message: ERROR_MESSAGES.API_UNAVAILABLE }
   }
 
+  const taskLabel = options?.taskName?.trim()
+  const promptNote = options?.prompt?.trim()
+
   // Небольшая вариация по настройкам чанков, чтобы перегенерация отличалась
   const take = Math.min(
     MOCK_TEST_CASES.length,
@@ -59,10 +68,19 @@ export async function mockGenerateTestCases(
   return {
     ok: true,
     result: {
-      cases: rotated.slice(0, take).map((c) => ({
-        ...c,
-        name: `[${settings.chunkMethod}] ${c.name}`,
-      })),
+      cases: rotated.slice(0, take).map((c) => {
+        const namePrefix = taskLabel
+          ? `[${settings.chunkMethod}][${taskLabel}] `
+          : `[${settings.chunkMethod}] `
+        const stepSuffix = promptNote
+          ? `\n\n[Промт] ${promptNote}`
+          : ''
+        return {
+          ...c,
+          name: `${namePrefix}${c.name}`,
+          step: `${c.step}${stepSuffix}`,
+        }
+      }),
       truncated: false,
       generatedAt: new Date(),
     },

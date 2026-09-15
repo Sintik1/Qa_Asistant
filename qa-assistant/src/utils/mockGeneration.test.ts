@@ -28,6 +28,24 @@ describe('mockGenerateTestCases', () => {
     expect(outcome.result.cases[0]?.name.startsWith('[fixed] ')).toBe(true)
   })
 
+  it('embeds taskName and prompt into mock cases', async () => {
+    const outcome = await mockGenerateTestCases(
+      fileInfo('fd.pdf'),
+      DEFAULT_CHUNK_SETTINGS,
+      {
+        delayMs: 0,
+        taskName: 'CRM-AI-DEBUG',
+        prompt: 'Focus on negative login',
+      },
+    )
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(outcome.result.cases[0]?.name).toContain('[CRM-AI-DEBUG]')
+    expect(outcome.result.cases[0]?.step).toContain(
+      '[Промт] Focus on negative login',
+    )
+  })
+
   it.each([
     ['empty_reqs.md', ERROR_MESSAGES.NO_REQUIREMENTS],
     ['noreq.pdf', ERROR_MESSAGES.NO_REQUIREMENTS],

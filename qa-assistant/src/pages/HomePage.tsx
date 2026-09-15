@@ -38,6 +38,19 @@ export function HomePage() {
     generation.status === 'extracting' || generation.status === 'generating'
   const canSubmit = Boolean(requirements.file) && !isBusy
 
+  const generationContext = {
+    taskName,
+    prompt,
+    requirementsFileName: requirements.file?.name,
+  }
+
+  const handleRequirementsChange = (file: File | null) => {
+    requirements.setFromFile(file)
+    // B4: смена файла сбрасывает stale generation.error
+    generation.clearError()
+    setFormError(null)
+  }
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setFormError(null)
@@ -54,14 +67,14 @@ export function HomePage() {
       return
     }
 
-    await generation.generate(requirements.file)
+    await generation.generate(requirements.file, generationContext)
   }
 
   const handleRegenerate = async () => {
     if (!requirements.file || isBusy) return
     setFormError(null)
     generation.clearError()
-    await generation.generate(requirements.file)
+    await generation.generate(requirements.file, generationContext)
   }
 
   return (
@@ -77,7 +90,7 @@ export function HomePage() {
             id="requirements-file"
             label="Файл требований (.pdf, .docx, .doc, .md)"
             selectedFile={requirements.file}
-            onFileChange={requirements.setFromFile}
+            onFileChange={handleRequirementsChange}
             error={requirements.error ?? undefined}
           />
           <FileUploadField

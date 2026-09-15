@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TestCase } from '../types'
-import { buildCsvContent } from './csvExport'
+import { buildCsvContent, resolveDownloadCsvFileName } from './csvExport'
 
 const sample: TestCase[] = [
   {
@@ -36,5 +36,22 @@ describe('buildCsvContent', () => {
     expect(truncated).toBe(true)
     expect(content.includes(long)).toBe(false)
     expect(content).toContain('x'.repeat(32767))
+  })
+})
+
+describe('resolveDownloadCsvFileName', () => {
+  it('uses UI pattern Тест кейсы_<task>.csv by default', () => {
+    expect(
+      resolveDownloadCsvFileName({ taskName: 'CRM-AI-DEBUG' }),
+    ).toBe('Тест кейсы_CRM-AI-DEBUG.csv')
+  })
+
+  it('falls back to requirements file stem', () => {
+    expect(
+      resolveDownloadCsvFileName({
+        taskName: '',
+        requirementsFileName: 'requirements.md',
+      }),
+    ).toBe('Тест кейсы_requirements.csv')
   })
 })
