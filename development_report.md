@@ -27,6 +27,7 @@
 15. Fix R1/R2 + полный регресс — **done** (см. [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)): R1/R2 закрыты; регресс green
 16. Behavior-preserving refactor — **done** (см. [#16](https://github.com/Sintik1/Qa_Asistant/issues/16), commit `6dc1eed`)
 17. Оптимизация вёрстки (perf markup/CSS) — **done** (см. [#17](https://github.com/Sintik1/Qa_Asistant/issues/17)); регресс PASS; commit после OK
+18. Selenium fix + Vitest bump + component tests + docs sync — **in review** (см. [#18](https://github.com/Sintik1/Qa_Asistant/issues/18))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -57,10 +58,23 @@
 | Fix → verify loop | Stage 15: правки touch targets → Vitest/build → emulator regression suite |
 | Prompt template § refactor (Role/Task) | Stage 16: анализ → proposal → gate «не менять без OK» |
 | Prompt template §4 perf layout | Stage 17: узкие места → код → что ускорилось; без OK не менять |
+| Quality hardening batch | Stage 18: Selenium order fix, oxlint, Vitest CVE, RTL components, docs |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: Stage 18 — качество frontend (Selenium / Vitest / docs)
+
+**Запрос:** поправить `test_generate_without_token_shows_tz_error` (сначала open, затем clear localStorage); убрать warning в `useMediaQuery.ts`; обновить Vitest (2 medium); добавить component React-тесты; синхронизировать `technical_specification.md` и `.cursorrules` с фактическим frontend-стеком.
+
+**Результат:** Issue [#18](https://github.com/Sintik1/Qa_Asistant/issues/18).
+- Selenium: `open_home()` → `localStorage.clear()` → upload/generate
+- `useMediaQuery` → `useSyncExternalStore` (lint clean)
+- Vitest **4.1.11** (+ Testing Library/jsdom); `npm audit` — **0** vulnerabilities
+- Component tests: Button, ErrorMessage, ProgressBar, PageHeader, GenerationAlerts — **71/71** Vitest
+- Docs: стек React 19 / TypeScript / Vite / Tailwind v4 в ТЗ и `.cursorrules`
+
 
 ### Промпт: рефакторинг без изменения поведения (`prompt_templates.md` §)
 
@@ -298,6 +312,11 @@
 | Resize thrash на результатах генерации | Stage 17: убрать JS breakpoint → CSS media dual view |
 | Широкий `transition` / pulse / gradient paint | Stage 17: `transition-colors`, CSS progress, shared `.app-gradient` |
 | Tailwind `md:hidden` vs custom `display: grid` | Stage 17 P17-1: переключение только в `index.css` `@media` |
+| Selenium `localStorage.clear()` до navigation | SecurityError / flaky: сначала `open_home()`, потом clear |
+| oxlint `react/set-state-in-effect` в `useMediaQuery` | `useSyncExternalStore` вместо `useState`+`useEffect` |
+| Vitest 3.2.7: 2 moderate (`@vitest/mocker` path traversal) | Upgrade to Vitest **4.1.11** → audit 0 |
+| npm arborist `edgesOut` на peer set Vitest 4/5 | Clean install + `--legacy-peer-deps` |
+| Vitest 4 removed `environmentMatchGlobs` | Единый `environment: 'jsdom'` (+ RTL cleanup в setup) |
 
 ---
 
@@ -323,6 +342,7 @@
 18. Stage 16: рефактор по частям (styles → blob → hook → UI → PO); после — Vitest; commit только по явному OK.
 19. Stage 17: layout perf — сначала CSS/DOM (без новых libs); JS media только если CSS нельзя; gate перед apply.
 20. Stage 17: при CSS dual-view не смешивать Tailwind `hidden`/`md:hidden` с кастомным `display` того же узла — specificity/cascade ломает адаптив.
+21. Stage 18: для origin-bound Storage в Selenium — всегда navigate first; media hooks — `useSyncExternalStore`; Vitest ≥4.1.11 закрывает mocker CVE.
 
 ---
 
@@ -347,6 +367,7 @@
 | Шаг 15 — Fix R1/R2 + полный регресс | [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) | completed (отчёт в `docs/TESTING_REPORT.md`; commit в этом цикле) |
 | Шаг 16 — Behavior-preserving refactor | [#16](https://github.com/Sintik1/Qa_Asistant/issues/16) | completed, commit `6dc1eed` |
 | Шаг 17 — Оптимизация вёрстки (perf) | [#17](https://github.com/Sintik1/Qa_Asistant/issues/17) | completed (closed), commits `69ace4a` / `45187c4` |
+| Шаг 18 — Selenium + Vitest + RTL + docs | [#18](https://github.com/Sintik1/Qa_Asistant/issues/18) | in review (локально green; commit/close после OK) |
 
 ---
 

@@ -17,6 +17,8 @@
 **Технологический стек:**
 - Python 3.14+
 - Flask 3.0+
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS v4 (`qa-assistant/`)
+- Тесты frontend: Vitest + Testing Library; UI E2E: Pytest + Selenium
 - Pandas, python-docx, pypdf, pywin32 (Windows)
 - ИИ-агент API (Qwen/Qwen2.5-72B-Instruct)
 

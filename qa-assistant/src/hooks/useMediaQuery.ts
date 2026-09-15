@@ -1,34 +1,43 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 /**
  * Подписка на CSS media query (например `(min-width: 768px)`).
- * SSR-safe: на первом рендере возвращает `defaultMatches`.
+ * SSR-safe: на сервере / без `matchMedia` возвращает `defaultMatches`.
  */
 export function useMediaQuery(
   query: string,
   defaultMatches = false,
 ): boolean {
-  const [matches, setMatches] = useState(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (
+        typeof window === 'undefined' ||
+        typeof window.matchMedia !== 'function'
+      ) {
+        return () => {}
+      }
+
+      const media = window.matchMedia(query)
+      media.addEventListener('change', onStoreChange)
+      return () => media.removeEventListener('change', onStoreChange)
+    },
+    [query],
+  )
+
+  const getSnapshot = useCallback(() => {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
       return defaultMatches
     }
     return window.matchMedia(query).matches
-  })
+  }, [query, defaultMatches])
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return
-    }
+  const getServerSnapshot = useCallback(
+    () => defaultMatches,
+    [defaultMatches],
+  )
 
-    const media = window.matchMedia(query)
-    const onChange = (event: MediaQueryListEvent) => {
-      setMatches(event.matches)
-    }
-
-    setMatches(media.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [query])
-
-  return matches
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }

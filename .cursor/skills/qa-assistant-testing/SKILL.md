@@ -28,7 +28,8 @@ Suggested files (from project conventions):
 ## Frontend
 
 - Prefer testing pure utils first: `fileValidation`, `buildCsvFileName`, `formatFileSize`.
-- Component tests optional until a runner is added; do not add Jest/Vitest without asking if absent.
+- Component tests: Vitest + Testing Library (`*.test.tsx`, jsdom via `environmentMatchGlobs`).
+- Cover TZ wiring in UI (`ErrorMessage`, `GenerationAlerts`, `role=alert`) and basic controls (`Button`, `ProgressBar`).
 - Manual check: `npm run build` must pass after UI changes.
 
 ## Quality gates before done

@@ -47,11 +47,11 @@ class TestUserScenarios:
         base_url: str,
         sample_md_file: Path,
     ):
+        # Origin must be loaded before localStorage is accessible; clear after open.
+        home = HomePage(driver, base_url).open_home()
         driver.execute_script("window.localStorage.clear()")
         (
-            HomePage(driver, base_url)
-            .open_home()
-            .upload_requirements(sample_md_file)
+            home.upload_requirements(sample_md_file)
             .generate()
             .expect_alert_contains("Не настроен API-токен")
         )

@@ -47,7 +47,10 @@
 
 ## Контекст проекта
 
-4. Основной стек проекта: Python 3.14+, Flask 3.x, Jinja2, v2, Pytest, Docker.
+4. Основной стек проекта:
+   - Backend (целевой): Python 3.14+, Flask 3.x, Pytest, Docker;
+   - Frontend (факт): React 19, TypeScript, Vite, Tailwind CSS v4 в `qa-assistant/`;
+   - Тесты UI: Vitest (+ Testing Library для компонентов), Pytest + Selenium (E2E).
 
 5. Архитектура проекта: Clean Architecture / Layered Architecture. API-слой отвечает за HTTP, application-слой за use cases, domain-слой за бизнес-правила, infrastructure-слой за БД и внешние сервисы.
 
@@ -57,18 +60,30 @@
 
 8. Используй Dependency Injection, особенно в FastAPI через `Depends`. Не создавай подключения к БД, сервисы и репозитории напрямую внутри бизнес-логики.
 
-9. UI: React, Tailwind CSS.
+9. UI: React 19 + TypeScript + Vite + Tailwind CSS v4 (`qa-assistant/src/**`); роутинг — `react-router-dom`.
 
 ---
 
 ## Структура файлов и организация кода
 
 21. Предпочтительная структура проекта:
-TestSites/
+
+Frontend (факт, каталог `qa-assistant/`):
+qa-assistant/
+├── src/
+│   ├── pages/              # HomePage, SettingsPage
+│   ├── components/         # layout, upload, form, generation, ui, management
+│   ├── hooks/              # useMediaQuery, useBreakpoint, useFileUpload, …
+│   ├── utils/              # валидация, CSV/DOCX, mock generation, constants
+│   └── test/               # setup Vitest / Testing Library
+├── package.json            # React 19, Vite, Tailwind v4, Vitest
+├── Dockerfile              # multi-stage build + nginx
+└── …
+
+Backend / монорепо (целевой каркас + E2E):
 ├── app.py                  # Flask-приложение, все HTTP-эндпоинты
 ├── requirements.txt        # Python-зависимости
-├── Dockerfile              # Образ контейнера
-├── docker-compose.yml      # Локальный деплой
+├── docker-compose.yml      # Локальный деплой (в т.ч. frontend)
 ├── README.md               # Быстрый старт
 │
 ├── core/                   # Бизнес-логика (без Flask)
@@ -80,13 +95,6 @@ TestSites/
 │
 ├── integrations/           # Внешние сервисы
 │   └── leopold_client.py   # Leopold API
-│
-├── templates/              # HTML-шаблоны (UI)
-│   ├── login.html
-│   ├── register.html
-│   ├── index.html          # Написание тест-кейсов
-│   ├── requirements_assessment.html
-│   └── partials/app_nav.html
 │
 ├── data/                   # JSON-хранилища (персистентные данные)
 │   ├── prompts.json
