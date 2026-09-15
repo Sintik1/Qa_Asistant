@@ -27,7 +27,7 @@
 15. Fix R1/R2 + полный регресс — **done** (см. [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)): R1/R2 закрыты; регресс green
 16. Behavior-preserving refactor — **done** (см. [#16](https://github.com/Sintik1/Qa_Asistant/issues/16), commit `6dc1eed`)
 17. Оптимизация вёрстки (perf markup/CSS) — **done** (см. [#17](https://github.com/Sintik1/Qa_Asistant/issues/17)); регресс PASS; commit после OK
-18. Selenium fix + Vitest bump + component tests + docs sync — **in review** (см. [#18](https://github.com/Sintik1/Qa_Asistant/issues/18))
+18. Selenium fix + Vitest bump + component tests + docs sync — **done** (см. [#18](https://github.com/Sintik1/Qa_Asistant/issues/18), commit `53e1583`)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
