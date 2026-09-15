@@ -279,7 +279,7 @@
 | Шаг 10 — Автотесты (prompt_templates §5) | [#10](https://github.com/Sintik1/Qa_Asistant/issues/10) | completed locally (`e2f2e28`; push/close после OK) |
 | Шаг 11 — AI screenshot + console debug | [#11](https://github.com/Sintik1/Qa_Asistant/issues/11) | open (результат в комментарии; закрытие после OK) |
 | Шаг 12 — Fix B1–B7 | [#12](https://github.com/Sintik1/Qa_Asistant/issues/12) | open (ожидает вердикт/коммит) |
-| Шаг 13 — Адаптив + media queries | [#13](https://github.com/Sintik1/Qa_Asistant/issues/13) | completed (closed after push) |
+| Шаг 13 — Адаптив + media queries | [#13](https://github.com/Sintik1/Qa_Asistant/issues/13) | completed (closed), commit `8e46176` |
 
 ---
 
