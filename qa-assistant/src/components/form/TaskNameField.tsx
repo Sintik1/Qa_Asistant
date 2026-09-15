@@ -1,3 +1,5 @@
+import { INPUT_CLASS } from '../../utils/formStyles'
+
 interface TaskNameFieldProps {
   value: string
   onChange: (value: string) => void
@@ -15,7 +17,7 @@ export function TaskNameField({ value, onChange }: TaskNameFieldProps) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Например: CRM-1234 Map"
-        className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+        className={INPUT_CLASS}
       />
       <p className="text-xs text-slate-500">
         Если не заполнено — используется имя файла требований. Имя скачиваемого

@@ -42,15 +42,11 @@ class HomePage(BasePage):
         return self
 
     def set_task_name(self, value: str) -> "HomePage":
-        el = self.wait_visible(self.TASK_NAME)
-        el.clear()
-        el.send_keys(value)
+        self.fill(self.TASK_NAME, value)
         return self
 
     def set_prompt(self, value: str) -> "HomePage":
-        el = self.wait_visible(self.PROMPT)
-        el.clear()
-        el.send_keys(value)
+        self.fill(self.PROMPT, value)
         return self
 
     def generate(self) -> "HomePage":

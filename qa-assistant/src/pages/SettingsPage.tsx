@@ -3,6 +3,7 @@ import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { API_TOKEN_STORAGE_KEY, ERROR_MESSAGES } from '../utils/constants'
+import { INPUT_CLASS } from '../utils/formStyles'
 
 /**
  * Экран настроек по ТЗ §3.5 — API-токен (mock в localStorage до бэкенда).
@@ -45,7 +46,7 @@ export function SettingsPage() {
             autoComplete="off"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className={INPUT_CLASS}
             placeholder="Введите токен"
           />
         </div>

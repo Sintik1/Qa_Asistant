@@ -7,11 +7,11 @@ import { PromptField } from '../components/form/PromptField'
 import { ProjectSelect } from '../components/form/ProjectSelect'
 import { ManagementCard } from '../components/management/ManagementCard'
 import { ChunkSettingsForm } from '../components/generation/ChunkSettingsForm'
+import { GenerationAlerts } from '../components/generation/GenerationAlerts'
 import { GenerationResults } from '../components/generation/GenerationResults'
 import { Button } from '../components/ui/Button'
 import { PageHeader } from '../components/ui/PageHeader'
 import { ProgressBar } from '../components/ui/ProgressBar'
-import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { useTestCaseGeneration } from '../hooks/useTestCaseGeneration'
 import {
@@ -37,6 +37,8 @@ export function HomePage() {
   const isBusy =
     generation.status === 'extracting' || generation.status === 'generating'
   const canSubmit = Boolean(requirements.file) && !isBusy
+  const showChunkControls =
+    generation.showChunkPanel || generation.status === 'success'
 
   const generationContext = {
     taskName,
@@ -117,7 +119,7 @@ export function HomePage() {
           addLabel="Добавить шаблон"
         />
 
-        {generation.showChunkPanel || generation.status === 'success' ? (
+        {showChunkControls ? (
           <ChunkSettingsForm
             value={generation.chunkSettings}
             onChange={generation.setChunkSettings}
@@ -125,42 +127,18 @@ export function HomePage() {
           />
         ) : null}
 
-        {formError === ERROR_MESSAGES.MISSING_TOKEN ? (
-          <ErrorMessage
-            message={formError}
-            actionLabel="Настроить токен"
-            onAction={() => navigate('/settings')}
-          />
-        ) : formError ? (
-          <ErrorMessage message={formError} />
-        ) : null}
-
-        {generation.error ? (
-          <ErrorMessage
-            message={generation.error}
-            actionLabel={
-              generation.error === ERROR_MESSAGES.NO_REQUIREMENTS
-                ? 'Загрузить другой файл'
-                : 'Повторить'
-            }
-            onAction={() => {
-              if (generation.error === ERROR_MESSAGES.NO_REQUIREMENTS) {
-                requirements.clear()
-                generation.clearError()
-                return
-              }
-              void handleRegenerate()
-            }}
-          />
-        ) : null}
-
-        {generation.warning ? (
-          <ErrorMessage
-            message={generation.warning}
-            actionLabel="Скрыть"
-            onAction={generation.clearWarning}
-          />
-        ) : null}
+        <GenerationAlerts
+          formError={formError}
+          generationError={generation.error}
+          warning={generation.warning}
+          onOpenSettings={() => navigate('/settings')}
+          onClearGenerationError={generation.clearError}
+          onClearRequirements={requirements.clear}
+          onRetry={() => {
+            void handleRegenerate()
+          }}
+          onClearWarning={generation.clearWarning}
+        />
 
         {isBusy && generation.progressLabel ? (
           <ProgressBar label={generation.progressLabel} />
@@ -178,8 +156,7 @@ export function HomePage() {
           <Button type="submit" disabled={!canSubmit} className="sm:min-w-56">
             Генерировать тест-кейсы
           </Button>
-          {(generation.showChunkPanel || generation.status === 'success') &&
-          requirements.file ? (
+          {showChunkControls && requirements.file ? (
             <Button
               type="button"
               variant="secondary"

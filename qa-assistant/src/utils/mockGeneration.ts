@@ -11,6 +11,17 @@ export const DEFAULT_CHUNK_SETTINGS: ChunkSettings = {
   chunkMethod: 'header',
 }
 
+/**
+ * Подстроки в имени файла для негативных/демо сценариев.
+ * Правила `includes` должны оставаться бит-идентичными.
+ */
+export const MOCK_FILENAME_MARKERS = {
+  noRequirements: ['empty', 'noreq'],
+  corrupt: ['corrupt', 'broken'],
+  apiFail: ['fail', 'apierror'],
+  slowDemo: ['slow', 'notify'],
+} as const
+
 export type MockGenerationOutcome =
   | { ok: true; result: GenerationResult }
   | { ok: false; message: string }
@@ -19,6 +30,22 @@ export interface MockGenerationOptions {
   delayMs?: number
   taskName?: string
   prompt?: string
+}
+
+function filenameIncludesAny(
+  fileName: string,
+  markers: readonly string[],
+): boolean {
+  const lower = fileName.toLowerCase()
+  return markers.some((marker) => lower.includes(marker))
+}
+
+/** Большой файл или маркеры `slow`/`notify` — демо уведомления S3. */
+export function isSlowDemoFile(file: SelectedFileInfo): boolean {
+  return (
+    file.size > LONG_DOCUMENT_BYTES ||
+    filenameIncludesAny(file.name, MOCK_FILENAME_MARKERS.slowDemo)
+  )
 }
 
 /**
@@ -37,17 +64,15 @@ export async function mockGenerateTestCases(
   const delayMs = options?.delayMs ?? 1200
   await wait(delayMs)
 
-  const lower = file.name.toLowerCase()
-
-  if (lower.includes('empty') || lower.includes('noreq')) {
+  if (filenameIncludesAny(file.name, MOCK_FILENAME_MARKERS.noRequirements)) {
     return { ok: false, message: ERROR_MESSAGES.NO_REQUIREMENTS }
   }
 
-  if (lower.includes('corrupt') || lower.includes('broken')) {
+  if (filenameIncludesAny(file.name, MOCK_FILENAME_MARKERS.corrupt)) {
     return { ok: false, message: ERROR_MESSAGES.CORRUPT_FILE }
   }
 
-  if (lower.includes('fail') || lower.includes('apierror')) {
+  if (filenameIncludesAny(file.name, MOCK_FILENAME_MARKERS.apiFail)) {
     return { ok: false, message: ERROR_MESSAGES.API_UNAVAILABLE }
   }
 

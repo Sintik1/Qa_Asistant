@@ -1,3 +1,5 @@
+import { SELECT_CLASS } from '../../utils/formStyles'
+
 interface ProjectSelectProps {
   value: string
   options: string[]
@@ -17,7 +19,7 @@ export function ProjectSelect({ value, options, onChange }: ProjectSelectProps) 
         id="project-id"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+        className={SELECT_CLASS}
       >
         {options.map((option) => (
           <option key={option} value={option}>

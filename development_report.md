@@ -25,6 +25,7 @@
 13. Адаптивный дизайн + media queries — **done** (см. [#13](https://github.com/Sintik1/Qa_Asistant/issues/13))
 14. Тест адаптивной вёрстки на эмуляторах — **done** (см. [#14](https://github.com/Sintik1/Qa_Asistant/issues/14)): P0 — **0**; medium — 1; low — 1
 15. Fix R1/R2 + полный регресс — **done** (см. [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)): R1/R2 закрыты; регресс green
+16. Behavior-preserving refactor — **done locally** (см. [#16](https://github.com/Sintik1/Qa_Asistant/issues/16)): formStyles, blob helper, hook, alerts, CASE_FIELDS, mock markers, BasePage.fill; Vitest 58/58; commit после OK
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -53,10 +54,21 @@
 | Device emulation matrix | chrome-devtools MCP `emulate` + DOM overflow/touch audit script |
 | Cross-check visual + metrics | cursor-ide-browser CDP screenshots vs `getBoundingClientRect` |
 | Fix → verify loop | Stage 15: правки touch targets → Vitest/build → emulator regression suite |
+| Prompt template § refactor (Role/Task) | Stage 16: анализ → proposal → gate «не менять без OK» |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: рефакторинг без изменения поведения (`prompt_templates.md` §)
+
+**Запрос:** Role Senior Python Developer + Task «отрефактори код» + ограничения (API/deps/форматы) + Format (список → код → риски) + «без согласия код не менять».
+
+**Результат:** код применён после «ок все»:
+- `formStyles.ts`, `triggerBlobDownload.ts`, `GenerationAlerts.tsx`
+- cleanup `useTestCaseGeneration` / `mockGeneration` markers
+- `CASE_FIELDS` в `GenerationResults`; `BasePage.fill`
+- Vitest: **58/58** passed; commit/close Issue — после OK пользователя
 
 ### Промпт: инициализация проекта по ТЗ (шаги 1–4)
 
@@ -270,6 +282,8 @@
 | Inline link «настройки» 14px по высоте | Зафиксировано R1 в [#14](https://github.com/Sintik1/Qa_Asistant/issues/14); увеличен hit-area (`min-h-11` + inline-flex) в [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) |
 | `body { overflow-x: hidden }` маскирует scrollWidth | Аудит по `getBoundingClientRect` right &gt; vw (элементы не вылезали) |
 | Form controls 37–42px на mobile | R2: `min-h-11` на input/select (TaskName, ProjectSelect, Settings, Chunk) |
+| Дубли Tailwind input class / blob download / fill+send_keys | Stage 16: shared helpers без смены публичного API |
+| Риск «сломать e2e» при рефакторе UI | DOM ids, тексты кнопок, ERROR_MESSAGES, mock markers сохранены |
 
 ---
 
@@ -292,6 +306,7 @@
 15. Stage 13: держать breakpoints в одном источнике (`utils/breakpoints.ts` ↔ `index.css`); на phone предпочитать карточки широким таблицам.
 16. Stage 14: адаптив готов к демо; перед polish — увеличить touch target у inline «настройки» и при желании у form controls.
 17. Stage 15: после UI-фиксов всегда гонять короткий emulator-регресс (R1/R2 + generate + overflow) до commit.
+18. Stage 16: рефактор по частям (styles → blob → hook → UI → PO); после — Vitest; commit только по явному OK.
 
 ---
 
@@ -314,6 +329,7 @@
 | Шаг 13 — Адаптив + media queries | [#13](https://github.com/Sintik1/Qa_Asistant/issues/13) | completed (closed), commit `8e46176` |
 | Шаг 14 — Тест адаптивной вёрстки (эмуляторы) | [#14](https://github.com/Sintik1/Qa_Asistant/issues/14) | open (отчёт готов; R1/R2 → #15) |
 | Шаг 15 — Fix R1/R2 + полный регресс | [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) | completed (отчёт в `docs/TESTING_REPORT.md`; commit в этом цикле) |
+| Шаг 16 — Behavior-preserving refactor | [#16](https://github.com/Sintik1/Qa_Asistant/issues/16) | done locally (Vitest green; commit/close после OK) |
 
 ---
 

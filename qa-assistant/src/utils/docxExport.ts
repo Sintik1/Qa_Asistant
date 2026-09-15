@@ -1,5 +1,6 @@
 import type { TestCase } from '../types'
 import { buildTimestampedFileName } from './buildTimestampedFileName'
+import { triggerBlobDownload } from './triggerBlobDownload'
 
 /**
  * Минимальный ZIP (store) + OOXML DOCX без сторонних библиотек.
@@ -176,12 +177,8 @@ export function downloadDocx(cases: TestCase[], generatedAt?: Date): void {
   const blob = new Blob([zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength) as ArrayBuffer], {
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = buildTimestampedFileName('docx', generatedAt ?? new Date())
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  triggerBlobDownload(
+    blob,
+    buildTimestampedFileName('docx', generatedAt ?? new Date()),
+  )
 }

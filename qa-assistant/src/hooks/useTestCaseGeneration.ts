@@ -7,9 +7,10 @@ import type {
 } from '../types'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
 import { buildCsvFileName } from '../utils/buildCsvFileName'
-import { downloadCsv } from '../utils/csvExport'
+import { downloadCsv, type DownloadCsvOptions } from '../utils/csvExport'
 import {
   DEFAULT_CHUNK_SETTINGS,
+  isSlowDemoFile,
   LONG_DOCUMENT_BYTES,
   mockGenerateTestCases,
 } from '../utils/mockGeneration'
@@ -39,6 +40,25 @@ interface UseTestCaseGenerationResult {
   clearError: () => void
 }
 
+function csvDownloadOptions(
+  result: GenerationResult,
+  ctx: GenerationContext,
+  fileName?: string,
+): DownloadCsvOptions {
+  return {
+    generatedAt: result.generatedAt,
+    taskName: ctx.taskName,
+    requirementsFileName: ctx.requirementsFileName,
+    ...(fileName ? { fileName } : {}),
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
 /**
  * Mock-поток генерации: прогресс извлечения → генерация → опциональное уведомление.
  */
@@ -59,6 +79,14 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   const clearWarning = useCallback(() => setWarning(null), [])
   const clearError = useCallback(() => setError(null), [])
 
+  const failGeneration = useCallback((message: string) => {
+    setStatus('error')
+    setProgressLabel(null)
+    setError(message)
+    setResult(null)
+    resultRef.current = null
+  }, [])
+
   const maybeNotify = useCallback((next: GenerationResult) => {
     const elapsed = Date.now() - startedAtRef.current
     if (elapsed < NOTIFY_AFTER_MS || !document.hidden) return
@@ -69,11 +97,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       const n = new Notification(ERROR_MESSAGES.GENERATION_DONE_NOTIFY)
       n.onclick = () => {
         window.focus()
-        downloadCsv(next.cases, {
-          generatedAt: next.generatedAt,
-          taskName: ctx.taskName,
-          requirementsFileName: ctx.requirementsFileName,
-        })
+        downloadCsv(next.cases, csvDownloadOptions(next, ctx))
         n.close()
       }
     }
@@ -104,20 +128,13 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       setStatus('extracting')
       setProgressLabel('Извлечение текста.')
 
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 400)
-      })
+      await delay(400)
 
       setStatus('generating')
       setProgressLabel('Генерация тест-кейсов...')
 
       // Большой файл или маркеры `slow`/`notify` → задержка >30с для демо уведомления S3
-      const lowerName = file.name.toLowerCase()
-      const slowDemo =
-        file.size > LONG_DOCUMENT_BYTES ||
-        lowerName.includes('slow') ||
-        lowerName.includes('notify')
-      const delayMs = slowDemo ? 32_000 : 1400
+      const delayMs = isSlowDemoFile(file) ? 32_000 : 1400
       const outcome = await mockGenerateTestCases(file, settings, {
         delayMs,
         taskName: context.taskName,
@@ -125,20 +142,12 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       })
 
       if (!outcome.ok) {
-        setStatus('error')
-        setProgressLabel(null)
-        setError(outcome.message)
-        setResult(null)
-        resultRef.current = null
+        failGeneration(outcome.message)
         return
       }
 
       if (outcome.result.cases.length === 0) {
-        setStatus('error')
-        setProgressLabel(null)
-        setError(ERROR_MESSAGES.API_EMPTY)
-        setResult(null)
-        resultRef.current = null
+        failGeneration(ERROR_MESSAGES.API_EMPTY)
         return
       }
 
@@ -148,7 +157,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       setProgressLabel(null)
       maybeNotify(outcome.result)
     },
-    [maybeNotify],
+    [failGeneration, maybeNotify],
   )
 
   const generate = useCallback(
@@ -166,15 +175,14 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
     const current = resultRef.current
     if (!current) return
     const ctx = exportContextRef.current
-    const built = downloadCsv(current.cases, {
-      generatedAt: current.generatedAt,
-      taskName: ctx.taskName,
-      requirementsFileName: ctx.requirementsFileName,
-      fileName: buildCsvFileName(
-        ctx.taskName ?? '',
-        ctx.requirementsFileName,
+    const built = downloadCsv(
+      current.cases,
+      csvDownloadOptions(
+        current,
+        ctx,
+        buildCsvFileName(ctx.taskName ?? '', ctx.requirementsFileName),
       ),
-    })
+    )
     if (built.truncated) {
       setWarning(ERROR_MESSAGES.STEPS_TRUNCATED)
     }

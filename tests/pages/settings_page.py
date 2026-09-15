@@ -23,9 +23,7 @@ class SettingsPage(BasePage):
         return self
 
     def set_token(self, value: str) -> "SettingsPage":
-        el = self.wait_visible(self.TOKEN)
-        el.clear()
-        el.send_keys(value)
+        self.fill(self.TOKEN, value)
         return self
 
     def save(self) -> "SettingsPage":

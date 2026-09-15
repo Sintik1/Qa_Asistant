@@ -33,6 +33,11 @@ class BasePage:
             EC.text_to_be_present_in_element(locator, text),
         )
 
+    def fill(self, locator: tuple[str, str], value: str) -> None:
+        el = self.wait_visible(locator)
+        el.clear()
+        el.send_keys(value)
+
     def js_alert_fired(self) -> bool:
         try:
             alert = self.driver.switch_to.alert

@@ -1,6 +1,7 @@
 import type { TestCase } from '../types'
 import { buildCsvFileName } from './buildCsvFileName'
 import { buildTimestampedFileName } from './buildTimestampedFileName'
+import { triggerBlobDownload } from './triggerBlobDownload'
 
 const CSV_HEADERS = ['Name', 'Status', 'Step', 'Expected Result'] as const
 const EXCEL_CELL_LIMIT = 32767
@@ -82,13 +83,6 @@ export function downloadCsv(
   const fileName = resolveDownloadCsvFileName(opts)
 
   const blob = new Blob([built.content], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  URL.revokeObjectURL(url)
+  triggerBlobDownload(blob, fileName)
   return { ...built, fileName }
 }

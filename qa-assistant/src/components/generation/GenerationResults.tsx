@@ -9,27 +9,36 @@ interface GenerationResultsProps {
   onDownloadCsv: () => void
 }
 
+const CASE_FIELDS = [
+  { key: 'name', label: 'Name', preWrap: false },
+  { key: 'status', label: 'Status', preWrap: false },
+  { key: 'step', label: 'Step', preWrap: true },
+  { key: 'expectedResult', label: 'Expected Result', preWrap: true },
+] as const satisfies ReadonlyArray<{
+  key: keyof TestCase
+  label: string
+  preWrap: boolean
+}>
+
 function CaseCard({ item }: { item: TestCase }) {
   return (
     <article className="app-case-cards__item">
-      <div>
-        <p className="app-case-cards__label">Name</p>
-        <p className="text-sm font-medium text-slate-900">{item.name}</p>
-      </div>
-      <div>
-        <p className="app-case-cards__label">Status</p>
-        <p className="text-sm text-slate-700">{item.status}</p>
-      </div>
-      <div>
-        <p className="app-case-cards__label">Step</p>
-        <p className="whitespace-pre-wrap text-sm text-slate-700">{item.step}</p>
-      </div>
-      <div>
-        <p className="app-case-cards__label">Expected Result</p>
-        <p className="whitespace-pre-wrap text-sm text-slate-700">
-          {item.expectedResult}
-        </p>
-      </div>
+      {CASE_FIELDS.map((field) => (
+        <div key={field.key}>
+          <p className="app-case-cards__label">{field.label}</p>
+          <p
+            className={
+              field.preWrap
+                ? 'whitespace-pre-wrap text-sm text-slate-700'
+                : field.key === 'name'
+                  ? 'text-sm font-medium text-slate-900'
+                  : 'text-sm text-slate-700'
+            }
+          >
+            {item[field.key]}
+          </p>
+        </div>
+      ))}
     </article>
   )
 }
@@ -66,10 +75,11 @@ export function GenerationResults({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-700">
               <tr>
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">Step</th>
-                <th className="px-3 py-2 font-medium">Expected Result</th>
+                {CASE_FIELDS.map((field) => (
+                  <th key={field.key} className="px-3 py-2 font-medium">
+                    {field.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -78,14 +88,20 @@ export function GenerationResults({
                   key={item.name}
                   className="border-t border-slate-100 align-top"
                 >
-                  <td className="px-3 py-2 text-slate-900">{item.name}</td>
-                  <td className="px-3 py-2 text-slate-700">{item.status}</td>
-                  <td className="max-w-xs whitespace-pre-wrap px-3 py-2 text-slate-700">
-                    {item.step}
-                  </td>
-                  <td className="max-w-xs whitespace-pre-wrap px-3 py-2 text-slate-700">
-                    {item.expectedResult}
-                  </td>
+                  {CASE_FIELDS.map((field) => (
+                    <td
+                      key={field.key}
+                      className={
+                        field.preWrap
+                          ? 'max-w-xs whitespace-pre-wrap px-3 py-2 text-slate-700'
+                          : field.key === 'name'
+                            ? 'px-3 py-2 text-slate-900'
+                            : 'px-3 py-2 text-slate-700'
+                      }
+                    >
+                      {item[field.key]}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
