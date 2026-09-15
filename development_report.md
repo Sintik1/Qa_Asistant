@@ -26,6 +26,7 @@
 14. Тест адаптивной вёрстки на эмуляторах — **done** (см. [#14](https://github.com/Sintik1/Qa_Asistant/issues/14)): P0 — **0**; medium — 1; low — 1
 15. Fix R1/R2 + полный регресс — **done** (см. [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)): R1/R2 закрыты; регресс green
 16. Behavior-preserving refactor — **done** (см. [#16](https://github.com/Sintik1/Qa_Asistant/issues/16), commit `6dc1eed`)
+17. Оптимизация вёрстки (perf markup/CSS) — **done** (см. [#17](https://github.com/Sintik1/Qa_Asistant/issues/17)); регресс PASS; commit после OK
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -55,6 +56,7 @@
 | Cross-check visual + metrics | cursor-ide-browser CDP screenshots vs `getBoundingClientRect` |
 | Fix → verify loop | Stage 15: правки touch targets → Vitest/build → emulator regression suite |
 | Prompt template § refactor (Role/Task) | Stage 16: анализ → proposal → gate «не менять без OK» |
+| Prompt template §4 perf layout | Stage 17: узкие места → код → что ускорилось; без OK не менять |
 
 ---
 
@@ -69,6 +71,15 @@
 - cleanup `useTestCaseGeneration` / `mockGeneration` markers
 - `CASE_FIELDS` в `GenerationResults`; `BasePage.fill`
 - Vitest: **58/58** passed; commit/close Issue — после OK пользователя
+
+### Промпт: оптимизация вёрстки (`prompt_templates.md` §4)
+
+**Запрос:** Role Senior Python Developer + Task «рефакторинг и оптимизация для производительности» + Context (формат результата, без сторонних libs, проверка ×3) + Format (узкое место → код → что ускорилось) + «без согласия не менять». Scope: весь UI `qa-assistant/`.
+
+**Результат (applied + regress):** Issue [#17](https://github.com/Sintik1/Qa_Asistant/issues/17).
+- Применено: CSS dual view (`.app-results-table` / `.app-case-cards`), `.app-gradient`, `transition-colors`, progress keyframes, `content-visibility`
+- Регресс поймал P17-1 (Tailwind `md:hidden` vs `.app-case-cards { display:grid }`) → фикс через `@media` в `index.css`
+- Vitest **58/58**, build OK; эмулятор F1–F10 PASS; отчёт в `docs/TESTING_REPORT.md` §7
 
 ### Промпт: инициализация проекта по ТЗ (шаги 1–4)
 
@@ -284,6 +295,9 @@
 | Form controls 37–42px на mobile | R2: `min-h-11` на input/select (TaskName, ProjectSelect, Settings, Chunk) |
 | Дубли Tailwind input class / blob download / fill+send_keys | Stage 16: shared helpers без смены публичного API |
 | Риск «сломать e2e» при рефакторе UI | DOM ids, тексты кнопок, ERROR_MESSAGES, mock markers сохранены |
+| Resize thrash на результатах генерации | Stage 17: убрать JS breakpoint → CSS media dual view |
+| Широкий `transition` / pulse / gradient paint | Stage 17: `transition-colors`, CSS progress, shared `.app-gradient` |
+| Tailwind `md:hidden` vs custom `display: grid` | Stage 17 P17-1: переключение только в `index.css` `@media` |
 
 ---
 
@@ -307,6 +321,8 @@
 16. Stage 14: адаптив готов к демо; перед polish — увеличить touch target у inline «настройки» и при желании у form controls.
 17. Stage 15: после UI-фиксов всегда гонять короткий emulator-регресс (R1/R2 + generate + overflow) до commit.
 18. Stage 16: рефактор по частям (styles → blob → hook → UI → PO); после — Vitest; commit только по явному OK.
+19. Stage 17: layout perf — сначала CSS/DOM (без новых libs); JS media только если CSS нельзя; gate перед apply.
+20. Stage 17: при CSS dual-view не смешивать Tailwind `hidden`/`md:hidden` с кастомным `display` того же узла — specificity/cascade ломает адаптив.
 
 ---
 
@@ -330,6 +346,7 @@
 | Шаг 14 — Тест адаптивной вёрстки (эмуляторы) | [#14](https://github.com/Sintik1/Qa_Asistant/issues/14) | open (отчёт готов; R1/R2 → #15) |
 | Шаг 15 — Fix R1/R2 + полный регресс | [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) | completed (отчёт в `docs/TESTING_REPORT.md`; commit в этом цикле) |
 | Шаг 16 — Behavior-preserving refactor | [#16](https://github.com/Sintik1/Qa_Asistant/issues/16) | completed, commit `6dc1eed` |
+| Шаг 17 — Оптимизация вёрстки (perf) | [#17](https://github.com/Sintik1/Qa_Asistant/issues/17) | completed locally (регресс PASS; commit/close после OK) |
 
 ---
 

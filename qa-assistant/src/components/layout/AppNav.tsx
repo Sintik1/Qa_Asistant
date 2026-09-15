@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `app-shell__nav-link rounded-md px-3 py-2 text-sm font-medium transition ${
+  `app-shell__nav-link rounded-md px-3 py-2 text-sm font-medium transition-colors ${
     isActive
       ? 'bg-violet-100 text-violet-800'
       : 'text-slate-700 hover:bg-slate-100'

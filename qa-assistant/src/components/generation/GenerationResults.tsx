@@ -1,5 +1,4 @@
 import { Button } from '../ui/Button'
-import { useBreakpoint } from '../../hooks/useBreakpoint'
 import type { GenerationResult, TestCase } from '../../types'
 import { downloadDocx } from '../../utils/docxExport'
 
@@ -22,7 +21,7 @@ const CASE_FIELDS = [
 
 function CaseCard({ item }: { item: TestCase }) {
   return (
-    <article className="app-case-cards__item">
+    <article className="app-case-cards__item" role="listitem">
       {CASE_FIELDS.map((field) => (
         <div key={field.key}>
           <p className="app-case-cards__label">{field.label}</p>
@@ -45,14 +44,13 @@ function CaseCard({ item }: { item: TestCase }) {
 
 /**
  * Действия после генерации: CSV (M3), DOCX (S2), вход в перегенерацию (S1).
- * На &lt; md — карточки; на md+ — таблица со scroll-x.
+ * На &lt; md — карточки; на md+ — таблица со scroll-x (переключение через CSS, без JS).
  */
 export function GenerationResults({
   result,
   onRegenerateClick,
   onDownloadCsv,
 }: GenerationResultsProps) {
-  const { isMdUp } = useBreakpoint()
   const count = result.cases.length
 
   return (
@@ -70,7 +68,7 @@ export function GenerationResults({
         </p>
       </div>
 
-      {isMdUp ? (
+      <div className="app-results-table">
         <div className="app-table-scroll rounded-md border border-green-200 bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-700">
@@ -107,15 +105,13 @@ export function GenerationResults({
             </tbody>
           </table>
         </div>
-      ) : (
-        <div className="app-case-cards" role="list">
-          {result.cases.map((item) => (
-            <div key={item.name} role="listitem">
-              <CaseCard item={item} />
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
+
+      <div className="app-case-cards" role="list">
+        {result.cases.map((item) => (
+          <CaseCard key={item.name} item={item} />
+        ))}
+      </div>
 
       <div className="app-actions">
         <Button type="button" variant="success" onClick={onDownloadCsv}>

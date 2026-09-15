@@ -6,8 +6,8 @@
 | Репозиторий | https://github.com/Sintik1/Qa_Asistant |
 | Дата | 2026-09-15 |
 | Стенд | http://localhost:5173 (`npm run dev`) |
-| Issues | [#14](https://github.com/Sintik1/Qa_Asistant/issues/14) (адаптив), [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) (fix + регресс) |
-| Вердикт | **PASS** — P0 layout-багов нет; R1/R2 исправлены; полный регресс зелёный |
+| Issues | [#14](https://github.com/Sintik1/Qa_Asistant/issues/14), [#15](https://github.com/Sintik1/Qa_Asistant/issues/15), [#17](https://github.com/Sintik1/Qa_Asistant/issues/17) (layout perf + регресс) |
+| Вердикт | **PASS** — Stage 17 layout-оптимизация применена; полный регресс зелёный; P0 = 0 |
 
 ---
 
@@ -139,3 +139,54 @@ cd qa-assistant && npm run dev
 Автотесты Selenium: см. [`tests/README.md`](../tests/README.md).
 
 Журнал стадий разработки: [`development_report.md`](../development_report.md).
+
+---
+
+## 7. Stage 17 — layout perf + полный регресс
+
+### 7.1 Изменения UI (после OK)
+
+- CSS dual view: `.app-results-table` / `.app-case-cards` + `@media (min-width: 768px)` (без JS `useBreakpoint`)
+- `.app-gradient`, `transition-colors`, `app-progress__bar` + `prefers-reduced-motion`
+- `content-visibility` на карточках/строках; flatten `CaseCard`
+
+### 7.2 Баг, пойманный регрессом
+
+| ID | Severity | Описание | Статус |
+|----|----------|----------|--------|
+| P17-1 | High | Tailwind `md:hidden` перебит `.app-case-cards { display: grid }` → table+cards одновременно | **Fixed** — переключение только через CSS media в `index.css` |
+
+### 7.3 Автотесты / сборка
+
+| Проверка | Результат |
+|----------|-----------|
+| `npm test` (Vitest) | **58/58 PASS** |
+| `npm run build` | OK |
+| Console errors | 0 |
+
+### 7.4 Эмулятор-матрица (overflow)
+
+| Viewport | Overflow-X | Results view | Статус |
+|----------|------------|--------------|--------|
+| 320×568 | 0 | cards | PASS (`pad-x` 0.75rem) |
+| 375×667 | 0 | cards only (`table` display:none) | PASS |
+| 768×1024 | 0 | table only (`cards` display:none) | PASS |
+| 1024×768 | 0 | table, max-width 56rem | PASS |
+| 1280×800 | 0 | table, max-width 64rem | PASS |
+| 1440×900 | 0 | table, max-width 64rem | PASS |
+
+### 7.5 Функциональный регресс
+
+| ID | Сценарий | Результат |
+|----|----------|-----------|
+| F1 | Missing token → точный текст ТЗ + «Настроить токен» 44px | PASS |
+| F2 | Settings: token input 44px, overflow 0 | PASS |
+| F3 | Happy path → «Генерация завершена», 3 кейса | PASS |
+| F4 | Phone: cards + CSV/DOCX/переген ≥44px | PASS |
+| F5 | ≥768: table only | PASS |
+| F7 | `empty.md` → «не обнаружено требований» | PASS |
+| F8 | `fail.md` → «сервису анализа» | PASS |
+| F9 | Смена файла очищает ошибку | PASS |
+| F10 | Overflow 320–1440 | PASS (0) |
+
+**Вердикт Stage 17:** PASS.

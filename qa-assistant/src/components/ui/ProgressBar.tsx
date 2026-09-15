@@ -13,9 +13,13 @@ export function ProgressBar({ label, value }: ProgressBarProps) {
       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
         <div
           className={`h-full rounded-full bg-violet-600 ${
-            indeterminate ? 'w-1/3 animate-pulse' : ''
+            indeterminate ? 'app-progress__bar' : ''
           }`}
-          style={indeterminate ? undefined : { width: `${Math.min(100, Math.max(0, value))}%` }}
+          style={
+            indeterminate
+              ? undefined
+              : { width: `${Math.min(100, Math.max(0, value))}%` }
+          }
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}

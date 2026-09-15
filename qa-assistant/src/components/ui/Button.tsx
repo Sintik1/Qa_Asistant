@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    'bg-gradient-to-r from-violet-600 to-orange-500 text-white hover:opacity-95 disabled:opacity-50',
+    'app-gradient text-white hover:opacity-95 disabled:opacity-50',
   secondary: 'bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50',
   success: 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50',
 }
@@ -24,7 +24,7 @@ export function Button({
   return (
     <button
       type={type}
-      className={`inline-flex min-h-11 w-full items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition sm:w-auto ${variantClass[variant]} ${className}`}
+      className={`inline-flex min-h-11 w-full items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition-colors sm:w-auto ${variantClass[variant]} ${className}`}
       {...rest}
     >
       {children}
