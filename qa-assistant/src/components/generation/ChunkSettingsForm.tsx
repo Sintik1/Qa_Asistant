@@ -39,7 +39,7 @@ export function ChunkSettingsForm({
             onChange={(e) =>
               onChange({ ...value, chunkSize: Number(e.target.value) || 0 })
             }
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
           />
         </label>
 
@@ -57,7 +57,7 @@ export function ChunkSettingsForm({
                 chunkOverlap: Number(e.target.value) || 0,
               })
             }
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
           />
         </label>
 
@@ -71,7 +71,7 @@ export function ChunkSettingsForm({
                 chunkMethod: e.target.value as ChunkMethod,
               })
             }
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className="mt-1 min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
           >
             {METHODS.map((m) => (
               <option key={m.value} value={m.value}>

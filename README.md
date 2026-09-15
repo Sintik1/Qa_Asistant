@@ -111,12 +111,41 @@ npm run preview
 
 ---
 
+## Тестирование и отчёты
+
+| Документ / команда | Назначение |
+|--------------------|------------|
+| [`docs/TESTING_REPORT.md`](docs/TESTING_REPORT.md) | Отчёт о тестировании и проверке **адаптивной вёрстки** (матрица устройств, баги R1/R2, полный регресс) |
+| [`development_report.md`](development_report.md) | Журнал стадий разработки + Issues |
+| [`tests/README.md`](tests/README.md) | Автотесты: Vitest (unit) и Selenium (UI/security) |
+
+Unit-тесты frontend:
+
+```bash
+cd qa-assistant
+npm test
+npm run build
+```
+
+UI E2E (нужен запущенный app):
+
+```bash
+cd tests
+QA_ASSISTANT_BASE_URL=http://localhost:5173 pytest -m "ui or security" -v
+```
+
+Issues по тестированию адаптивa и регрессу: [#14](https://github.com/Sintik1/Qa_Asistant/issues/14), [#15](https://github.com/Sintik1/Qa_Asistant/issues/15).
+
+---
+
 ## Структура проекта
 
 | Путь | Назначение |
 |------|------------|
 | `qa-assistant/` | Frontend (React + Vite) |
 | `docker-compose.yml` | Запуск UI в Docker на порту 8080 |
+| `docs/TESTING_REPORT.md` | Отчёт о тестировании / адаптив |
+| `tests/` | Автотесты (Vitest utils в `qa-assistant`, Selenium в `tests/`) |
 | `technical_specification.md` | Техническое задание |
 | `user_stories.md` | User stories |
 | `development_report.md` | Отчёт по стадиям разработки |
@@ -128,4 +157,6 @@ npm run preview
 ## Полезные ссылки
 
 - Issue Docker: https://github.com/Sintik1/Qa_Asistant/issues/7
+- Issue адаптив-тест: https://github.com/Sintik1/Qa_Asistant/issues/14
+- Issue fix R1/R2 + регресс: https://github.com/Sintik1/Qa_Asistant/issues/15
 - UI: `/` — написание тест-кейсов, `/settings` — API-токен

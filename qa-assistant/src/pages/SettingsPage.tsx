@@ -45,7 +45,7 @@ export function SettingsPage() {
             autoComplete="off"
             value={token}
             onChange={(event) => setToken(event.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+            className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
             placeholder="Введите токен"
           />
         </div>

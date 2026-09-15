@@ -19,7 +19,7 @@ export function ErrorMessage({
         <button
           type="button"
           onClick={onAction}
-          className="mt-2 font-semibold text-red-900 underline"
+          className="mt-2 inline-flex min-h-11 items-center font-semibold text-red-900 underline"
         >
           {actionLabel}
         </button>

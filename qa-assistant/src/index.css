@@ -180,10 +180,14 @@ body {
   }
 }
 
-/* Touch: увеличенная зона клика для nav */
+/* Touch: увеличенная зона клика для nav и inline-ссылок */
 @media (hover: none) and (pointer: coarse) {
   .app-shell__nav a,
   .app-shell__nav button {
+    min-height: 2.75rem;
+  }
+
+  main a {
     min-height: 2.75rem;
   }
 }

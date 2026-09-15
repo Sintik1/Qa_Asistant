@@ -23,6 +23,8 @@
 11. AI-отладка: мультимодальные скриншоты + интерпретация консоли — **done** (см. [#11](https://github.com/Sintik1/Qa_Asistant/issues/11))
 12. Фикс багов B1–B7 из AI-отладки — **in review** (см. [#12](https://github.com/Sintik1/Qa_Asistant/issues/12))
 13. Адаптивный дизайн + media queries — **done** (см. [#13](https://github.com/Sintik1/Qa_Asistant/issues/13))
+14. Тест адаптивной вёрстки на эмуляторах — **done** (см. [#14](https://github.com/Sintik1/Qa_Asistant/issues/14)): P0 — **0**; medium — 1; low — 1
+15. Fix R1/R2 + полный регресс — **done** (см. [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)): R1/R2 закрыты; регресс green
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
 
@@ -48,6 +50,9 @@
 | AI-интерпретация console/runtime | CDP console hook + Vite log; отличить app errors от debug-probe |
 | Prompt template §1 (адаптив) | Stage 13: план → код → типы → пример; проверка ×3; без commit без OK |
 | Mobile-first + explicit `@media` | CSS vars + `@media` в `index.css` + Tailwind + `useBreakpoint` |
+| Device emulation matrix | chrome-devtools MCP `emulate` + DOM overflow/touch audit script |
+| Cross-check visual + metrics | cursor-ide-browser CDP screenshots vs `getBoundingClientRect` |
+| Fix → verify loop | Stage 15: правки touch targets → Vitest/build → emulator regression suite |
 
 ---
 
@@ -210,6 +215,27 @@
 - Vitest **56/56** green; `npm run build` OK
 - Issue [#12](https://github.com/Sintik1/Qa_Asistant/issues/12)
 
+### Промпт: тест адаптивной вёрстки на эмуляторах (шаг 14)
+
+**Запрос:** senior QA — протестировать адаптив на мобильных/эмуляторах, выдать отчёт с багами.
+
+**Результат:**
+- Issue [#14](https://github.com/Sintik1/Qa_Asistant/issues/14)
+- Матрица: 320 / 375 / 393 / 430 / 667×375 / 768 / 1024×768 / 1280 / 1440
+- P0 layout — 0; R1 medium (touch «настройки» 14px); R2 low (input/select ~38px)
+- Cards (&lt;md) / table (≥md) подтверждены на реальной mock-генерации
+
+### Промпт: правь R1/R2 + полный регресс (шаг 15)
+
+**Запрос:** исправить найденные баги и провести полное регрессионное тестирование.
+
+**Результат:**
+- Issue [#15](https://github.com/Sintik1/Qa_Asistant/issues/15)
+- R1/R2: `min-h-11` на Link/ErrorMessage/form controls; touch CSS для `main a`
+- Vitest 58/58; build OK
+- Регресс: token/generate/cards/table/negatives/overflow 320–1440 — all PASS; новых багов нет
+- Отчёт вынесен в `docs/TESTING_REPORT.md`; ссылки добавлены в корневой / `tests/` / `qa-assistant` README
+
 ---
 
 ## 4. Проблемы и решения
@@ -240,6 +266,10 @@
 | Dual «Файл не выбран» + stale native name (B1/B2) | preview только при selectedFile; `input.value=''` при reject |
 | Таблица тест-кейсов ломает узкие экраны | &lt; md — карточки; md+ — таблица в `.app-table-scroll` |
 | Нужны именно media queries, не только Tailwind | CSS custom properties + `@media` в `index.css`, синхрон с `BREAKPOINTS` |
+| chrome-devtools `take_screenshot` timeout | Опора на `evaluate_script` метрики + cursor-ide-browser screenshots |
+| Inline link «настройки» 14px по высоте | Зафиксировано R1 в [#14](https://github.com/Sintik1/Qa_Asistant/issues/14); увеличен hit-area (`min-h-11` + inline-flex) в [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) |
+| `body { overflow-x: hidden }` маскирует scrollWidth | Аудит по `getBoundingClientRect` right &gt; vw (элементы не вылезали) |
+| Form controls 37–42px на mobile | R2: `min-h-11` на input/select (TaskName, ProjectSelect, Settings, Chunk) |
 
 ---
 
@@ -260,6 +290,8 @@
 13. Stage 11: для UI-багов комбинировать скрин (мультимодалка) + a11y snapshot + CDP; console alone недостаточен, если ошибки только в state.
 14. Stage 12: после AI-отладки сразу чинить high (CSV name, stale error), затем UX medium — меньше регрессий к демо.
 15. Stage 13: держать breakpoints в одном источнике (`utils/breakpoints.ts` ↔ `index.css`); на phone предпочитать карточки широким таблицам.
+16. Stage 14: адаптив готов к демо; перед polish — увеличить touch target у inline «настройки» и при желании у form controls.
+17. Stage 15: после UI-фиксов всегда гонять короткий emulator-регресс (R1/R2 + generate + overflow) до commit.
 
 ---
 
@@ -280,6 +312,8 @@
 | Шаг 11 — AI screenshot + console debug | [#11](https://github.com/Sintik1/Qa_Asistant/issues/11) | open (результат в комментарии; закрытие после OK) |
 | Шаг 12 — Fix B1–B7 | [#12](https://github.com/Sintik1/Qa_Asistant/issues/12) | open (ожидает вердикт/коммит) |
 | Шаг 13 — Адаптив + media queries | [#13](https://github.com/Sintik1/Qa_Asistant/issues/13) | completed (closed), commit `8e46176` |
+| Шаг 14 — Тест адаптивной вёрстки (эмуляторы) | [#14](https://github.com/Sintik1/Qa_Asistant/issues/14) | open (отчёт готов; R1/R2 → #15) |
+| Шаг 15 — Fix R1/R2 + полный регресс | [#15](https://github.com/Sintik1/Qa_Asistant/issues/15) | completed (отчёт в `docs/TESTING_REPORT.md`; commit в этом цикле) |
 
 ---
 

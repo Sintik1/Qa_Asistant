@@ -15,7 +15,7 @@ export function TaskNameField({ value, onChange }: TaskNameFieldProps) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder="Например: CRM-1234 Map"
-        className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
+        className="min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-200"
       />
       <p className="text-xs text-slate-500">
         Если не заполнено — используется имя файла требований. Имя скачиваемого

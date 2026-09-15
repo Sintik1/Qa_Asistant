@@ -132,6 +132,18 @@ npm run preview
 
 ---
 
+## Тесты и отчёты
+
+```bash
+npm test          # Vitest unit
+npm run build     # production build
+```
+
+Отчёт о тестировании и адаптивной вёрстке: [`../docs/TESTING_REPORT.md`](../docs/TESTING_REPORT.md)  
+Автотесты Selenium: [`../tests/README.md`](../tests/README.md)
+
+---
+
 ## Маршруты
 
 | Path | Страница | Источник |

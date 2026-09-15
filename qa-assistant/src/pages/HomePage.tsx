@@ -199,7 +199,10 @@ export function HomePage() {
           <code>empty</code>/<code>noreq</code> (нет требований),{' '}
           <code>fail</code> (ошибка API), <code>slow</code>/<code>notify</code>{' '}
           (уведомление &gt;30с). Токен:{' '}
-          <Link to="/settings" className="text-violet-700 underline">
+          <Link
+            to="/settings"
+            className="inline-flex min-h-11 items-center text-violet-700 underline"
+          >
             настройки
           </Link>
           .
