@@ -21,6 +21,9 @@ export function AppNav() {
         <NavLink to="/" end className={linkClass}>
           Написание тест-кейсов
         </NavLink>
+        <NavLink to="/chat" className={linkClass}>
+          Чат по требованиям
+        </NavLink>
         <NavLink to="/settings" className={linkClass}>
           Настройки
         </NavLink>

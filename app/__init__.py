@@ -20,6 +20,7 @@ from core.services import (
     SettingsService,
     TestCaseService,
 )
+from core.rag_service import RagService
 from infrastructure.document_storage import build_document_storage
 from infrastructure.logging_setup import configure_logging, get_logger
 from infrastructure.memory_store import (
@@ -27,6 +28,14 @@ from infrastructure.memory_store import (
     MemoryRunRepository,
     MemorySettingsRepository,
     MemoryTestCaseRepository,
+)
+from infrastructure.rag_memory_store import (
+    MemoryCaseChunkRepository,
+    MemoryDocumentChunkRepository,
+)
+from infrastructure.rag_supabase_store import (
+    SupabaseCaseChunkRepository,
+    SupabaseDocumentChunkRepository,
 )
 from infrastructure.supabase_rest import SupabaseRestClient, SupabaseRestConfig
 from infrastructure.supabase_store import (
@@ -36,6 +45,7 @@ from infrastructure.supabase_store import (
     SupabaseTestCaseRepository,
 )
 from integrations.ai_client import build_ai_client, load_ai_settings
+from integrations.embedding_client import build_embedding_client, load_embedding_settings
 
 PUBLIC_API_PATHS = frozenset({"/api/health", "/api/ai/ping"})
 
@@ -87,13 +97,10 @@ def _error_body(code: str, status_code: int, message: str | None = None) -> dict
     return body
 
 
-def _build_repositories(testing: bool) -> tuple[object, object, object, object, str]:
-    """Return docs/runs/cases/settings repos + persistence mode label.
-
-    Selection:
-    - testing / PERSIST_BACKEND=memory → in-memory
-    - PERSIST_BACKEND=supabase|auto + SUPABASE_URL(+anon/service) → PostgREST
-    """
+def _build_repositories(
+    testing: bool,
+) -> tuple[object, object, object, object, object | None, object | None, str]:
+    """Return docs/runs/cases/settings/doc_chunks/case_chunks + persist mode."""
     backend = (os.getenv("PERSIST_BACKEND") or "auto").strip().lower()
     if testing or backend == "memory":
         return (
@@ -101,6 +108,8 @@ def _build_repositories(testing: bool) -> tuple[object, object, object, object, 
             MemoryRunRepository(),
             MemoryTestCaseRepository(),
             MemorySettingsRepository(),
+            MemoryDocumentChunkRepository(),
+            MemoryCaseChunkRepository(),
             "memory",
         )
 
@@ -111,6 +120,8 @@ def _build_repositories(testing: bool) -> tuple[object, object, object, object, 
             MemoryRunRepository(),
             MemoryTestCaseRepository(),
             MemorySettingsRepository(),
+            MemoryDocumentChunkRepository(),
+            MemoryCaseChunkRepository(),
             "memory",
         )
 
@@ -120,6 +131,8 @@ def _build_repositories(testing: bool) -> tuple[object, object, object, object, 
         SupabaseRunRepository(client),
         SupabaseTestCaseRepository(client),
         SupabaseSettingsRepository(client),
+        SupabaseDocumentChunkRepository(client),
+        SupabaseCaseChunkRepository(client),
         "supabase",
     )
 
@@ -161,13 +174,30 @@ def create_app(testing: bool = False) -> Flask:
         },
     )
 
-    docs_repo, runs_repo, cases_repo, settings_repo, persist_mode = _build_repositories(
-        testing
-    )
+    (
+        docs_repo,
+        runs_repo,
+        cases_repo,
+        settings_repo,
+        doc_chunks_repo,
+        case_chunks_repo,
+        persist_mode,
+    ) = _build_repositories(testing)
     doc_storage = build_document_storage(testing=testing)
     ai_settings = load_ai_settings()
     ai_client = build_ai_client(ai_settings)
-    document_service = DocumentService(docs_repo, doc_storage)
+    embedding_settings = load_embedding_settings()
+    # Tests use deterministic hash embeddings (no network).
+    if testing:
+        os.environ.setdefault("EMBEDDING_PROVIDER", "hash")
+        embedding_settings = load_embedding_settings()
+    embedding_client = build_embedding_client(embedding_settings)
+    rag_service = RagService(
+        doc_chunks=doc_chunks_repo,
+        case_chunks=case_chunks_repo,
+        embedder=embedding_client,
+    )
+    document_service = DocumentService(docs_repo, doc_storage, rag_service)
 
     app.extensions["persist_mode"] = persist_mode
     app.extensions["docs_repo"] = docs_repo
@@ -179,11 +209,19 @@ def create_app(testing: bool = False) -> Flask:
     app.extensions["run_service"] = RunService(runs_repo, docs_repo)
     app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo)
     app.extensions["settings_service"] = SettingsService(settings_repo)
+    app.extensions["rag_service"] = rag_service
     app.extensions["generation_service"] = GenerationService(
-        runs_repo, docs_repo, cases_repo, ai_client, document_service
+        runs_repo,
+        docs_repo,
+        cases_repo,
+        ai_client,
+        document_service,
+        rag_service=rag_service,
     )
     app.extensions["ai_settings"] = ai_settings
     app.extensions["ai_client"] = ai_client
+    app.extensions["embedding_settings"] = embedding_settings
+    app.extensions["embedding_client"] = embedding_client
 
     from app.routes import api_bp
 

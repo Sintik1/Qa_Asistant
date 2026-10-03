@@ -4,6 +4,7 @@ import { RequireAuth } from './auth/RequireAuth'
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthLayout } from './components/layout/AuthLayout'
 import { AuthPage } from './pages/AuthPage'
+import { ChatPage } from './pages/ChatPage'
 import { HomePage } from './pages/HomePage'
 import { SettingsPage } from './pages/SettingsPage'
 
@@ -19,6 +20,7 @@ function App() {
           <Route element={<RequireAuth />}>
             <Route element={<AppLayout />}>
               <Route index element={<HomePage />} />
+              <Route path="chat" element={<ChatPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>

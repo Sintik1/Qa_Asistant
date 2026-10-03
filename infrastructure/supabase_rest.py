@@ -147,6 +147,24 @@ class SupabaseRestClient:
         )
         self._raise(response, f"DELETE {table}")
 
+    def rpc(self, fn_name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
+        """Call a PostgREST / PostgreSQL function."""
+        response = httpx.post(
+            f"{self._config.rest_url}/rpc/{fn_name}",
+            json=payload,
+            headers=self._headers(prefer="return=representation"),
+            timeout=self._timeout,
+        )
+        self._raise(response, f"RPC {fn_name}")
+        data = response.json()
+        if data is None:
+            return []
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            return [data]
+        return []
+
     @staticmethod
     def _raise(response: httpx.Response, action: str) -> None:
         if response.status_code >= 400:

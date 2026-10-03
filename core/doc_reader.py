@@ -121,22 +121,84 @@ def _extract_pdf(data: bytes) -> tuple[str, int | None]:
 
 
 def _extract_docx(data: bytes) -> tuple[str, int | None]:
+    """Extract DOCX in order; map Word heading styles → markdown ``#`` prefixes."""
     from docx import Document
+    from docx.oxml.ns import qn
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
 
-    # python-docx expects a seekable file-like object.
     document = Document(io.BytesIO(data))
     blocks: list[str] = []
-    for para in document.paragraphs:
-        t = (para.text or "").strip()
-        if t:
-            blocks.append(t)
-    for table in document.tables:
-        for row in table.rows:
-            cells = [ (c.text or "").strip() for c in row.cells ]
-            cells = [c for c in cells if c]
-            if cells:
-                blocks.append(" | ".join(cells))
-    return "\n".join(blocks), len(document.paragraphs)
+    para_count = 0
+
+    body = document.element.body
+    for child in body.iterchildren():
+        if child.tag == qn("w:p"):
+            para = Paragraph(child, document)
+            para_count += 1
+            text = (para.text or "").rstrip()
+            if not text.strip():
+                continue
+            style_name = ""
+            if para.style is not None and para.style.name:
+                style_name = para.style.name
+            prefix = _docx_heading_prefix(style_name)
+            blocks.append(f"{prefix}{text.strip()}" if prefix else text)
+        elif child.tag == qn("w:tbl"):
+            table = Table(child, document)
+            rendered = _render_docx_table(table)
+            if rendered:
+                blocks.append(rendered)
+
+    return "\n".join(blocks), para_count
+
+
+def _docx_heading_prefix(style_name: str) -> str:
+    """
+    Map Word styles to markdown heading markers for the section parser.
+
+    Real specs (e.g. Trebovania.docx) use Heading 2/3/4 for systems/subsections,
+    and a TOC-like style for the opening «Основные требования» block.
+    """
+    name = (style_name or "").strip().lower()
+    if not name:
+        return ""
+    # Russian / custom TOC title at the start of the doc → same rank as Heading 2
+    if name in {"оглавление", "toc heading", "title"}:
+        return "## "
+    if name.startswith("heading"):
+        # "Heading 1" … "Heading 9" or localized "Заголовок 1"
+        parts = name.replace("heading", "").strip().split()
+        level = 1
+        for part in parts:
+            if part.isdigit():
+                level = max(1, min(6, int(part)))
+                break
+        return "#" * level + " "
+    if name.startswith("заголовок"):
+        parts = name.replace("заголовок", "").strip().split()
+        level = 1
+        for part in parts:
+            if part.isdigit():
+                level = max(1, min(6, int(part)))
+                break
+        return "#" * level + " "
+    return ""
+
+
+def _render_docx_table(table: object) -> str:
+    """Render a Word table as pipe rows (kept inline with surrounding section text)."""
+    rows_out: list[str] = []
+    for row in table.rows:  # type: ignore[attr-defined]
+        cells = [(c.text or "").replace("\n", " ").strip() for c in row.cells]
+        # Deduplicate horizontally merged repeated cells from python-docx
+        deduped: list[str] = []
+        for cell in cells:
+            if not deduped or deduped[-1] != cell:
+                deduped.append(cell)
+        if any(deduped):
+            rows_out.append("| " + " | ".join(deduped) + " |")
+    return "\n".join(rows_out)
 
 
 def _extract_doc(data: bytes) -> tuple[str, int | None]:

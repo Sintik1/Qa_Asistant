@@ -19,7 +19,14 @@ from core.models import (
     UpdateTestCaseCommand,
     UserSettings,
 )
+from core.prompt_builder import (
+    FLAT_SYSTEM_PROMPT,
+    SECTION_SYSTEM_PROMPT,
+    iter_generation_prompts,
+)
+from core.rag_service import RagService
 from core.repositories import DocumentRepository, RunRepository, SettingsRepository, TestCaseRepository
+from core.section_parser import ParseOptions, ParsedDocument, parse_requirements_document
 
 
 class AiGenerator(Protocol):
@@ -41,12 +48,8 @@ class DocumentBlobStore(Protocol):
     def read_extracted_text(self, storage_path: str) -> str | None: ...
 
 
-GENERATE_SYSTEM_PROMPT = (
-    "Ты QA-инженер. По требованиям сгенерируй тест-кейсы. "
-    "Ответь ТОЛЬКО CSV без пояснений, с заголовком:\n"
-    "Name,Status,Step,Expected Result\n"
-    "Status всегда Approved. Step может содержать несколько строк в кавычках CSV."
-)
+# Backward-compatible alias for tests / callers that imported the flat prompt.
+GENERATE_SYSTEM_PROMPT = FLAT_SYSTEM_PROMPT
 
 
 def _validate_filename(filename: str) -> None:
@@ -60,9 +63,11 @@ class DocumentService:
         self,
         docs: DocumentRepository,
         storage: DocumentBlobStore | None = None,
+        rag_service: RagService | None = None,
     ) -> None:
         self._docs = docs
         self._storage = storage
+        self._rag = rag_service
 
     def create(self, cmd: CreateDocumentCommand) -> Document:
         _validate_filename(cmd.original_filename)
@@ -113,6 +118,16 @@ class DocumentService:
         doc.storage_path = path
         doc.status = "extracted"
         self._docs.save(doc)
+        if self._rag is not None:
+            try:
+                self._rag.index_document_text(
+                    user_id=user_id,
+                    document_id=doc.id,
+                    text=extracted.text,
+                )
+            except Exception:
+                # Indexing must not fail the upload/extract happy path.
+                pass
         return doc, extracted.text, extracted.char_count
 
     def get(self, document_id: str, user_id: str) -> Document:
@@ -202,7 +217,7 @@ class SettingsService:
 
 
 class GenerationService:
-    """Thin generate: AI text → parsed cases → persist on run."""
+    """Generate by leaf sections when outline exists; RAG enriches each leaf prompt."""
 
     def __init__(
         self,
@@ -211,12 +226,23 @@ class GenerationService:
         cases: TestCaseRepository,
         ai_client: AiGenerator | None,
         document_service: DocumentService | None = None,
+        parse_options: ParseOptions | None = None,
+        rag_service: RagService | None = None,
     ) -> None:
         self._runs = runs
         self._docs = docs
         self._cases = cases
         self._ai = ai_client
         self._document_service = document_service
+        self._parse_options = parse_options or ParseOptions()
+        self._rag = rag_service
+
+    def parse_document(
+        self, requirements_text: str, options: ParseOptions | None = None
+    ) -> ParsedDocument:
+        return parse_requirements_document(
+            requirements_text, options=options or self._parse_options
+        )
 
     def generate(
         self,
@@ -249,26 +275,56 @@ class GenerationService:
         run.error_message = None
         self._runs.save(run)
 
-        user_parts = [f"Требования:\n{text}"]
-        if task_name and task_name.strip():
-            user_parts.append(f"Имя задачи: {task_name.strip()}")
-        if prompt and prompt.strip():
-            user_parts.append(f"Доп. промпт: {prompt.strip()}")
-        user_parts.append(
-            f"Параметры чанков: size={run.chunk_size}, "
-            f"overlap={run.chunk_overlap}, method={run.chunk_method}"
-        )
+        # Ensure RAG index exists even if upload skipped indexing (text-only generate).
+        if self._rag is not None:
+            try:
+                self._rag.index_document_text(
+                    user_id=user_id,
+                    document_id=run.document_id,
+                    text=text,
+                )
+            except Exception:
+                pass
 
+        parsed_doc = self.parse_document(text)
+        prompts: list[tuple[str, str, str | None]]
+        if parsed_doc.leaves and self._rag is not None and self._rag.enabled:
+            prompts = []
+            for leaf in parsed_doc.leaves:
+                user_prompt = self._rag.enrich_leaf_prompt(
+                    leaf,
+                    user_id=user_id,
+                    document_id=run.document_id,
+                    task_name=task_name,
+                    extra_prompt=prompt,
+                )
+                prompts.append((SECTION_SYSTEM_PROMPT, user_prompt, leaf.number))
+        else:
+            prompts = iter_generation_prompts(
+                parsed_doc,
+                task_name=task_name,
+                extra_prompt=prompt,
+                raw_text_fallback=text,
+            )
+
+        all_parsed: list = []
         try:
-            ai_text = self._ai.generate(GENERATE_SYSTEM_PROMPT, "\n\n".join(user_parts))
+            for system_prompt, user_prompt, _leaf_number in prompts:
+                user_with_meta = (
+                    f"{user_prompt}\n\n"
+                    f"Параметры чанков: size={run.chunk_size}, "
+                    f"overlap={run.chunk_overlap}, method={run.chunk_method}"
+                )
+                ai_text = self._ai.generate(system_prompt, user_with_meta)
+                chunk_cases = parse_cases_from_ai_text(ai_text)
+                all_parsed.extend(chunk_cases)
         except AppError as exc:
             run.status = "failed"
             run.error_message = exc.code
             self._runs.save(run)
             raise
 
-        parsed = parse_cases_from_ai_text(ai_text)
-        if not parsed:
+        if not all_parsed:
             run.status = "failed"
             run.error_message = "API_EMPTY"
             self._runs.save(run)
@@ -285,9 +341,17 @@ class GenerationService:
                 expected_result=item.expected_result,
                 sort_order=idx,
             )
-            for idx, item in enumerate(parsed)
+            for idx, item in enumerate(all_parsed)
         ]
         saved = self._cases.replace_for_run(run.id, user_id, case_rows)
+        if self._rag is not None:
+            try:
+                self._rag.index_approved_cases(
+                    user_id=user_id,
+                    cases=[c.to_dict() for c in saved],
+                )
+            except Exception:
+                pass
         run.status = "completed"
         run.case_count = len(saved)
         run.error_message = None

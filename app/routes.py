@@ -31,6 +31,8 @@ def _svc(name: str):
 
 @api_bp.get("/health")
 def health():
+    emb = current_app.extensions.get("embedding_settings")
+    rag = current_app.extensions.get("rag_service")
     return jsonify(
         {
             "status": "ok",
@@ -38,6 +40,12 @@ def health():
             "mode": "hybrid-c",
             "persist": current_app.extensions.get("persist_mode", "memory"),
             "ai": ai_status_dict(),
+            "rag": {
+                "enabled": bool(rag and getattr(rag, "enabled", False)),
+                "embedding_provider": getattr(emb, "provider", None),
+                "embedding_model": getattr(emb, "model", None),
+                "embedding_dims": getattr(emb, "dims", None),
+            },
         }
     )
 
@@ -184,6 +192,7 @@ def generate_run(run_id: str):
         current_app.extensions["cases_repo"],
         current_app.extensions.get("ai_client"),
         current_app.extensions.get("document_service"),
+        rag_service=current_app.extensions.get("rag_service"),
     )
     run, cases = gen_svc.generate(
         run_id,
@@ -198,6 +207,80 @@ def generate_run(run_id: str):
             "items": [c.to_dict() for c in cases],
         }
     )
+
+
+@api_bp.post("/chat")
+def chat_requirements():
+    """RAG chat over indexed document chunks."""
+    data = request.get_json(silent=True) or {}
+    question = (data.get("question") or data.get("message") or "").strip()
+    if len(question) < 2:
+        raise ValidationError(code="VALIDATION_ERROR", message="question is required")
+    document_id = (data.get("document_id") or "").strip() or None
+    rag = current_app.extensions.get("rag_service")
+    ai = current_app.extensions.get("ai_client")
+    if rag is None:
+        raise AppError(code="INTERNAL_ERROR", status_code=500)
+    if ai is None:
+        raise AppError(code="MISSING_TOKEN", status_code=503)
+    result = rag.chat(
+        user_id=g.user_id,
+        question=question,
+        document_id=document_id,
+        ai_generate=ai.generate,
+    )
+    return jsonify(result)
+
+
+@api_bp.post("/rag/templates")
+def upsert_rag_templates():
+    """Upload style templates (positive/negative/boundary) into case_chunks."""
+    from core.rag_models import IndexCaseChunkCommand
+
+    data = request.get_json(silent=True) or {}
+    items = data.get("items") or data.get("templates") or []
+    if not isinstance(items, list) or not items:
+        raise ValidationError(code="VALIDATION_ERROR", message="items[] required")
+    rag = current_app.extensions.get("rag_service")
+    embedder = current_app.extensions.get("embedding_client")
+    if rag is None or embedder is None or not getattr(rag, "enabled", False):
+        raise AppError(code="INTERNAL_ERROR", status_code=500, message="RAG unavailable")
+
+    commands: list[IndexCaseChunkCommand] = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or "").strip()
+        step = str(raw.get("step") or "").strip()
+        expected = str(raw.get("expected_result") or "").strip()
+        source_type = str(raw.get("source_type") or "template").strip()
+        if source_type not in {"template", "anti_example", "approved_case"}:
+            source_type = "template"
+        tags = raw.get("tags") or []
+        if isinstance(tags, str):
+            tags = [t.strip() for t in tags.split(",") if t.strip()]
+        content = f"{name}\n{step}\n{expected}".strip()
+        if not content:
+            continue
+        emb = embedder.embed(content)
+        commands.append(
+            IndexCaseChunkCommand(
+                user_id=g.user_id,
+                source_type=source_type,
+                name=name or "template",
+                content=content,
+                embedding=emb,
+                status=str(raw.get("status") or "Approved"),
+                step=step,
+                expected_result=expected,
+                tags=tuple(str(t) for t in tags),
+                metadata={"kind": raw.get("kind") or "style"},
+            )
+        )
+    if not commands:
+        raise ValidationError(code="VALIDATION_ERROR", message="No valid templates")
+    count = rag.index_case_commands(commands)
+    return jsonify({"indexed": count})
 
 
 @api_bp.patch("/test-cases/<case_id>")

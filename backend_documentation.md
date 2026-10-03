@@ -38,23 +38,25 @@
 
 ### 1.1. Контекст продукта
 
-QA Assistant: загрузка документов требований → извлечение текста → чанкинг → вызов ИИ (Leopold / Qwen) → CSV / табличные тест-кейсы для TestRail/Zephyr.
+QA Assistant: загрузка документов требований → structure-aware parse (leaf sections) → индекс RAG (pgvector) → вызов ИИ (Leopold / Qwen) → CSV / табличные тест-кейсы; опционально chat по требованиям.
 
-### 1.2. Целевая схема (после выполнения ДЗ)
+### 1.2. Целевая схема (после выполнения ДЗ + RAG)
 
 ```text
 ┌─────────────┐     JWT (Supabase Auth)      ┌──────────────────┐
 │  React UI   │◄────────────────────────────►│  Supabase        │
-│ qa-assistant│     PostgREST / Client       │  Auth + Postgres │
+│ Home/Chat   │     PostgREST / Client       │  Auth+Postgres   │
 └──────┬──────┘                              │  + Storage + RLS │
-       │                                      └────────▲─────────┘
-       │ HTTP (generate, upload, CRUD proxy)            │
-       ▼                                                │ service role
-┌─────────────┐         SQL / Storage API              │ (server only)
+       │                                      │  + pgvector      │
+       │ HTTP (upload/generate/chat)          └────────▲─────────┘
+       ▼                                                │
+┌─────────────┐   SQL / Storage / match_* RPC          │
 │ Flask API   │─────────────────────────────────────────┘
-│ (Python)    │────► Leopold / external AI API
+│ + RagService│────► Leopold/Ollama chat + embeddings
 └─────────────┘
 ```
+
+**RAG tables (durable, ≠ `generation_chunks`):** `document_chunks`, `case_chunks` (vector 768); RPC `match_document_chunks`, `match_case_chunks`. Миграция: `supabase/migrations/20261003213000_rag_chunks_pgvector.sql`.
 
 ### 1.3. Слои приложения (Flask)
 
@@ -503,7 +505,9 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `GET` | `/api/runs/<id>/test-cases` | **R**ead cases | done |
 | `PATCH` | `/api/test-cases/<id>` | **U**pdate case | done |
 | `GET`/`PATCH` | `/api/settings` | settings | done |
-| `POST` | `/api/runs/<id>/generate` | AI generate → cases | done (шаг 6) |
+| `POST` | `/api/runs/<id>/generate` | AI generate → cases (+ RAG enrich) | done (шаг 6 / [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| `POST` | `/api/chat` | RAG Q&A по `document_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| `POST` | `/api/rag/templates` | загрузка шаблонов кейсов в `case_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/admin/analyze-logs` | AI анализ логов (шаг 7) | done |
 
 **Supabase REST (автоматический, параллельно для FE):**  
@@ -841,6 +845,17 @@ Senior Python Developer: проектирование схемы, миграци
 | Storage gaps (debug/exports) | доп. policies update/delete |
 | Ломать Vitest без env Supabase | `RequireAuth` пропускает, если клиент не сконфигурирован |
 
+### 5.11. RAG + section parser ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36))
+
+**Промпт:** внедрить RAG (style / multi-doc / chat) на Supabase; парсить ТЗ по Heading и нумерации.
+
+**Результат:**
+- Leaf-section parser (`core/section_parser.py`); DOCX tables stay in-section
+- `document_chunks` / `case_chunks` + match RPC; index on upload
+- Generate: full leaf coverage + few-shot templates + related docs
+- `POST /api/chat`, `POST /api/rag/templates`, FE `/chat`
+- Env: `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` / `EMBEDDING_DIMS=768`
+
 ### 5.10. Шаг 9 — оформление сдачи
 
 **Промпт:** оформить результаты в `backend_documentation.md` (архитектура, деплой, API, примеры) и обновить README.
@@ -875,7 +890,8 @@ Senior Python Developer: проектирование схемы, миграци
 | 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
 | 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed) | локальный стенд; деплой не обязателен |
 | 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed) | демо-вход, checklist, bypass, compose UI-only, screencast; `ddd6fcf` |
+| — | RAG + section parser | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | pgvector chunks; style/multi-doc/chat; FE `/chat` |
 
 ---
 
-_Последнее обновление: 2026-10-03 — рекомендации проверяющего ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35))._
+_Последнее обновление: 2026-10-03 — RAG [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)._

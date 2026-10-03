@@ -53,6 +53,7 @@
 41. Backend ДЗ шаг 9 — оформление сдачи (`backend_documentation.md` + README) — **done** (см. [#33](https://github.com/Sintik1/Qa_Asistant/issues/33), closed; Backend ДЗ шаг 9 → `backend_documentation.md` §5.10 / §6)
 42. README для проверяющего (локальный стенд без публичного деплоя) — **done** (см. [#34](https://github.com/Sintik1/Qa_Asistant/issues/34), closed)
 43. Рекомендации проверяющего (демо-вход, Table Editor, bypass, compose, screencast) — **done** (см. [#35](https://github.com/Sintik1/Qa_Asistant/issues/35), closed; `ddd6fcf`)
+44. RAG на Supabase (pgvector) + section-parser + chat — **done (awaiting OK)** (см. [#36](https://github.com/Sintik1/Qa_Asistant/issues/36); Backend → `backend_documentation.md` §1/§3/§6)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -95,10 +96,22 @@
 | Full QA methodology + gate before execute | Backend ДЗ шаг 8: методика API+UI → OK → live/DevTools → автотесты ([#29](https://github.com/Sintik1/Qa_Asistant/issues/29)) |
 | Bypass MCP Issue UI (no Submit) | Issue #29 через `~/.local/bin/gh issue create` |
 | Submission doc sync | Шаг 9: итоговый блок в `backend_documentation.md` + README под реальный стек ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
+| Structure-aware parse + RAG design | Leaf-section parser → pgvector index → style/multi-doc/chat ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| Bypass MCP Issue UI (no Submit) | Issue #36 через `~/.local/bin/gh issue create` |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: RAG все сценарии + парсер ТЗ
+
+**Запрос:** реализовать RAG (style / multi-doc / chat) на Supabase; парсить объёмные ТЗ по Heading и нумерации (лист раздела = кейс, пункты = шаги); на `Trebovania.docx` ничего не исключать.
+
+**Результат:** Issue [#36](https://github.com/Sintik1/Qa_Asistant/issues/36).
+- `core/section_parser.py` + DOCX heading→markdown; `tools/debug_section_parse.py`
+- Миграция `document_chunks` / `case_chunks` + RPC `match_*` (768-dim)
+- Index on upload; generate обогащается few-shot + related docs; `POST /api/chat` + UI `/chat`
+- Pytest: `tests/test_section_parser.py`, `tests/test_rag.py` (22 related green)
 
 ### Промпт: рекомендации проверяющего
 
@@ -488,6 +501,10 @@
 
 | Проблема | Решение |
 |----------|---------|
+| MCP `issue_write` без кнопки Submit | Issue через `~/.local/bin/gh issue create` ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| DOCX таблицы отрывались от разделов | Extract в порядке body; Heading→`##` для парсера |
+| ТЗ без `3.1`, только Heading 2/3/4 | Hybrid parser: Word styles + явная нумерация |
+| pgvector `<=>` в schema `extensions` | RPC `set search_path = public, extensions` |
 | Node.js не установлен; Homebrew на macOS 13 не поставил Node | Бинарник Node v22.19.0 в `~/.local/node` |
 | `gh` CLI отсутствовал | Бинарник `gh` 2.76.2; push через HTTPS + token |
 | Figma MCP auth / namespace | `mcp_auth` → повторный discovery |
@@ -556,6 +573,7 @@
 
 ## 5. Выводы и рекомендации
 
+0. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
 3. Issues + `development_report.md` обновлять сразу при закрытии шага.
@@ -637,6 +655,7 @@
 | Backend ДЗ шаг 9 — docs + README | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed): `backend_documentation.md` + `README.md`; → §5.10 / §6 |
 | README для проверяющего (без деплоя) | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed): блок в корневом README |
 | Reviewer feedback (demo + bypass) | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed): demo/checklist/bypass + screencast; commit `ddd6fcf` |
+| RAG + section parser (style/multi-doc/chat) | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK): pgvector + Chat UI; → `backend_documentation.md` §6 |
 
 ---
 

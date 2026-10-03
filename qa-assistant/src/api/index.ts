@@ -15,6 +15,8 @@ export {
   chunkSettingsToApi,
 } from './runs'
 export { getSettings, patchSettings, getHealth, settingsToChunk } from './settings'
+export { chatRequirements } from './chat'
+export type { ChatCitation, ChatResponse } from './chat'
 export type {
   ApiDocument,
   ApiRun,
