@@ -9,7 +9,6 @@ import type {
 } from '../types'
 import {
   chunkSettingsToApi,
-  createDocument,
   createRun,
   generateRun,
   getHealth,
@@ -17,6 +16,7 @@ import {
   isApiConfigured,
   resolveApiError,
   settingsToChunk,
+  uploadDocument,
 } from '../api'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
 import { buildCsvFileName } from '../utils/buildCsvFileName'
@@ -25,7 +25,6 @@ import {
   DEFAULT_CHUNK_SETTINGS,
   LONG_DOCUMENT_BYTES,
 } from '../utils/chunkSettings'
-import { readRequirementsText } from '../utils/readRequirementsText'
 
 export interface GenerationContext {
   taskName?: string
@@ -179,8 +178,9 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       setProgressLabel('Извлечение текста.')
 
       try {
-        const requirementsText = await readRequirementsText(file.file)
-        if (!requirementsText.trim()) {
+        const uploaded = await uploadDocument(file.file)
+        const requirementsText = uploaded.text.trim()
+        if (!requirementsText) {
           failGeneration(ERROR_MESSAGES.EMPTY_FILE)
           return
         }
@@ -188,14 +188,8 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
         setStatus('generating')
         setProgressLabel('Генерация тест-кейсов...')
 
-        const document = await createDocument({
-          original_filename: file.name,
-          size_bytes: file.size,
-          mime_type: file.file.type || null,
-        })
-
         const run = await createRun({
-          document_id: document.id,
+          document_id: uploaded.document.id,
           ...chunkSettingsToApi(settings),
         })
 

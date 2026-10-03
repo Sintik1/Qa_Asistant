@@ -455,6 +455,7 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `GET` | `/api/health` | health + ai config (provider/model) | done |
 | `POST` | `/api/ai/ping` | smoke-вызов Ollama/Leopold | done |
 | `POST` | `/api/documents` | **C**reate document meta | done |
+| `POST` | `/api/documents/upload` | multipart upload + extract + Storage | done (шаг 7b) |
 | `GET` | `/api/documents` | **R**ead list | done |
 | `GET` | `/api/documents/<id>` | **R**ead one | done |
 | `POST` | `/api/runs` | **C**reate run | done |
@@ -588,7 +589,7 @@ Pytest: `tests/test_api_generate.py`, `tests/test_case_parser.py` (+ smoke/error
 
 **Поток:** validate file → read text (.md) / metadata stub (pdf/docx) → `POST /api/documents` → `POST /api/runs` → `POST …/generate` → CSV download как раньше.
 
-**Ограничения шага:** multipart Storage upload и серверный extract PDF/DOCX — следующие инкременты; Leopold token остаётся в server `.env`, UI ставит `has_api_token`.
+**Ограничения шага 6 (сняты в 7b):** multipart + extract — см. §4.6. Leopold token остаётся в server `.env`, UI ставит `has_api_token`.
 
 ### 4.5. Ошибки, логи, AI-анализ (шаг 7)
 
@@ -613,6 +614,28 @@ python tools/analyze_logs.py --max-lines 150
 
 **Supabase Logs (MCP):** `query_logs` с SQL вида  
 `select id, timestamp, event_message from logs where source = 'postgres_logs' order by timestamp desc limit 20`.
+
+### 4.6. Upload + extract (шаг 7b, вариант B)
+
+Issue: [#28](https://github.com/Sintik1/Qa_Asistant/issues/28)
+
+| Компонент | Роль |
+|-----------|------|
+| `core/doc_reader.py` | PDF (`pypdf`), DOCX (`python-docx`), MD; legacy OLE `.doc` → `CORRUPT_FILE` (нужен конвертер later) |
+| `infrastructure/document_storage.py` | Supabase Storage bucket `documents` (service role) + local fallback `uploads/documents/` |
+| `POST /api/documents/upload` | multipart `file` → extract → persist → `{ document, text, char_count }` |
+| FE `uploadDocument` | заменяет client stub в `useTestCaseGeneration` |
+
+```bash
+curl -s -X POST http://localhost:5000/api/documents/upload \
+  -H 'X-User-Id: 11111111-1111-4111-8111-111111111111' \
+  -F 'file=@./reqs.md;type=text/markdown' | jq '.document.status,.char_count'
+```
+
+Ошибки extract: `INVALID_FORMAT`, `FILE_TOO_LARGE`, `EMPTY_FILE`, `NO_REQUIREMENTS`, `CORRUPT_FILE`.  
+Generate без `requirements_text` читает sidecar `extracted.txt` из storage.
+
+Pytest: `tests/test_doc_reader.py`, `tests/test_api_upload_extract.py`.
 
 ---
 
@@ -778,9 +801,10 @@ Senior Python Developer: проектирование схемы, миграци
 | 5 | Безопасность (Auth, RLS, CORS) | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK) | Supabase Auth + JWT middleware + Storage RLS; pytest auth **10**; vitest **71** |
 | 6 | Интеграция Frontend | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK) | **B**: FE `src/api` + hooks; `POST …/generate`; pytest **24**; §4.4 |
 | 7 | Ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK) | **B**: JSON logs + FE UX + analyze-logs; pytest logging **11** |
+| 7b | Extract PDF/DOCX/DOC | [#28](https://github.com/Sintik1/Qa_Asistant/issues/28) | done (awaiting OK) | **B**: `POST /api/documents/upload` + doc_reader + Storage/local |
 | 8 | Тестирование | — | pending | |
 | 9 | Оформление сдачи | — | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-03 — шаг 7 вариант **B** реализован ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)); §3.3.1 / §4.5._
+_Последнее обновление: 2026-10-03 — extract вариант **B** ([#28](https://github.com/Sintik1/Qa_Asistant/issues/28)): upload + pypdf/python-docx._

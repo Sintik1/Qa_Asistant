@@ -5,7 +5,8 @@ export {
   resolveApiError,
 } from './errors'
 export type { ApiErrorAction } from './errors'
-export { createDocument, listDocuments } from './documents'
+export { createDocument, listDocuments, uploadDocument } from './documents'
+export type { UploadDocumentResult } from './documents'
 export {
   createRun,
   listRuns,

@@ -42,6 +42,8 @@
 30. Backend ДЗ шаг 6 — интеграция Frontend ↔ Backend — **done (awaiting OK)** (см. [#26](https://github.com/Sintik1/Qa_Asistant/issues/26); вариант **B**; `backend_documentation.md` §4.4)
 31. Backend ДЗ шаг 7 — ошибки и логирование (3 варианта, gate) — **awaiting choice** (см. [#27](https://github.com/Sintik1/Qa_Asistant/issues/27); `backend_documentation.md` §6)
 32. Backend ДЗ шаг 7 — выбран **B** + реализация — **done (awaiting OK)** (см. [#27](https://github.com/Sintik1/Qa_Asistant/issues/27); `backend_documentation.md` §3.3.1 / §4.5)
+33. Backend extract PDF/DOCX/DOC (3 варианта, gate) — **awaiting choice** (см. [#28](https://github.com/Sintik1/Qa_Asistant/issues/28); `backend_documentation.md` §6)
+34. Backend extract — выбран **B** + реализация — **done (awaiting OK)** (см. [#28](https://github.com/Sintik1/Qa_Asistant/issues/28); `backend_documentation.md` §4.6)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -85,6 +87,16 @@
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: Backend extract PDF/DOCX/DOC (proposal → B)
+
+**Запрос:** почему нет парсинга → предложить варианты → **`b`**.
+
+**Результат:** Issue [#28](https://github.com/Sintik1/Qa_Asistant/issues/28).
+- `core/doc_reader.py` + `POST /api/documents/upload`
+- Storage: Supabase bucket / local `uploads/documents/`
+- FE: `uploadDocument` вместо stub
+- Pytest upload/extract **22** в выборке с generate/smoke/error
 
 ### Промпт: Backend ДЗ шаг 7 — ошибки и логирование (proposal → B)
 
@@ -483,6 +495,7 @@
 27. Шаг 5: не писать свой Auth — схема уже на `auth.users`+RLS; JWT middleware + FE signup/login реализованы ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25)); следующий — шаг 6 FE↔API с Bearer.
 28. Шаг 6: Axios не нужен (`apiFetch` + Supabase); вариант **B** реализован — FE api/hooks + `POST …/generate` ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)); PDF extract на сервере — later.
 29. Шаг 7: structured JSON logs + `request_id` + AI analyze (CLI/API); Supabase Logs через Dashboard/MCP, не дублировать в свою таблицу без нужды ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)).
+30. Extract B: серверный parse обязателен для PDF/DOCX; legacy OLE `.doc` без LibreOffice → `CORRUPT_FILE` до отдельного конвертера ([#28](https://github.com/Sintik1/Qa_Asistant/issues/28)).
 
 ---
 
@@ -520,6 +533,7 @@
 | Backend ДЗ шаг 5 — Auth / RLS / CORS / secrets | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK): JWT + FE Auth + Storage RLS |
 | Backend ДЗ шаг 6 — FE ↔ Backend API | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK / commit); Backend ДЗ шаг 6 → `backend_documentation.md` §4.4 |
 | Backend ДЗ шаг 7 — ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK): вариант **B**; Backend ДЗ шаг 7 → `backend_documentation.md` §3.3.1 |
+| Backend extract PDF/DOCX/DOC | [#28](https://github.com/Sintik1/Qa_Asistant/issues/28) | done (awaiting OK): вариант **B**; → `backend_documentation.md` §4.6 |
 
 ---
 

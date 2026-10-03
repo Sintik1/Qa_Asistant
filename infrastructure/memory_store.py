@@ -53,6 +53,13 @@ class MemoryDocumentRepository:
             reverse=True,
         )
 
+    def save(self, document: Document) -> Document:
+        existing = self._items.get(document.id)
+        if existing is None or existing.user_id != document.user_id:
+            raise KeyError(document.id)
+        self._items[document.id] = document
+        return document
+
 
 class MemoryRunRepository:
     def __init__(self) -> None:

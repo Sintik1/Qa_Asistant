@@ -13,7 +13,11 @@ function newRequestId(): string {
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers)
-  if (!headers.has('Content-Type') && init.body) {
+  // Let the browser set multipart boundary for FormData; JSON only for string bodies.
+  if (
+    !headers.has('Content-Type') &&
+    typeof init.body === 'string'
+  ) {
     headers.set('Content-Type', 'application/json')
   }
   if (!headers.has('X-Request-Id')) {

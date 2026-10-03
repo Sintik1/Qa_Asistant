@@ -1,14 +1,13 @@
-/** Client-side text for thin generate (full extract stays on server later). */
-
+/**
+ * @deprecated Prefer server extract via `uploadDocument` (`POST /api/documents/upload`).
+ * Kept for offline/unit helpers if needed.
+ */
 export async function readRequirementsText(file: File): Promise<string> {
   const lower = file.name.toLowerCase()
   if (lower.endsWith('.md') || lower.endsWith('.txt')) {
-    const text = (await file.text()).trim()
-    return text
+    return (await file.text()).trim()
   }
-
-  return (
-    `Файл требований: ${file.name} (${file.size} bytes).\n` +
-    'Сгенерируй типовые функциональные тест-кейсы для документа требований ПО.'
+  throw new Error(
+    'Client-side extract for PDF/DOCX/DOC removed — use POST /api/documents/upload',
   )
 }

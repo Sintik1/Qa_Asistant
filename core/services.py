@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Protocol
 
 from core.case_parser import parse_cases_from_ai_text
+from core.doc_reader import extract_text, validate_upload_meta
 from core.errors import AppError, NotFoundError, ValidationError
 from core.messages import ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from core.models import (
@@ -25,6 +26,21 @@ class AiGenerator(Protocol):
     def generate(self, system_prompt: str, user_content: str) -> str: ...
 
 
+class DocumentBlobStore(Protocol):
+    def save(
+        self,
+        *,
+        user_id: str,
+        document_id: str,
+        filename: str,
+        data: bytes,
+        content_type: str | None,
+        extracted_text: str,
+    ) -> str: ...
+
+    def read_extracted_text(self, storage_path: str) -> str | None: ...
+
+
 GENERATE_SYSTEM_PROMPT = (
     "Ты QA-инженер. По требованиям сгенерируй тест-кейсы. "
     "Ответь ТОЛЬКО CSV без пояснений, с заголовком:\n"
@@ -40,8 +56,13 @@ def _validate_filename(filename: str) -> None:
 
 
 class DocumentService:
-    def __init__(self, docs: DocumentRepository) -> None:
+    def __init__(
+        self,
+        docs: DocumentRepository,
+        storage: DocumentBlobStore | None = None,
+    ) -> None:
         self._docs = docs
+        self._storage = storage
 
     def create(self, cmd: CreateDocumentCommand) -> Document:
         _validate_filename(cmd.original_filename)
@@ -51,6 +72,49 @@ class DocumentService:
             raise ValidationError(code="FILE_TOO_LARGE")
         return self._docs.create(cmd)
 
+    def upload_and_extract(
+        self,
+        *,
+        user_id: str,
+        filename: str,
+        data: bytes,
+        mime_type: str | None = None,
+    ) -> tuple[Document, str, int]:
+        """Validate → extract → persist blob/text → document meta (status=extracted)."""
+        validate_upload_meta(filename, len(data))
+        extracted = extract_text(filename, data)
+
+        doc = self._docs.create(
+            CreateDocumentCommand(
+                user_id=user_id,
+                original_filename=filename,
+                size_bytes=len(data),
+                mime_type=mime_type,
+                storage_path=None,
+            )
+        )
+        if self._storage is None:
+            raise AppError(code="INTERNAL_ERROR", status_code=500)
+
+        try:
+            path = self._storage.save(
+                user_id=user_id,
+                document_id=doc.id,
+                filename=filename,
+                data=data,
+                content_type=mime_type,
+                extracted_text=extracted.text,
+            )
+        except Exception as exc:  # noqa: BLE001
+            doc.status = "failed"
+            self._docs.save(doc)
+            raise AppError(code="INTERNAL_ERROR", status_code=500) from exc
+
+        doc.storage_path = path
+        doc.status = "extracted"
+        self._docs.save(doc)
+        return doc, extracted.text, extracted.char_count
+
     def get(self, document_id: str, user_id: str) -> Document:
         doc = self._docs.get(document_id, user_id)
         if doc is None:
@@ -59,6 +123,12 @@ class DocumentService:
 
     def list_for_user(self, user_id: str) -> list[Document]:
         return self._docs.list_for_user(user_id)
+
+    def load_extracted_text(self, document_id: str, user_id: str) -> str | None:
+        doc = self.get(document_id, user_id)
+        if self._storage is None:
+            return None
+        return self._storage.read_extracted_text(doc.storage_path)
 
 
 class RunService:
@@ -140,18 +210,20 @@ class GenerationService:
         docs: DocumentRepository,
         cases: TestCaseRepository,
         ai_client: AiGenerator | None,
+        document_service: DocumentService | None = None,
     ) -> None:
         self._runs = runs
         self._docs = docs
         self._cases = cases
         self._ai = ai_client
+        self._document_service = document_service
 
     def generate(
         self,
         run_id: str,
         user_id: str,
         *,
-        requirements_text: str,
+        requirements_text: str | None = None,
         task_name: str | None = None,
         prompt: str | None = None,
     ) -> tuple[GenerationRun, list[CaseRow]]:
@@ -162,6 +234,9 @@ class GenerationService:
             raise NotFoundError()
 
         text = (requirements_text or "").strip()
+        if not text and self._document_service is not None:
+            loaded = self._document_service.load_extracted_text(run.document_id, user_id)
+            text = (loaded or "").strip()
         if not text:
             raise ValidationError(code="EMPTY_FILE")
         if len(text) < 8:

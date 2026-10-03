@@ -92,6 +92,34 @@ def create_document():
     return jsonify(doc.to_dict()), 201
 
 
+@api_bp.post("/documents/upload")
+def upload_document():
+    """Multipart upload: extract text + persist to Storage/local + document meta."""
+    if "file" not in request.files:
+        raise ValidationError(code="VALIDATION_ERROR", message="multipart field 'file' is required")
+    upload = request.files["file"]
+    filename = (upload.filename or "").strip()
+    if not filename:
+        raise ValidationError(code="VALIDATION_ERROR", message="filename is required")
+    data = upload.read()
+    doc, text, char_count = _svc("document_service").upload_and_extract(
+        user_id=g.user_id,
+        filename=filename,
+        data=data,
+        mime_type=upload.mimetype,
+    )
+    return (
+        jsonify(
+            {
+                "document": doc.to_dict(),
+                "text": text,
+                "char_count": char_count,
+            }
+        ),
+        201,
+    )
+
+
 @api_bp.get("/documents/<document_id>")
 def get_document(document_id: str):
     doc = _svc("document_service").get(document_id, g.user_id)
@@ -146,12 +174,7 @@ def generate_run(run_id: str):
     from core.services import GenerationService
 
     data = request.get_json(silent=True) or {}
-    requirements_text = (data.get("requirements_text") or "").strip()
-    # Prefer client-extracted text; fallback to filename hint for thin MVP.
-    if not requirements_text:
-        run = _svc("run_service").get(run_id, g.user_id)
-        doc = _svc("document_service").get(run.document_id, g.user_id)
-        requirements_text = f"Документ: {doc.original_filename}"
+    requirements_text = (data.get("requirements_text") or "").strip() or None
 
     # Build per-request so tests can swap app.extensions["ai_client"].
     gen_svc = GenerationService(
@@ -159,6 +182,7 @@ def generate_run(run_id: str):
         current_app.extensions["docs_repo"],
         current_app.extensions["cases_repo"],
         current_app.extensions.get("ai_client"),
+        current_app.extensions.get("document_service"),
     )
     run, cases = gen_svc.generate(
         run_id,

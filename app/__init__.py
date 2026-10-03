@@ -20,6 +20,7 @@ from core.services import (
     SettingsService,
     TestCaseService,
 )
+from infrastructure.document_storage import build_document_storage
 from infrastructure.logging_setup import configure_logging, get_logger
 from infrastructure.memory_store import (
     MemoryDocumentRepository,
@@ -77,19 +78,22 @@ def create_app(testing: bool = False) -> Flask:
     runs_repo = MemoryRunRepository()
     cases_repo = MemoryTestCaseRepository()
     settings_repo = MemorySettingsRepository()
+    doc_storage = build_document_storage(testing=testing)
     ai_settings = load_ai_settings()
     ai_client = build_ai_client(ai_settings)
+    document_service = DocumentService(docs_repo, doc_storage)
 
     app.extensions["docs_repo"] = docs_repo
     app.extensions["runs_repo"] = runs_repo
     app.extensions["cases_repo"] = cases_repo
     app.extensions["settings_repo"] = settings_repo
-    app.extensions["document_service"] = DocumentService(docs_repo)
+    app.extensions["document_storage"] = doc_storage
+    app.extensions["document_service"] = document_service
     app.extensions["run_service"] = RunService(runs_repo, docs_repo)
     app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo)
     app.extensions["settings_service"] = SettingsService(settings_repo)
     app.extensions["generation_service"] = GenerationService(
-        runs_repo, docs_repo, cases_repo, ai_client
+        runs_repo, docs_repo, cases_repo, ai_client, document_service
     )
     app.extensions["ai_settings"] = ai_settings
     app.extensions["ai_client"] = ai_client
