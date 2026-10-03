@@ -93,6 +93,10 @@ class MemoryRunRepository:
         del self._items[run_id]
         return True
 
+    def save(self, run: GenerationRun) -> GenerationRun:
+        self._items[run.id] = run
+        return run
+
 
 class MemoryTestCaseRepository:
     def __init__(self) -> None:
@@ -109,6 +113,20 @@ class MemoryTestCaseRepository:
             if c.run_id == run_id and c.user_id == user_id
         ]
         return sorted(rows, key=lambda c: c.sort_order)
+
+    def replace_for_run(
+        self, run_id: str, user_id: str, cases: list[CaseRow]
+    ) -> list[CaseRow]:
+        to_delete = [
+            cid
+            for cid, c in self._items.items()
+            if c.run_id == run_id and c.user_id == user_id
+        ]
+        for cid in to_delete:
+            del self._items[cid]
+        for case in cases:
+            self._items[case.id] = case
+        return self.list_for_run(run_id, user_id)
 
     def update(
         self, case_id: str, user_id: str, cmd: UpdateTestCaseCommand

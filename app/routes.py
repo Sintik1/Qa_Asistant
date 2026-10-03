@@ -126,6 +126,41 @@ def list_test_cases(run_id: str):
     return jsonify({"items": [c.to_dict() for c in items]})
 
 
+@api_bp.post("/runs/<run_id>/generate")
+def generate_run(run_id: str):
+    """Run AI generation for an existing run; persist test cases."""
+    from core.services import GenerationService
+
+    data = request.get_json(silent=True) or {}
+    requirements_text = (data.get("requirements_text") or "").strip()
+    # Prefer client-extracted text; fallback to filename hint for thin MVP.
+    if not requirements_text:
+        run = _svc("run_service").get(run_id, g.user_id)
+        doc = _svc("document_service").get(run.document_id, g.user_id)
+        requirements_text = f"Документ: {doc.original_filename}"
+
+    # Build per-request so tests can swap app.extensions["ai_client"].
+    gen_svc = GenerationService(
+        current_app.extensions["runs_repo"],
+        current_app.extensions["docs_repo"],
+        current_app.extensions["cases_repo"],
+        current_app.extensions.get("ai_client"),
+    )
+    run, cases = gen_svc.generate(
+        run_id,
+        g.user_id,
+        requirements_text=requirements_text,
+        task_name=data.get("task_name"),
+        prompt=data.get("prompt"),
+    )
+    return jsonify(
+        {
+            "run": run.to_dict(),
+            "items": [c.to_dict() for c in cases],
+        }
+    )
+
+
 @api_bp.patch("/test-cases/<case_id>")
 def update_test_case(case_id: str):
     data = request.get_json(silent=True) or {}

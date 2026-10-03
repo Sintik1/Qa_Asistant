@@ -11,7 +11,13 @@ from flask_cors import CORS
 from app.auth import verify_supabase_access_token
 from core.errors import AppError, UnauthorizedError
 from core.messages import ERROR_MESSAGES
-from core.services import DocumentService, RunService, SettingsService, TestCaseService
+from core.services import (
+    DocumentService,
+    GenerationService,
+    RunService,
+    SettingsService,
+    TestCaseService,
+)
 from infrastructure.memory_store import (
     MemoryDocumentRepository,
     MemoryRunRepository,
@@ -66,6 +72,9 @@ def create_app(testing: bool = False) -> Flask:
     app.extensions["run_service"] = RunService(runs_repo, docs_repo)
     app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo)
     app.extensions["settings_service"] = SettingsService(settings_repo)
+    app.extensions["generation_service"] = GenerationService(
+        runs_repo, docs_repo, cases_repo, ai_client
+    )
     app.extensions["ai_settings"] = ai_settings
     app.extensions["ai_client"] = ai_client
 

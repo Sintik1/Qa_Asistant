@@ -438,6 +438,7 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `GET` | `/api/runs/<id>/test-cases` | **R**ead cases | done |
 | `PATCH` | `/api/test-cases/<id>` | **U**pdate case | done |
 | `GET`/`PATCH` | `/api/settings` | settings | done |
+| `POST` | `/api/runs/<id>/generate` | AI generate → cases | done (шаг 6) |
 
 **Supabase REST (автоматический, параллельно для FE):**  
 `GET/POST/PATCH/DELETE https://revyywfeeqdmlgrbakpj.supabase.co/rest/v1/{documents|generation_runs|test_cases|user_settings}` + JWT + RLS.
@@ -514,11 +515,45 @@ curl -s -X PATCH http://localhost:5000/api/test-cases/CASE_ID \
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE \
   http://localhost:5000/api/runs/RUN_ID \
   -H 'X-User-Id: 11111111-1111-4111-8111-111111111111'
+
+# Generate (нужен AI: Ollama/Leopold; в тестах — FakeAi)
+curl -s -X POST http://localhost:5000/api/runs/RUN_ID/generate \
+  -H 'Content-Type: application/json' -H 'X-User-Id: 11111111-1111-4111-8111-111111111111' \
+  -d '{"requirements_text":"User can log in.","task_name":"Auth"}' | jq
 ```
 
 ### 4.3. Auth (Supabase)
 
-SignUp / SignIn — шаг 5 ДЗ. Сейчас для локального Flask CRUD: заголовок `X-User-Id` (или позже `Authorization: Bearer <jwt>`).
+SignUp / SignIn — шаг 5 ДЗ. Flask CRUD: `Authorization: Bearer <jwt>` (prod); `X-User-Id` только testing / `AUTH_DEV_BYPASS`.
+
+### 4.4. Frontend ↔ API (шаг 6) — **реализовано (вариант B, awaiting OK)**
+
+Issue: [#26](https://github.com/Sintik1/Qa_Asistant/issues/26)
+
+**Выбрано:** вариант **B** (полный happy-path). Axios не добавлялся.
+
+#### Backend
+
+| Метод | Path | Назначение |
+|-------|------|------------|
+| `POST` | `/api/runs/<id>/generate` | AI → parse CSV cases → persist; body: `requirements_text`, `task_name`, `prompt` |
+
+Код: `core/services.py` (`GenerationService`), `core/case_parser.py`, thin route в `app/routes.py`.  
+Pytest: `tests/test_api_generate.py`, `tests/test_case_parser.py` (+ smoke/error/auth) — **24 passed**.
+
+#### Frontend
+
+| Артефакт | Роль |
+|----------|------|
+| `qa-assistant/src/api/*` | typed client: documents, runs, settings, errors |
+| `hooks/useTestCaseGeneration.ts` | document → run → generate → UI cases (без mock) |
+| `hooks/useSettingsApi.ts` | GET/PATCH settings |
+| `HomePage` / `SettingsPage` | реальные данные; mock hint убран |
+| Клиент | `@supabase/supabase-js` + `apiFetch` (Bearer JWT) |
+
+**Поток:** validate file → read text (.md) / metadata stub (pdf/docx) → `POST /api/documents` → `POST /api/runs` → `POST …/generate` → CSV download как раньше.
+
+**Ограничения шага:** multipart Storage upload и серверный extract PDF/DOCX — следующие инкременты; Leopold token остаётся в server `.env`, UI ставит `has_api_token`.
 
 ---
 
@@ -545,6 +580,17 @@ Senior Python Developer: проектирование схемы, миграци
 | Backend/API/data | skills backend, data, api, testing |
 | Frontend (шаги 6–8) | skills ui, react; UI rules |
 | Трекинг backend артефакта | `.cursorrules` §12, `backend-homework-dz.mdc` |
+
+### 5.4. Шаг 6 — промпт и результат
+
+**Запрос:** Senior FullStack; клиент, хуки, load/send, убрать mock; сначала решение → после OK код → коммит. Затем выбор **`b`**.
+
+**Результат:** Issue [#26](https://github.com/Sintik1/Qa_Asistant/issues/26).
+- FE: `src/api/*`, `useTestCaseGeneration` / `useSettingsApi` на Flask
+- BE: `POST /api/runs/<id>/generate` + `case_parser`
+- Pytest API+parser+auth: **24 passed**
+- Vitest: npm недоступен в среде агента — прогон локально у пользователя
+- Коммит — после явной просьбы
 
 ### 5.3. Применённые техники (накопительно)
 
@@ -654,11 +700,11 @@ Senior Python Developer: проектирование схемы, миграци
 | 4 | API (≥3 CRUD) | [#23](https://github.com/Sintik1/Qa_Asistant/issues/23) | done (awaiting OK) | Hybrid **C**; Ollama 1.5b + Leopold |
 | 4b | Тест endpoints + Ollama | [#24](https://github.com/Sintik1/Qa_Asistant/issues/24) | done | Pytest **16/16**; live **17/17** PASS; `docs/API_LIVE_TEST_REPORT.md` |
 | 5 | Безопасность (Auth, RLS, CORS) | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK) | Supabase Auth + JWT middleware + Storage RLS; pytest auth **10**; vitest **71** |
-| 6 | Интеграция Frontend | — | pending | |
+| 6 | Интеграция Frontend | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK) | **B**: FE `src/api` + hooks; `POST …/generate`; pytest **24**; §4.4 |
 | 7 | Ошибки и логирование | — | pending | |
 | 8 | Тестирование | — | pending | |
 | 9 | Оформление сдачи | — | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-03 — шаг 5: Auth/RLS/CORS/secrets реализованы ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25))._
+_Последнее обновление: 2026-10-03 — шаг 6 вариант B реализован ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)); коммит после OK._

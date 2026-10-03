@@ -19,10 +19,11 @@ import {
   DEFAULT_PROJECT_ID,
   ERROR_MESSAGES,
 } from '../utils/constants'
+import { isApiConfigured } from '../api'
 
 /**
- * Главный экран: загрузка (M1) → mock-генерация (M2) → экспорт CSV/DOCX (M3/S2)
- * + перегенерация с параметрами чанкинга (S1).
+ * Главный экран: загрузка → API-генерация → экспорт CSV/DOCX
+ * + перегенерация с параметрами чанкинга.
  */
 export function HomePage() {
   const navigate = useNavigate()
@@ -48,9 +49,16 @@ export function HomePage() {
 
   const handleRequirementsChange = (file: File | null) => {
     requirements.setFromFile(file)
-    // B4: смена файла сбрасывает stale generation.error
     generation.clearError()
     setFormError(null)
+  }
+
+  const ensureTokenReady = (): boolean => {
+    const localToken = localStorage.getItem(API_TOKEN_STORAGE_KEY)?.trim()
+    if (localToken) return true
+    if (generation.apiReady) return true
+    setFormError(ERROR_MESSAGES.MISSING_TOKEN)
+    return false
   }
 
   const handleSubmit = async (event: FormEvent) => {
@@ -63,11 +71,14 @@ export function HomePage() {
       return
     }
 
-    const token = localStorage.getItem(API_TOKEN_STORAGE_KEY)?.trim()
-    if (!token) {
-      setFormError(ERROR_MESSAGES.MISSING_TOKEN)
+    if (!isApiConfigured()) {
+      setFormError(
+        'Не задан VITE_API_BASE_URL. Укажите URL Flask API в qa-assistant/.env.local',
+      )
       return
     }
+
+    if (!ensureTokenReady()) return
 
     await generation.generate(requirements.file, generationContext)
   }
@@ -76,6 +87,7 @@ export function HomePage() {
     if (!requirements.file || isBusy) return
     setFormError(null)
     generation.clearError()
+    if (!ensureTokenReady()) return
     await generation.generate(requirements.file, generationContext)
   }
 
@@ -86,7 +98,7 @@ export function HomePage() {
         description="Генерация тест-кейсов из документов ФД/HLD с помощью нейросети."
       />
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-6" onSubmit={(e) => void handleSubmit(e)}>
         <UploadSection>
           <FileUploadField
             id="requirements-file"
@@ -172,17 +184,16 @@ export function HomePage() {
         </div>
 
         <p className="text-xs text-slate-500">
-          Mock-режим: API не вызывается. Имена файлов для проверки:{' '}
-          <code>empty</code>/<code>noreq</code> (нет требований),{' '}
-          <code>fail</code> (ошибка API), <code>slow</code>/<code>notify</code>{' '}
-          (уведомление &gt;30с). Токен:{' '}
+          Режим API: Flask ({isApiConfigured() ? 'подключён' : 'нет VITE_API_BASE_URL'}
+          ). Нужны вход (Supabase Auth) и токен в{' '}
           <Link
             to="/settings"
             className="inline-flex min-h-11 items-center text-violet-700 underline"
           >
-            настройки
-          </Link>
-          .
+            настройках
+          </Link>{' '}
+          (или настроенный AI на сервере). Для .md текст читается в браузере; PDF/DOCX —
+          thin-generate по метаданным до серверного extract.
         </p>
       </form>
     </div>

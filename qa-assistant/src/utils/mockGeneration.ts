@@ -1,15 +1,12 @@
 import { MOCK_TEST_CASES } from '../mocks/mockTestCases'
 import type { ChunkSettings, GenerationResult, SelectedFileInfo } from '../types'
 import { ERROR_MESSAGES } from './constants'
+import {
+  DEFAULT_CHUNK_SETTINGS,
+  LONG_DOCUMENT_BYTES,
+} from './chunkSettings'
 
-/** Файлы больше порога показывают confirm «длинный документ» (эвристика mock). */
-export const LONG_DOCUMENT_BYTES = 5 * 1024 * 1024
-
-export const DEFAULT_CHUNK_SETTINGS: ChunkSettings = {
-  chunkSize: 4000,
-  chunkOverlap: 200,
-  chunkMethod: 'header',
-}
+export { DEFAULT_CHUNK_SETTINGS, LONG_DOCUMENT_BYTES }
 
 /**
  * Подстроки в имени файла для негативных/демо сценариев.

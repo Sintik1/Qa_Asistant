@@ -1,19 +1,30 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   ChunkSettings,
   GenerationResult,
   GenerationStatus,
   SelectedFileInfo,
+  TestCase,
 } from '../types'
+import {
+  chunkSettingsToApi,
+  createDocument,
+  createRun,
+  generateRun,
+  getHealth,
+  getSettings,
+  isApiConfigured,
+  messageForApiError,
+  settingsToChunk,
+} from '../api'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
 import { buildCsvFileName } from '../utils/buildCsvFileName'
 import { downloadCsv, type DownloadCsvOptions } from '../utils/csvExport'
 import {
   DEFAULT_CHUNK_SETTINGS,
-  isSlowDemoFile,
   LONG_DOCUMENT_BYTES,
-  mockGenerateTestCases,
-} from '../utils/mockGeneration'
+} from '../utils/chunkSettings'
+import { readRequirementsText } from '../utils/readRequirementsText'
 
 export interface GenerationContext {
   taskName?: string
@@ -38,6 +49,7 @@ interface UseTestCaseGenerationResult {
   ) => Promise<void>
   downloadResultCsv: () => void
   clearError: () => void
+  apiReady: boolean | null
 }
 
 function csvDownloadOptions(
@@ -53,14 +65,19 @@ function csvDownloadOptions(
   }
 }
 
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms)
-  })
+function mapApiCases(
+  items: { name: string; status: string; step: string; expected_result: string }[],
+): TestCase[] {
+  return items.map((item) => ({
+    name: item.name,
+    status: 'Approved' as const,
+    step: item.step,
+    expectedResult: item.expected_result,
+  }))
 }
 
 /**
- * Mock-поток генерации: прогресс извлечения → генерация → опциональное уведомление.
+ * Реальный поток: document → run → generate → test-cases (Flask + JWT).
  */
 export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   const [status, setStatus] = useState<GenerationStatus>('idle')
@@ -72,9 +89,33 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
   )
   const [showChunkPanel, setShowChunkPanel] = useState(false)
   const [warning, setWarning] = useState<string | null>(null)
+  const [apiReady, setApiReady] = useState<boolean | null>(
+    isApiConfigured() ? null : false,
+  )
   const startedAtRef = useRef<number>(0)
   const resultRef = useRef<GenerationResult | null>(null)
   const exportContextRef = useRef<GenerationContext>({})
+
+  useEffect(() => {
+    if (!isApiConfigured()) {
+      setApiReady(false)
+      return
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const [health, settings] = await Promise.all([getHealth(), getSettings()])
+        if (cancelled) return
+        setChunkSettings(settingsToChunk(settings))
+        setApiReady(Boolean(health.ai?.configured || settings.has_api_token))
+      } catch {
+        if (!cancelled) setApiReady(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const clearWarning = useCallback(() => setWarning(null), [])
   const clearError = useCallback(() => setError(null), [])
@@ -117,6 +158,13 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       settings: ChunkSettings,
       context: GenerationContext,
     ) => {
+      if (!isApiConfigured()) {
+        failGeneration(
+          'Не задан VITE_API_BASE_URL. Укажите URL Flask API в qa-assistant/.env.local',
+        )
+        return
+      }
+
       startedAtRef.current = Date.now()
       exportContextRef.current = {
         taskName: context.taskName,
@@ -128,34 +176,52 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       setStatus('extracting')
       setProgressLabel('Извлечение текста.')
 
-      await delay(400)
+      try {
+        const requirementsText = await readRequirementsText(file.file)
+        if (!requirementsText.trim()) {
+          failGeneration(ERROR_MESSAGES.EMPTY_FILE)
+          return
+        }
 
-      setStatus('generating')
-      setProgressLabel('Генерация тест-кейсов...')
+        setStatus('generating')
+        setProgressLabel('Генерация тест-кейсов...')
 
-      // Большой файл или маркеры `slow`/`notify` → задержка >30с для демо уведомления S3
-      const delayMs = isSlowDemoFile(file) ? 32_000 : 1400
-      const outcome = await mockGenerateTestCases(file, settings, {
-        delayMs,
-        taskName: context.taskName,
-        prompt: context.prompt,
-      })
+        const document = await createDocument({
+          original_filename: file.name,
+          size_bytes: file.size,
+          mime_type: file.file.type || null,
+        })
 
-      if (!outcome.ok) {
-        failGeneration(outcome.message)
-        return
+        const run = await createRun({
+          document_id: document.id,
+          ...chunkSettingsToApi(settings),
+        })
+
+        const generated = await generateRun(run.id, {
+          requirements_text: requirementsText,
+          task_name: context.taskName,
+          prompt: context.prompt,
+        })
+
+        const cases = mapApiCases(generated.items)
+        if (cases.length === 0) {
+          failGeneration(ERROR_MESSAGES.API_EMPTY)
+          return
+        }
+
+        const next: GenerationResult = {
+          cases,
+          truncated: false,
+          generatedAt: new Date(),
+        }
+        setResult(next)
+        resultRef.current = next
+        setStatus('success')
+        setProgressLabel(null)
+        maybeNotify(next)
+      } catch (err) {
+        failGeneration(messageForApiError(err))
       }
-
-      if (outcome.result.cases.length === 0) {
-        failGeneration(ERROR_MESSAGES.API_EMPTY)
-        return
-      }
-
-      setResult(outcome.result)
-      resultRef.current = outcome.result
-      setStatus('success')
-      setProgressLabel(null)
-      maybeNotify(outcome.result)
     },
     [failGeneration, maybeNotify],
   )
@@ -202,5 +268,6 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
     generate,
     downloadResultCsv,
     clearError,
+    apiReady,
   }
 }
