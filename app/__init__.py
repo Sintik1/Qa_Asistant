@@ -28,6 +28,13 @@ from infrastructure.memory_store import (
     MemorySettingsRepository,
     MemoryTestCaseRepository,
 )
+from infrastructure.supabase_rest import SupabaseRestClient, SupabaseRestConfig
+from infrastructure.supabase_store import (
+    SupabaseDocumentRepository,
+    SupabaseRunRepository,
+    SupabaseSettingsRepository,
+    SupabaseTestCaseRepository,
+)
 from integrations.ai_client import build_ai_client, load_ai_settings
 
 PUBLIC_API_PATHS = frozenset({"/api/health", "/api/ai/ping"})
@@ -45,6 +52,43 @@ def _error_body(code: str, status_code: int, message: str | None = None) -> dict
     if request_id:
         body["error"]["request_id"] = request_id
     return body
+
+
+def _build_repositories(testing: bool) -> tuple[object, object, object, object, str]:
+    """Return docs/runs/cases/settings repos + persistence mode label.
+
+    Selection:
+    - testing / PERSIST_BACKEND=memory → in-memory
+    - PERSIST_BACKEND=supabase|auto + SUPABASE_URL(+anon/service) → PostgREST
+    """
+    backend = (os.getenv("PERSIST_BACKEND") or "auto").strip().lower()
+    if testing or backend == "memory":
+        return (
+            MemoryDocumentRepository(),
+            MemoryRunRepository(),
+            MemoryTestCaseRepository(),
+            MemorySettingsRepository(),
+            "memory",
+        )
+
+    config = SupabaseRestConfig.from_env()
+    if config is None or backend not in {"supabase", "auto"}:
+        return (
+            MemoryDocumentRepository(),
+            MemoryRunRepository(),
+            MemoryTestCaseRepository(),
+            MemorySettingsRepository(),
+            "memory",
+        )
+
+    client = SupabaseRestClient(config)
+    return (
+        SupabaseDocumentRepository(client),
+        SupabaseRunRepository(client),
+        SupabaseTestCaseRepository(client),
+        SupabaseSettingsRepository(client),
+        "supabase",
+    )
 
 
 def create_app(testing: bool = False) -> Flask:
@@ -74,15 +118,15 @@ def create_app(testing: bool = False) -> Flask:
         },
     )
 
-    docs_repo = MemoryDocumentRepository()
-    runs_repo = MemoryRunRepository()
-    cases_repo = MemoryTestCaseRepository()
-    settings_repo = MemorySettingsRepository()
+    docs_repo, runs_repo, cases_repo, settings_repo, persist_mode = _build_repositories(
+        testing
+    )
     doc_storage = build_document_storage(testing=testing)
     ai_settings = load_ai_settings()
     ai_client = build_ai_client(ai_settings)
     document_service = DocumentService(docs_repo, doc_storage)
 
+    app.extensions["persist_mode"] = persist_mode
     app.extensions["docs_repo"] = docs_repo
     app.extensions["runs_repo"] = runs_repo
     app.extensions["cases_repo"] = cases_repo
@@ -139,13 +183,13 @@ def create_app(testing: bool = False) -> Flask:
             if request.headers.get("X-Skip-Auth") == "1":
                 raise UnauthorizedError()
             user_id = request.headers.get("X-User-Id", "").strip()
-            if not user_id and testing:
+            # Default identity for local FE (no JWT) and pytest when header omitted.
+            if not user_id:
                 user_id = "00000000-0000-4000-8000-000000000001"
-            if user_id:
-                g.user_id = user_id
-                g.access_token = None
-                g.user_email = None
-                return
+            g.user_id = user_id
+            g.access_token = None
+            g.user_email = None
+            return
 
         raise UnauthorizedError()
 

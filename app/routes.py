@@ -36,6 +36,7 @@ def health():
             "status": "ok",
             "api": "qa-assistant",
             "mode": "hybrid-c",
+            "persist": current_app.extensions.get("persist_mode", "memory"),
             "ai": ai_status_dict(),
         }
     )

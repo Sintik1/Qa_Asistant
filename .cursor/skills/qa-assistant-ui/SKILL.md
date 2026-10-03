@@ -25,6 +25,7 @@ description: >-
 
 | Route | Page | Source |
 |-------|------|--------|
+| `/auth` | `AuthPage` (отдельный `AuthLayout`, без вкладок) | Supabase Auth |
 | `/` | `HomePage` | Figma mockup «Написание тест-кейсов» |
 | `/settings` | `SettingsPage` | TZ §3.5 API token |
 

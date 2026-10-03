@@ -1,5 +1,9 @@
 # Отчёт о тестировании — QA Assistant
 
+> **Актуально для Backend ДЗ шаг 8 (Full QA / API / DB / Auth):** см. единый отчёт  
+> [`docs/FULL_QA_REPORT.md`](FULL_QA_REPORT.md) ([#32](https://github.com/Sintik1/Qa_Asistant/issues/32)).  
+> Ниже — исторический отчёт по UI/адаптиву (сентябрь 2026, mock-frontend).
+
 | Поле | Значение |
 |------|----------|
 | Проект | QA Assistant (frontend, mock) |

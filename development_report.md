@@ -44,6 +44,13 @@
 32. Backend ДЗ шаг 7 — выбран **B** + реализация — **done (awaiting OK)** (см. [#27](https://github.com/Sintik1/Qa_Asistant/issues/27); `backend_documentation.md` §3.3.1 / §4.5)
 33. Backend extract PDF/DOCX/DOC (3 варианта, gate) — **awaiting choice** (см. [#28](https://github.com/Sintik1/Qa_Asistant/issues/28); `backend_documentation.md` §6)
 34. Backend extract — выбран **B** + реализация — **done (awaiting OK)** (см. [#28](https://github.com/Sintik1/Qa_Asistant/issues/28); `backend_documentation.md` §4.6)
+35. Backend ДЗ шаг 8 — Full QA (API + UI happy path) — **done (awaiting OK)** (см. [#29](https://github.com/Sintik1/Qa_Asistant/issues/29); live API **23/23**, UI happy path PASS, pytest **59**; `backend_documentation.md` §6)
+36. FE Auth page enable — **done** (см. [#29](https://github.com/Sintik1/Qa_Asistant/issues/29)): `VITE_SUPABASE_*` в `.env.local` → `/auth` + RequireAuth)
+37. Auth вне общих вкладок — **done (awaiting OK)** (см. [#30](https://github.com/Sintik1/Qa_Asistant/issues/30)): `AuthLayout` без `AppNav`; после login → `AppLayout`
+38. DB persistence Supabase (signup + happy path) — **done (awaiting OK)** (см. [#31](https://github.com/Sintik1/Qa_Asistant/issues/31): PostgREST repos; live PASS; pytest 47)
+39. Autonomous DB+UI E2E (agent) — **done** (см. [#31](https://github.com/Sintik1/Qa_Asistant/issues/31)): SQL user seed (429 signup), API+Chrome UI PASS, docs updated)
+40. Единый отчёт Full QA — **done (awaiting OK)** (см. [#32](https://github.com/Sintik1/Qa_Asistant/issues/32); `docs/FULL_QA_REPORT.md`)
+41. Backend ДЗ шаг 9 — оформление сдачи (`backend_documentation.md` + README) — **done** (см. [#33](https://github.com/Sintik1/Qa_Asistant/issues/33), closed; Backend ДЗ шаг 9 → `backend_documentation.md` §5.10 / §6)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -83,10 +90,59 @@
 | FullStack wire-up proposal + gate | Backend ДЗ шаг 6: FE api/hooks vs mock; варианты A/B/C ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)) |
 | Bypass MCP Issue UI (no Submit) | Issue #26 через `~/.local/bin/gh issue create` |
 | Errors/logging options + gate | Backend ДЗ шаг 7: A/B/C → выбран B ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)) |
+| Full QA methodology + gate before execute | Backend ДЗ шаг 8: методика API+UI → OK → live/DevTools → автотесты ([#29](https://github.com/Sintik1/Qa_Asistant/issues/29)) |
+| Bypass MCP Issue UI (no Submit) | Issue #29 через `~/.local/bin/gh issue create` |
+| Submission doc sync | Шаг 9: итоговый блок в `backend_documentation.md` + README под реальный стек ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: Backend ДЗ шаг 9 — оформление сдачи
+
+**Запрос:** оформить результаты ДЗ в `backend_documentation.md` (архитектура, деплой, API, примеры) и обновить README.
+
+**Результат:** Issue [#33](https://github.com/Sintik1/Qa_Asistant/issues/33).
+- `backend_documentation.md`: блок «Итог сдачи», актуальный §2.4 полный стек, журнал шаг 9
+- `README.md`: FE+BE+Supabase, env, API-таблица, ссылки на docs/QA
+- Backend ДЗ шаг 9 → `backend_documentation.md` §5.10 / §6
+
+### Промпт: единый отчёт по тестированию
+
+**Запрос:** зафиксировать всё сделанное по тестированию в единый отчёт.
+
+**Результат:** Issue [#32](https://github.com/Sintik1/Qa_Asistant/issues/32). Файл `docs/FULL_QA_REPORT.md` (API 23/23, UI, Auth layout, DB, фиксы, автотесты, reproduce). Частные отчёты оставлены со ссылкой на сводку.
+
+### Промпт: DB persistence signup + happy path
+
+**Запрос:** полноценно проверить фиксацию в БД при регистрации и happy path; интеграция должна быть рабочей.
+
+**Результат:** Issue [#31](https://github.com/Sintik1/Qa_Asistant/issues/31).
+- Gap: Flask был только in-memory → таблицы 0 rows
+- Fix: `supabase_rest` + `supabase_store`, `PERSIST_BACKEND=auto`, status mapping
+- Live: signup→profile/settings; upload/run/generate → documents/runs/test_cases PASS
+- `docs/DB_PERSISTENCE_TEST_REPORT.md`; pytest **47**
+
+### Промпт: Auth UI без общих вкладок
+
+**Запрос:** страница входа/регистрации отдельно, не в поле общих вкладок; после успешной авторизации — основная.
+
+**Результат:** Issue [#30](https://github.com/Sintik1/Qa_Asistant/issues/30).
+- `AuthLayout` (Header + form, без `AppNav`)
+- `/auth` вне `AppLayout`; `RequireAuth` → после login `Home`/`Settings` с вкладками
+- Убрана вкладка «Вход» из `AppNav`
+- Verify: Chrome → `/` redirect `/auth`, nav отсутствует
+
+### Промпт: Backend ДЗ шаг 8 — Full QA (methodology → execute)
+
+**Запрос:** Senior Fullstack QA; все API; ошибки; AI-отладка; Chrome DevTools happy path; при green — автотесты. Сначала методика → **ок**.
+
+**Результат:** Issue [#29](https://github.com/Sintik1/Qa_Asistant/issues/29).
+- Live API: `scripts/live_api_full_qa.py` → **23/23** (`docs/API_LIVE_TEST_REPORT.md`)
+- UI: Chrome DevTools → upload/generate/CSV + reject `.exe` (`docs/UI_HAPPY_PATH_REPORT.md`)
+- Fixes: Flask **:5001** (AirTunes на 5000), CORS `127.0.0.1`, `AUTH_DEV_BYPASS` default user
+- Autotests: `tests/test_business_logic_full.py` + suite → **59 passed**
+- Backend ДЗ шаг 8 → `backend_documentation.md` §5.9 / §6
 
 ### Промпт: Backend extract PDF/DOCX/DOC (proposal → B)
 
@@ -461,6 +517,17 @@
 | Нет `/generate` и multipart upload на Flask | В proposal: вариант B добавляет thin generate; A оставляет mock |
 | `caplog` пуст при `propagate=False` у app logger | Тест вешает in-memory Handler на `qa_assistant` |
 | npm не в PATH агента | `/Users/vlad/.local/node/bin` для Vitest |
+| MCP `issue_write` без Submit на шаге 8 | `#29` через `~/.local/bin/gh issue create` |
+| Исполнение Full QA до согласования методики | Gate: методика → OK пользователя → тесты → автотесты |
+| macOS AirTunes занимает `:5000` | Flask на **5001**; `VITE_API_BASE_URL=http://127.0.0.1:5001` |
+| CORS только `localhost:5173`, UI на `127.0.0.1` | Добавить `127.0.0.1:5173` / `:8080` в `CORS_ORIGINS` |
+| Process env `VITE_API_BASE_URL` перекрывает `.env.local` | `env -u VITE_API_BASE_URL` при старте Vite |
+| FE без JWT + `AUTH_DEV_BYPASS` без `X-User-Id` → 401 | Default local user id при bypass |
+| `/auth` внутри `AppLayout` показывал вкладки Home/Settings | Отдельный `AuthLayout`; nav только после login ([#30](https://github.com/Sintik1/Qa_Asistant/issues/30)) |
+| Flask CRUD не писал в Supabase (0 rows) | PostgREST repos + user JWT/RLS ([#31](https://github.com/Sintik1/Qa_Asistant/issues/31)) |
+| Email confirm блокировал login после signup | Confirm SQL/admin или отключить Confirm email локально |
+| Enum mismatch (`extracted`/`completed` vs `parsed`/`done`) | Mapping в `supabase_store` |
+| README всё ещё описывал «только mock frontend» | Шаг 9: переписан под FE+Flask+Supabase + ссылка на `backend_documentation.md` ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
 
 ---
 
@@ -496,6 +563,9 @@
 28. Шаг 6: Axios не нужен (`apiFetch` + Supabase); вариант **B** реализован — FE api/hooks + `POST …/generate` ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)); PDF extract на сервере — later.
 29. Шаг 7: structured JSON logs + `request_id` + AI analyze (CLI/API); Supabase Logs через Dashboard/MCP, не дублировать в свою таблицу без нужды ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)).
 30. Extract B: серверный parse обязателен для PDF/DOCX; legacy OLE `.doc` без LibreOffice → `CORRUPT_FILE` до отдельного конвертера ([#28](https://github.com/Sintik1/Qa_Asistant/issues/28)).
+31. Шаг 8 Full QA: методика → OK → live/DevTools → фиксы → автотесты; на macOS избегать `:5000` (AirTunes) и синхронизировать CORS с origin (`localhost` vs `127.0.0.1`) ([#29](https://github.com/Sintik1/Qa_Asistant/issues/29)).
+32. Persistence: не считать FE↔API интеграцию готовой, пока `persist!=supabase` и таблицы пустые; для signup нужен confirm email / service role ([#31](https://github.com/Sintik1/Qa_Asistant/issues/31)).
+33. Сдача ДЗ: один вход — `backend_documentation.md` (архитектура/деплой/API/примеры) + README со стеком FE+BE; не оставлять в README формулировку «только mock» ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)).
 
 ---
 
@@ -534,6 +604,12 @@
 | Backend ДЗ шаг 6 — FE ↔ Backend API | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK / commit); Backend ДЗ шаг 6 → `backend_documentation.md` §4.4 |
 | Backend ДЗ шаг 7 — ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK): вариант **B**; Backend ДЗ шаг 7 → `backend_documentation.md` §3.3.1 |
 | Backend extract PDF/DOCX/DOC | [#28](https://github.com/Sintik1/Qa_Asistant/issues/28) | done (awaiting OK): вариант **B**; → `backend_documentation.md` §4.6 |
+| Backend ДЗ шаг 8 — Full QA API+UI | [#29](https://github.com/Sintik1/Qa_Asistant/issues/29) | done (awaiting OK): live 23/23, UI PASS, pytest 59; → `backend_documentation.md` §6 |
+| FE Auth enable (`VITE_SUPABASE_*`) | [#29](https://github.com/Sintik1/Qa_Asistant/issues/29) | done: `.env.local` + restart; `/auth` + RequireAuth |
+| Auth layout без вкладок | [#30](https://github.com/Sintik1/Qa_Asistant/issues/30) | done (awaiting OK): `AuthLayout` + route split |
+| DB persistence signup+happy path | [#31](https://github.com/Sintik1/Qa_Asistant/issues/31) | done (awaiting OK): Supabase repos; autonomous API+UI PASS; docs→`DB_PERSISTENCE_TEST_REPORT.md` |
+| Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK): `docs/FULL_QA_REPORT.md` |
+| Backend ДЗ шаг 9 — docs + README | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed): `backend_documentation.md` + `README.md`; → §5.10 / §6 |
 
 ---
 

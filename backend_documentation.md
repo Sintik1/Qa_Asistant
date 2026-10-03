@@ -1,12 +1,25 @@
 # Backend Documentation — QA Assistant (ДЗ: БД, Supabase, API)
 
-Документ — **артефакт сдачи домашнего задания** и живой журнал backend-разработки. Обновляется **на каждом шаге ДЗ** (1–9) в том же цикле, что и GitHub Issue и краткая запись в `development_report.md`.
+Документ — **артефакт сдачи** домашнего задания «Развертывание Backend и интеграция с Frontend» и живой журнал backend-разработки.
 
-Репозиторий: https://github.com/Sintik1/Qa_Asistant
+Репозиторий: https://github.com/Sintik1/Qa_Asistant  
+Оформление сдачи: [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) · Сводный QA: [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md)
 
-**Согласованный режим работы:** пользователь присылает отдельный промпт на шаг ДЗ → агент выполняет шаг → фиксирует результат здесь (и в Issue / `development_report.md`).
+**Инфраструктура:** **Supabase (BaaS)** ([#21](https://github.com/Sintik1/Qa_Asistant/issues/21)) + **Flask** (upload / generate / AI) + **React** (Supabase Auth Client + Flask API). Self-hosted Postgres/VPS — отклонён (см. §2.0).
 
-**Инфраструктурный выбор:** **Supabase (BaaS)** — принято на шаге 2 ДЗ ([#21](https://github.com/Sintik1/Qa_Asistant/issues/21)); Flask — доменный API (upload, generate, Leopold); React — Supabase Client + Flask где нужно. Self-hosted Postgres/VPS — отклонён (см. §2.0).
+### Итог сдачи (шаги 1–9)
+
+| Шаг | Результат |
+|-----|-----------|
+| 1 | Схема **Variant B** (6 таблиц) + миграция `supabase/migrations/20260928143000_init_variant_b.sql` |
+| 2 | Выбран **Supabase**; обоснование в §2.0 |
+| 3 | Cloud project `revyywfeeqdmlgrbakpj`: таблицы, RLS, Storage buckets |
+| 4 | Hybrid API **C**: Flask CRUD+generate + PostgREST |
+| 5 | Supabase Auth, JWT middleware, RLS, CORS, секреты в `.env` |
+| 6 | Frontend на реальном API (без mock generation) |
+| 7 | Единый error JSON, JSON-логи, AI-анализ логов |
+| 8 | Full QA PASS — см. `docs/FULL_QA_REPORT.md` |
+| 9 | Этот документ + обновлённый [`README.md`](README.md) |
 
 ---
 
@@ -162,7 +175,7 @@ auth.users ──1:1── profiles ──1:1── user_settings
 - CHECK на размер файла 100 МБ; enums статусов; trigger `on_auth_user_created` → profile + settings.
 - Базовый RLS включён в миграции (уточнение Auth/CORS — шаг 5 ДЗ).
 
-### 1.8. Безопасность (шаг 5) — **реализовано (awaiting OK)**
+### 1.8. Безопасность (шаг 5) — **реализовано**
 
 Issue: [#25](https://github.com/Sintik1/Qa_Asistant/issues/25). Выбран **вариант A: Supabase Auth**.
 
@@ -170,29 +183,28 @@ Issue: [#25](https://github.com/Sintik1/Qa_Asistant/issues/25). Выбран **�
 
 | Область | Реализация |
 |---------|------------|
-| Auth | Supabase Auth email/password; FE `/auth` + `AuthProvider`; signup trigger → profile/settings |
+| Auth | Supabase Auth email/password; FE `/auth` + `AuthProvider` + `AuthLayout`; signup trigger → profile/settings |
 | RLS (tables) | Owner isolation `user_id = auth.uid()` / `id = auth.uid()` (миграция Variant B) |
-| RLS (Storage) | Дополнены policies: `debug` update/delete, `exports` update (`20261003183000_security_storage_policies.sql`) |
+| RLS (Storage) | Policies по prefix `auth.uid()`; доп. `debug` update/delete, `exports` update |
 | Flask JWT | `app/auth.py` — HS256 через `SUPABASE_JWT_SECRET` (fallback: Auth `/user`); `g.user_id` из `sub` |
-| Bypass | `X-User-Id` только при `testing=True` или `AUTH_DEV_BYPASS=1` |
-| CORS | `CORS_ORIGINS` whitelist; credentials + `Authorization` header |
-| Secrets | `.env` / `.gitignore`; anon на FE; `SERVICE_ROLE` / JWT secret / Leopold — только server |
+| Bypass | `X-User-Id` / default user только при `testing=True` или `AUTH_DEV_BYPASS=1` (не для prod) |
+| CORS | `CORS_ORIGINS` whitelist; credentials + `Authorization` |
+| Secrets | `.env` / `.gitignore`; anon на FE; `SERVICE_ROLE` / JWT secret / AI token — только server |
 
 #### Поток
 
 ```text
-React /auth ──signUp/signIn──► Supabase Auth ──JWT──► localStorage session
-React API calls ──Authorization: Bearer <jwt>──► Flask middleware (verify) ──g.user_id──► services
-React / PostgREST ──same JWT──► Supabase RLS (auth.uid())
+React /auth ──signUp/signIn──► Supabase Auth ──JWT──► session
+React API ──Authorization: Bearer <jwt>──► Flask middleware ──g.user_id──► services → PostgREST (RLS)
 ```
 
 #### Локальный запуск Auth
 
-1. Skопировать `.env.example` → `.env` и `qa-assistant/.env.local`.
+1. Скопировать `.env.example` → `.env` и `qa-assistant/.env.example` → `qa-assistant/.env.local`.
 2. Dashboard → Settings → API: `anon`, `service_role`, **JWT Secret**.
-3. `VITE_SUPABASE_*` + `SUPABASE_JWT_SECRET` + `CORS_ORIGINS`.
-4. FE: `npm run dev` → `/auth` (регистрация/вход).
-5. Flask: `PYTHONPATH=. flask run` — защищённые `/api/*` требуют Bearer JWT.
+3. Заполнить `VITE_SUPABASE_*`, `SUPABASE_JWT_SECRET`, `CORS_ORIGINS`, `VITE_API_BASE_URL`.
+4. FE: `npm run dev` → `/auth` → после login — Home/Settings.
+5. Flask: `flask --app wsgi run -p 5001` — защищённые `/api/*` требуют Bearer JWT.
 
 ---
 
@@ -297,9 +309,35 @@ React (Vite) ──JWT──► Supabase Auth / PostgREST / Storage
 
 `SUPABASE_SERVICE_ROLE_KEY` и `SUPABASE_JWT_SECRET` — **только** сервер, никогда во frontend / git.
 
-### 2.4. Локальный запуск
+### 2.4. Локальный запуск (полный стек)
 
-_Позже (шаги 4–6):_ Vite + Flask + этот cloud-проект.
+**Требования:** Node.js 20+, Python 3.9+ (целевой 3.14+), Docker (опц. только для UI), Ollama (учёба) или Leopold token, ключи Supabase.
+
+```bash
+# 1) Env
+cp .env.example .env
+cp qa-assistant/.env.example qa-assistant/.env.local
+# заполнить SUPABASE_* / VITE_SUPABASE_* / SUPABASE_JWT_SECRET / SERVICE_ROLE
+
+# 2) AI (учёба на M1 8GB)
+./scripts/setup_ollama.sh 1.5b
+# в отдельном терминале: ollama serve
+
+# 3) Backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+# macOS: порт 5000 часто занят AirTunes — используйте 5001
+flask --app wsgi run -p 5001
+
+# 4) Frontend (другой терминал)
+cd qa-assistant && npm install && npm run dev
+# http://127.0.0.1:5173  →  /auth → регистрация/вход → генерация
+```
+
+**Проверка:** `curl -s http://127.0.0.1:5001/api/health | jq` → `persist` ≈ `supabase`, блок `.ai` заполнен.  
+**UI-only Docker:** `docker compose up --build` → http://localhost:8080 (нужен отдельно запущенный Flask + env).
+
+Подробнее по smoke/QA: [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md), [`README.md`](README.md).
 
 ### 2.5. Self-hosted (отклонённый альтернативный путь)
 
@@ -315,9 +353,9 @@ _Позже (шаги 4–6):_ Vite + Flask + этот cloud-проект.
 
 ## 3. Описание API endpoints
 
-> **Шаг 4 ДЗ — gate:** варианты ниже; код **не пишем** до одобрения. Issue: создать/обновить «Backend ДЗ шаг 4».
+Реализован **вариант C (гибрид)** — Issue [#23](https://github.com/Sintik1/Qa_Asistant/issues/23). Ниже — контракт и варианты, рассмотренные на gate шага 4.
 
-### 3.0. Минимальный контракт CRUD (для любого варианта)
+### 3.0. Минимальный контракт CRUD (≥3 операции)
 
 Достаточно для ДЗ (≥3 операции) и истории из ТЗ (NICE):
 
@@ -480,7 +518,7 @@ flask --app wsgi run -p 5000
 pytest tests/test_api_smoke.py tests/test_api_error_contract.py -q
 ```
 
-Текущий persistence Flask-слоя: **in-memory repositories** (pytest/local). Подключение Flask→Supabase PostgREST service role — следующий инкремент (Auth шаг 5).
+Persistence Flask-слоя: **Supabase PostgREST** при `PERSIST_BACKEND=auto|supabase` + `SUPABASE_URL`/`SUPABASE_ANON_KEY` (JWT пользователя → RLS). Pytest / `PERSIST_BACKEND=memory` — in-memory. Опционально `SUPABASE_SERVICE_ROLE_KEY` (Storage + admin confirm). Health: `persist` field.
 
 ### 3.5. Формат ошибок (реализовано + шаг 7)
 
@@ -562,7 +600,7 @@ curl -s -X POST http://localhost:5000/api/runs/RUN_ID/generate \
 
 SignUp / SignIn — шаг 5 ДЗ. Flask CRUD: `Authorization: Bearer <jwt>` (prod); `X-User-Id` только testing / `AUTH_DEV_BYPASS`.
 
-### 4.4. Frontend ↔ API (шаг 6) — **реализовано (вариант B, awaiting OK)**
+### 4.4. Frontend ↔ API (шаг 6) — **реализовано (вариант B)**
 
 Issue: [#26](https://github.com/Sintik1/Qa_Asistant/issues/26)
 
@@ -750,6 +788,23 @@ Senior Python Developer: проектирование схемы, миграци
 - Leopold 72B — переключение env без смены кода.
 - Шаг 5: JWT обязателен вне testing; FE Auth опционален только если нет `VITE_SUPABASE_*` (Vitest/mock).
 
+### 5.9. Шаг 8 — Full QA (executed)
+
+**Промпт:** Senior Fullstack QA; все API; ошибки; AI-отладка; Chrome DevTools happy path; при green — автотесты. Методика → **ок**.
+
+**Результат ([#29](https://github.com/Sintik1/Qa_Asistant/issues/29)):**
+- Live API: `scripts/live_api_full_qa.py` → **23/23** PASS — `docs/API_LIVE_TEST_REPORT.md`
+- UI happy path (Chrome DevTools): upload → generate → CSV; reject `.exe` — `docs/UI_HAPPY_PATH_REPORT.md`
+- Autotests: `tests/test_business_logic_full.py` + API suite → **59 passed**
+- Local run: Flask **`:5001`** (`AUTH_DEV_BYPASS=1`), Vite `:5173`, Ollama `qwen2.5:1.5b`
+
+**Фиксы в цикле QA:**
+| Проблема | Решение |
+|----------|---------|
+| AirTunes на `:5000` | Flask + `VITE_API_BASE_URL` → **5001** |
+| CORS `localhost` vs `127.0.0.1` | `CORS_ORIGINS` включает оба |
+| Bypass без `X-User-Id` ломал FE | default user при `AUTH_DEV_BYPASS=1` |
+
 ### 5.8. Шаг 7 — ошибки и логирование
 
 **Промпт:** Senior Backend (errors/logging); 3 варианта → выбор **B** → реализация → commit/push.
@@ -786,6 +841,16 @@ Senior Python Developer: проектирование схемы, миграци
 | Storage gaps (debug/exports) | доп. policies update/delete |
 | Ломать Vitest без env Supabase | `RequireAuth` пропускает, если клиент не сконфигурирован |
 
+### 5.10. Шаг 9 — оформление сдачи
+
+**Промпт:** оформить результаты в `backend_documentation.md` (архитектура, деплой, API, примеры) и обновить README.
+
+**Результат ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)):**
+- Сводный блок «Итог сдачи» в начале документа
+- Актуализированы §1.8, §2.4 (полный локальный стек), §3 (снят устаревший gate)
+- README: FE+BE+Supabase, быстрый старт, ссылки на docs/QA
+- Журнал §6: шаг 9 → Issue #33
+
 ---
 
 ## 6. Журнал шагов ДЗ
@@ -802,9 +867,13 @@ Senior Python Developer: проектирование схемы, миграци
 | 6 | Интеграция Frontend | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK) | **B**: FE `src/api` + hooks; `POST …/generate`; pytest **24**; §4.4 |
 | 7 | Ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK) | **B**: JSON logs + FE UX + analyze-logs; pytest logging **11** |
 | 7b | Extract PDF/DOCX/DOC | [#28](https://github.com/Sintik1/Qa_Asistant/issues/28) | done (awaiting OK) | **B**: `POST /api/documents/upload` + doc_reader + Storage/local |
-| 8 | Тестирование | — | pending | |
-| 9 | Оформление сдачи | — | pending | |
+| 8 | Full QA: API + UI happy path | [#29](https://github.com/Sintik1/Qa_Asistant/issues/29) | done (awaiting OK) | live **23/23**; UI PASS; pytest **59**; §5.9 |
+| 8b | FE Auth page on | [#29](https://github.com/Sintik1/Qa_Asistant/issues/29) | done | `VITE_SUPABASE_*` в `.env.local` → `/auth` |
+| 8c | Auth UI без вкладок | [#30](https://github.com/Sintik1/Qa_Asistant/issues/30) | done (awaiting OK) | `AuthLayout` отдельно; после login → `AppLayout` |
+| 8d | DB persistence signup+happy path | [#31](https://github.com/Sintik1/Qa_Asistant/issues/31) | done (awaiting OK) | PostgREST; autonomous API+UI PASS; user docs=2 runs=2 cases=10 |
+| 8e | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK) | `docs/FULL_QA_REPORT.md` |
+| 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
 
 ---
 
-_Последнее обновление: 2026-10-03 — extract вариант **B** ([#28](https://github.com/Sintik1/Qa_Asistant/issues/28)): upload + pypdf/python-docx._
+_Последнее обновление: 2026-10-03 — оформление сдачи ДЗ ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)); QA: [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md)._

@@ -24,11 +24,6 @@ export function AppNav() {
         <NavLink to="/settings" className={linkClass}>
           Настройки
         </NavLink>
-        {configured && !user ? (
-          <NavLink to="/auth" className={linkClass}>
-            Вход
-          </NavLink>
-        ) : null}
       </div>
       {configured && user ? (
         <div className="ml-auto flex items-center gap-2 px-2 py-1">

@@ -18,6 +18,8 @@ def jwt_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", TEST_JWT_SECRET)
     monkeypatch.delenv("AUTH_DEV_BYPASS", raising=False)
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173")
+    # Auth unit tests must not hit live PostgREST.
+    monkeypatch.setenv("PERSIST_BACKEND", "memory")
 
 
 @pytest.fixture()
