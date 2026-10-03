@@ -52,6 +52,7 @@
 40. Единый отчёт Full QA — **done (awaiting OK)** (см. [#32](https://github.com/Sintik1/Qa_Asistant/issues/32); `docs/FULL_QA_REPORT.md`)
 41. Backend ДЗ шаг 9 — оформление сдачи (`backend_documentation.md` + README) — **done** (см. [#33](https://github.com/Sintik1/Qa_Asistant/issues/33), closed; Backend ДЗ шаг 9 → `backend_documentation.md` §5.10 / §6)
 42. README для проверяющего (локальный стенд без публичного деплоя) — **done** (см. [#34](https://github.com/Sintik1/Qa_Asistant/issues/34), closed)
+43. Рекомендации проверяющего (демо-вход, Table Editor, bypass, compose) — **done (awaiting OK)** (см. [#35](https://github.com/Sintik1/Qa_Asistant/issues/35))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -98,6 +99,16 @@
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: рекомендации проверяющего
+
+**Запрос:** учесть feedback: compose только UI; демо-вход + Table Editor checklist; AUTH_DEV_BYPASS вне публичных env; опционально Vercel/Railway или скринкаст.
+
+**Результат:** Issue [#35](https://github.com/Sintik1/Qa_Asistant/issues/35).
+- README: демо `demo.reviewer@qatest.local` / `DemoReviewer-2026!`, чеклист Table Editor, compose UI-only, optional PaaS + screencast
+- `AUTH_DEV_BYPASS` игнорируется на production/PaaS; pytest **13 passed**
+- SQL `scripts/ensure_demo_reviewer.sql`; учётка создана в Supabase
+- Screencast: `docs/screencast/happy_path.mp4` (+ GIF/frames), скрипт `scripts/record_happy_path_screencast.py`
 
 ### Промпт: README для проверяющего
 
@@ -538,6 +549,8 @@
 | Email confirm блокировал login после signup | Confirm SQL/admin или отключить Confirm email локально |
 | Enum mismatch (`extracted`/`completed` vs `parsed`/`done`) | Mapping в `supabase_store` |
 | README всё ещё описывал «только mock frontend» | Шаг 9: переписан под FE+Flask+Supabase + ссылка на `backend_documentation.md` ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
+| Signup rate-limit / invalid email для демо | SQL seed `auth.users` + `scripts/ensure_demo_reviewer.sql` ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
+| `AUTH_DEV_BYPASS` мог утечь на Railway | Игнор при PaaS markers / `PUBLIC_DEPLOY` / production ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
 
 ---
 
@@ -577,6 +590,7 @@
 32. Persistence: не считать FE↔API интеграцию готовой, пока `persist!=supabase` и таблицы пустые; для signup нужен confirm email / service role ([#31](https://github.com/Sintik1/Qa_Asistant/issues/31)).
 33. Сдача ДЗ: один вход — `backend_documentation.md` (архитектура/деплой/API/примеры) + README со стеком FE+BE; не оставлять в README формулировку «только mock» ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)).
 34. Без бюджета на VPS: для проверяющего достаточно инструкций + FULL_QA + воспроизводимый локальный стенд; публичный URL не обязателен ([#34](https://github.com/Sintik1/Qa_Asistant/issues/34)).
+35. Feedback: compose UI-only явно; демо-login + Table Editor checklist; `AUTH_DEV_BYPASS` hard-disable на PaaS; деплой/скринкаст — опция ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)).
 
 ---
 
@@ -622,6 +636,7 @@
 | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK): `docs/FULL_QA_REPORT.md` |
 | Backend ДЗ шаг 9 — docs + README | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed): `backend_documentation.md` + `README.md`; → §5.10 / §6 |
 | README для проверяющего (без деплоя) | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed): блок в корневом README |
+| Reviewer feedback (demo + bypass) | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (awaiting OK): demo/checklist/bypass + screencast `docs/screencast/happy_path.mp4` |
 
 ---
 

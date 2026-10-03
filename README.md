@@ -17,24 +17,65 @@
 
 ## Для проверяющего
 
-Публичный cloud-деплой **не обязателен** (критерий ДЗ: «ссылка на деплой **или** инструкции»). Стенд сдачи:
+Публичный cloud-деплой **не обязателен** (критерий ДЗ: «ссылка на деплой **или** инструкции»).  
+`docker compose` поднимает **только UI**, не полный стек (см. комментарий в `docker-compose.yml`).
 
-| Слой | Где |
-|------|-----|
+| Слой | Где на стенде сдачи |
+|------|---------------------|
 | БД / Auth / Storage / RLS | **Supabase** (BaaS, Free tier) |
-| Backend (Flask) + Frontend (Vite) | **локально** по этому README |
-| AI | **Ollama** на машине разработчика или **Leopold** по токену в `.env` |
+| Backend (Flask) + Frontend (Vite) | **локально** (или опциональный PaaS — см. ниже) |
+| AI | **Ollama** локально или **Leopold** по токену в server `.env` |
 
-### Как убедиться, что всё работает
+### Демо-вход (Supabase Auth)
 
-1. **По отчёту (без установки):** [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) — live API **23/23**, UI happy path, запись в Supabase, Pytest. Детали: `docs/API_LIVE_TEST_REPORT.md`, `docs/UI_HAPPY_PATH_REPORT.md`, `docs/DB_PERSISTENCE_TEST_REPORT.md`.
-2. **По документации:** [`backend_documentation.md`](backend_documentation.md) — архитектура (§1), развёртывание (§2), API (§3), примеры curl (§4), процесс с AI (§5), журнал шагов 1–9 (§6).
-3. **Воспроизвести локально** (ниже «Быстрый старт») → `/auth` → upload → generate → CSV; в Supabase — строки в `documents` / `generation_runs` / `test_cases`.
-4. **Автотесты:** `pytest` (backend) и `npm test` (frontend) — см. раздел «Тестирование».
+| Поле | Значение |
+|------|----------|
+| URL UI | `http://127.0.0.1:5173/auth` (после «Быстрый старт») |
+| Email | `demo.reviewer@qatest.local` |
+| Password | `DemoReviewer-2026!` |
 
-Секреты (`SERVICE_ROLE`, JWT secret, AI token) в git **не** коммитятся — только плейсхолдеры в `.env.example`. Для полного e2e нужны ключи из своего проекта Supabase (или демо у автора на защите / по скринкасту).
+Учётка подтверждена (`email_confirmed`). После входа открываются Home / Settings (с вкладками).  
+Не используйте `AUTH_DEV_BYPASS` для проверки Auth — только реальный login.
 
-**Артефакты сдачи в репо:** код Backend + Frontend, `supabase/migrations/`, `.env.example`, `docker-compose.yml` (UI), `backend_documentation.md`, QA-отчёты.
+### Чеклист happy path + Table Editor
+
+После входа демо-учёткой:
+
+1. Главная → загрузить небольшой `.md` с требованиями (например `tests/fixtures/live_qa/login_requirements.md`).
+2. Нажать **Генерировать тест-кейсы** → дождаться таблицы кейсов → **Скачать CSV**.
+3. Supabase Dashboard → **Table Editor** (проект автора или свой с теми же миграциями) — для `user_id` демо-пользователя должно появиться:
+
+| Таблица | Что ожидать после одного generate |
+|--------|-----------------------------------|
+| `profiles` | 1 строка на пользователя (создаётся signup-триггером) |
+| `user_settings` | 1 строка (chunk defaults) |
+| `documents` | **+1** строка: `original_filename`, `status` ≈ `parsed`/`extracted`, `storage_path` |
+| `generation_runs` | **+1** строка: `document_id`, `status` завершённого прогона, `case_count` ≥ 1 |
+| `test_cases` | **≥1** строк с `run_id`, полями `name` / `status` / `step` / `expected_result` |
+| `generation_chunks` | 0+ (зависит от чанкинга; для короткого md часто 0–N) |
+
+Фильтр в Table Editor: колонка `user_id` = id пользователя `demo.reviewer@qatest.local` (Authentication → Users).
+
+### Как ещё убедиться без своего стенда
+
+1. **Отчёт:** [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) — API 23/23, UI, DB PASS.  
+2. **Документация:** [`backend_documentation.md`](backend_documentation.md) §1–§5.  
+3. **Скринкаст happy path (в репо):**  
+   - видео: [`docs/screencast/happy_path.mp4`](docs/screencast/happy_path.mp4)  
+   - GIF: [`docs/screencast/happy_path.gif`](docs/screencast/happy_path.gif)  
+   - кадры: [`docs/screencast/frames/`](docs/screencast/frames/) · описание: [`docs/screencast/README.md`](docs/screencast/README.md)  
+   Сценарий: демо-вход → upload `login_requirements.md` → generate → таблица + «Скачать CSV».  
+4. **Опциональный бесплатный деплой:** Frontend → Vercel / Cloudflare Pages; Flask → Railway / Render. В env PaaS: **не** ставить `AUTH_DEV_BYPASS`; задать `PUBLIC_DEPLOY=1` или `FLASK_ENV=production`, `CORS_ORIGINS` = URL фронта, `VITE_API_BASE_URL` = URL API. Демо-вход тот же (Supabase общий).
+
+### AUTH_DEV_BYPASS (обязательно вне публичных окружений)
+
+- Флаг **только** для локальной отладки на ноутбуке (`# AUTH_DEV_BYPASS=1` в `.env`, закомментирован по умолчанию).  
+- В коде **игнорируется**, если `FLASK_ENV|ENV|APP_ENV=production`, `PUBLIC_DEPLOY=1`, или есть маркеры Railway/Render/Fly/Vercel/Heroku.  
+- На проверке Auth / e2e используйте **демо-вход** выше, не bypass.
+
+Секреты (`SERVICE_ROLE`, JWT secret, AI token) в git **не** коммитятся.
+
+**Артефакты в репо:** Backend + Frontend, `supabase/migrations/`, `.env.example`, `docker-compose.yml` (**только UI**), `backend_documentation.md`, QA-отчёты.
 
 ---
 
@@ -114,13 +155,16 @@ npm run dev
 
 ---
 
-## Только UI в Docker
+## Docker: только UI (не полный стек)
 
-Нужен **Docker Desktop**. Полный e2e (Auth + generate + БД) требует отдельно запущенный Flask и ключи Supabase — см. «Быстрый старт».
+`docker-compose.yml` **намеренно** поднимает один сервис — статическую сборку React (nginx :8080).  
+**Не** включает Postgres, Flask, Ollama, Supabase.
+
+Полный e2e: «Быстрый старт» (Flask + Vite + Supabase + AI). Docker UI полезен для проверки вёрстки; API всё равно нужен отдельно (`VITE_API_BASE_URL`).
 
 ```bash
 docker compose up --build
-# http://localhost:8080
+# http://localhost:8080  — только frontend
 docker compose down
 ```
 
@@ -129,8 +173,7 @@ docker compose down
 ## API (кратко)
 
 Публичные: `GET /api/health`, `POST /api/ai/ping`.  
-Остальные `/api/*` — заголовок `Authorization: Bearer <Supabase JWT>`.  
-(`AUTH_DEV_BYPASS=1` — **только** локальная отладка, не для проверки безопасности.)
+Остальные `/api/*` — заголовок `Authorization: Bearer <Supabase JWT>`.
 
 | Метод | Path | Назначение |
 |-------|------|------------|

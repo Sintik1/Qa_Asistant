@@ -187,7 +187,7 @@ Issue: [#25](https://github.com/Sintik1/Qa_Asistant/issues/25). Выбран **�
 | RLS (tables) | Owner isolation `user_id = auth.uid()` / `id = auth.uid()` (миграция Variant B) |
 | RLS (Storage) | Policies по prefix `auth.uid()`; доп. `debug` update/delete, `exports` update |
 | Flask JWT | `app/auth.py` — HS256 через `SUPABASE_JWT_SECRET` (fallback: Auth `/user`); `g.user_id` из `sub` |
-| Bypass | `X-User-Id` / default user только при `testing=True` или `AUTH_DEV_BYPASS=1` (не для prod) |
+| Bypass | `AUTH_DEV_BYPASS=1` только локально; **игнорируется** при production/PaaS/`PUBLIC_DEPLOY=1` |
 | CORS | `CORS_ORIGINS` whitelist; credentials + `Authorization` |
 | Secrets | `.env` / `.gitignore`; anon на FE; `SERVICE_ROLE` / JWT secret / AI token — только server |
 
@@ -874,7 +874,8 @@ Senior Python Developer: проектирование схемы, миграци
 | 8e | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK) | `docs/FULL_QA_REPORT.md` |
 | 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
 | 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed) | локальный стенд; деплой не обязателен |
+| 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (awaiting OK) | демо-вход, checklist, bypass, compose UI-only, screencast `docs/screencast/` |
 
 ---
 
-_Последнее обновление: 2026-10-03 — README для проверяющего ([#34](https://github.com/Sintik1/Qa_Asistant/issues/34))._
+_Последнее обновление: 2026-10-03 — рекомендации проверяющего ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35))._

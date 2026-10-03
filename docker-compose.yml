@@ -1,4 +1,9 @@
-# Локальный запуск QA Assistant (frontend) в Docker
+# ВАЖНО: этот compose поднимает ТОЛЬКО frontend (nginx + static UI).
+# Полный стек (Flask + Supabase Auth/DB + AI) сюда НЕ входит —
+# см. корневой README.md → «Быстрый старт» и «Для проверяющего».
+#
+# После `docker compose up` UI на http://localhost:8080 всё равно
+# требует отдельно запущенный Flask (`VITE_API_BASE_URL`) и ключи Supabase.
 name: qa-assistant
 
 services:

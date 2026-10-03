@@ -40,6 +40,39 @@ from integrations.ai_client import build_ai_client, load_ai_settings
 PUBLIC_API_PATHS = frozenset({"/api/health", "/api/ai/ping"})
 
 
+def _is_public_or_production_env() -> bool:
+    """True when AUTH_DEV_BYPASS must never apply (PaaS / explicit prod)."""
+    for key in ("FLASK_ENV", "ENV", "APP_ENV"):
+        if os.getenv(key, "").strip().lower() == "production":
+            return True
+    if os.getenv("PUBLIC_DEPLOY", "").strip() == "1":
+        return True
+    # Common hosted markers — treat as public even if AUTH_DEV_BYPASS leaked into env.
+    if any(
+        os.getenv(name)
+        for name in (
+            "RAILWAY_ENVIRONMENT",
+            "RENDER",
+            "FLY_APP_NAME",
+            "VERCEL",
+            "HEROKU_APP_NAME",
+        )
+    ):
+        return True
+    return False
+
+
+def _auth_dev_bypass_enabled(testing: bool) -> bool:
+    """Allow JWT bypass only in pytest or local non-public debug."""
+    if testing:
+        return True
+    if os.getenv("AUTH_DEV_BYPASS", "").strip() != "1":
+        return False
+    if _is_public_or_production_env():
+        return False
+    return True
+
+
 def _cors_origins() -> list[str]:
     raw = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:8080")
     return [o.strip() for o in raw.split(",") if o.strip()]
@@ -97,6 +130,16 @@ def create_app(testing: bool = False) -> Flask:
     app.config["TESTING"] = testing
     logger = configure_logging(testing=testing)
     app.extensions["logger"] = logger
+
+    if (
+        not testing
+        and os.getenv("AUTH_DEV_BYPASS", "").strip() == "1"
+        and _is_public_or_production_env()
+    ):
+        logger.warning(
+            "AUTH_DEV_BYPASS=1 is set but ignored in public/production environment "
+            "(FLASK_ENV/ENV/APP_ENV=production, PUBLIC_DEPLOY=1, or PaaS markers)."
+        )
 
     CORS(
         app,
@@ -178,8 +221,8 @@ def create_app(testing: bool = False) -> Flask:
             g.user_email = user.email
             return
 
-        # Dev/test bypass only — never trusted in production.
-        if testing or os.getenv("AUTH_DEV_BYPASS", "").strip() == "1":
+        # Dev/test bypass — never on public/PaaS (see _auth_dev_bypass_enabled).
+        if _auth_dev_bypass_enabled(testing):
             if request.headers.get("X-Skip-Auth") == "1":
                 raise UnauthorizedError()
             user_id = request.headers.get("X-User-Id", "").strip()

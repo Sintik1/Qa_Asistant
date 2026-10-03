@@ -60,6 +60,38 @@ def test_api_rejects_x_user_id_without_jwt_in_prod(prod_client):
     assert res.status_code == 401
 
 
+def test_auth_dev_bypass_ignored_in_production_env(jwt_env, monkeypatch):
+    monkeypatch.setenv("AUTH_DEV_BYPASS", "1")
+    monkeypatch.setenv("FLASK_ENV", "production")
+    client = create_app(testing=False).test_client()
+    res = client.get("/api/runs", headers={"X-User-Id": USER_ID})
+    assert res.status_code == 401
+
+
+def test_auth_dev_bypass_ignored_on_railway_marker(jwt_env, monkeypatch):
+    monkeypatch.setenv("AUTH_DEV_BYPASS", "1")
+    monkeypatch.setenv("RAILWAY_ENVIRONMENT", "production")
+    client = create_app(testing=False).test_client()
+    res = client.get("/api/runs", headers={"X-User-Id": USER_ID})
+    assert res.status_code == 401
+
+
+def test_auth_dev_bypass_works_locally(jwt_env, monkeypatch):
+    monkeypatch.setenv("AUTH_DEV_BYPASS", "1")
+    monkeypatch.delenv("FLASK_ENV", raising=False)
+    monkeypatch.delenv("ENV", raising=False)
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("PUBLIC_DEPLOY", raising=False)
+    monkeypatch.delenv("RAILWAY_ENVIRONMENT", raising=False)
+    monkeypatch.delenv("RENDER", raising=False)
+    monkeypatch.delenv("FLY_APP_NAME", raising=False)
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.delenv("HEROKU_APP_NAME", raising=False)
+    client = create_app(testing=False).test_client()
+    res = client.get("/api/runs", headers={"X-User-Id": USER_ID})
+    assert res.status_code == 200
+
+
 def test_api_accepts_valid_supabase_jwt(prod_client):
     token = mint_test_access_token(user_id=USER_ID, secret=TEST_JWT_SECRET)
     res = prod_client.get(
