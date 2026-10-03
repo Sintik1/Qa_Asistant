@@ -4,14 +4,37 @@
 
 **Стек:** React 19 + TypeScript + Vite + Tailwind · Flask (Python) · Supabase (Auth, Postgres, Storage, RLS) · AI: Ollama / Leopold (Qwen).
 
-Репозиторий: https://github.com/Sintik1/Qa_Asistant
+**Репозиторий:** https://github.com/Sintik1/Qa_Asistant
 
 | Документ | Назначение |
 |----------|------------|
-| [`backend_documentation.md`](backend_documentation.md) | **Сдача Backend ДЗ:** архитектура, деплой, API, примеры запросов |
-| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт тестирования (API + UI + DB) |
-| [`development_report.md`](development_report.md) | Журнал стадий разработки + GitHub Issues |
+| [`backend_documentation.md`](backend_documentation.md) | **Сдача Backend ДЗ:** архитектура, развёртывание, API, примеры, AI-процесс |
+| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт: API + UI + DB (вердикт PASS) |
+| [`development_report.md`](development_report.md) | Журнал стадий + GitHub Issues |
 | [`technical_specification.md`](technical_specification.md) | Техническое задание |
+
+---
+
+## Для проверяющего
+
+Публичный cloud-деплой **не обязателен** (критерий ДЗ: «ссылка на деплой **или** инструкции»). Стенд сдачи:
+
+| Слой | Где |
+|------|-----|
+| БД / Auth / Storage / RLS | **Supabase** (BaaS, Free tier) |
+| Backend (Flask) + Frontend (Vite) | **локально** по этому README |
+| AI | **Ollama** на машине разработчика или **Leopold** по токену в `.env` |
+
+### Как убедиться, что всё работает
+
+1. **По отчёту (без установки):** [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) — live API **23/23**, UI happy path, запись в Supabase, Pytest. Детали: `docs/API_LIVE_TEST_REPORT.md`, `docs/UI_HAPPY_PATH_REPORT.md`, `docs/DB_PERSISTENCE_TEST_REPORT.md`.
+2. **По документации:** [`backend_documentation.md`](backend_documentation.md) — архитектура (§1), развёртывание (§2), API (§3), примеры curl (§4), процесс с AI (§5), журнал шагов 1–9 (§6).
+3. **Воспроизвести локально** (ниже «Быстрый старт») → `/auth` → upload → generate → CSV; в Supabase — строки в `documents` / `generation_runs` / `test_cases`.
+4. **Автотесты:** `pytest` (backend) и `npm test` (frontend) — см. раздел «Тестирование».
+
+Секреты (`SERVICE_ROLE`, JWT secret, AI token) в git **не** коммитятся — только плейсхолдеры в `.env.example`. Для полного e2e нужны ключи из своего проекта Supabase (или демо у автора на защите / по скринкасту).
+
+**Артефакты сдачи в репо:** код Backend + Frontend, `supabase/migrations/`, `.env.example`, `docker-compose.yml` (UI), `backend_documentation.md`, QA-отчёты.
 
 ---
 
@@ -30,7 +53,7 @@ React (Vite) ──JWT──► Supabase Auth / PostgREST / Storage
 
 ## Быстрый старт (полный стек)
 
-Нужны: **Node.js 20+**, **Python 3.9+**, аккаунт **Supabase**, опционально **Ollama** (локальный AI).
+Нужны: **Node.js 20+**, **Python 3.9+**, аккаунт **[Supabase](https://supabase.com)** (Free), для генерации кейсов — **Ollama** или токен Leopold.
 
 ### 1. Переменные окружения
 
@@ -39,20 +62,21 @@ cp .env.example .env
 cp qa-assistant/.env.example qa-assistant/.env.local
 ```
 
-В Dashboard Supabase → Settings → API скопируйте URL, `anon` key, `service_role` key, **JWT Secret** в `.env` / `.env.local`.
-
-Важные переменные:
+В Supabase Dashboard → **Settings → API** скопируйте URL, `anon` key, `service_role` key, **JWT Secret** в `.env` и `qa-assistant/.env.local`.
 
 | Переменная | Где | Назначение |
 |------------|-----|------------|
 | `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` | FE | Auth + клиент |
 | `VITE_API_BASE_URL` | FE | Flask (на macOS часто `http://127.0.0.1:5001`) |
 | `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_JWT_SECRET` | Flask | JWT + PostgREST |
-| `SUPABASE_SERVICE_ROLE_KEY` | Flask only | Storage / admin — **не** во frontend |
+| `SUPABASE_SERVICE_ROLE_KEY` | Flask only | Storage / admin — **никогда** во frontend |
 | `CORS_ORIGINS` | Flask | whitelist Vite (`localhost` и `127.0.0.1`) |
 | `AI_PROVIDER` | Flask | `ollama` (учёба) или `leopold` |
+| `PERSIST_BACKEND` | Flask | `auto` или `supabase` для записи в БД |
 
-Секреты не коммитить. Полный список — в `.env.example` и `backend_documentation.md` §2.3.
+Полный список — в `.env.example` и `backend_documentation.md` §2.3.
+
+Миграции схемы (если поднимаете **свой** проект Supabase): SQL из `supabase/migrations/` через SQL Editor или CLI. В учебном проекте автора схема уже применена на cloud Supabase.
 
 ### 2. Backend (Flask)
 
@@ -61,15 +85,17 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
-# Опционально: локальный AI на M1 8GB
+# Локальный AI (MacBook Air M1 8GB → модель 1.5b)
 ./scripts/setup_ollama.sh 1.5b
-# в отдельном терминале: ollama serve
+# в отдельном терминале:
+ollama serve
 
 # Порт 5000 на macOS часто занят AirTunes — используйте 5001
 flask --app wsgi run -p 5001
 ```
 
-Проверка: http://127.0.0.1:5001/api/health
+Проверка: http://127.0.0.1:5001/api/health  
+Ожидание: `"status":"ok"`, `"persist":"supabase"` (при настроенных ключах), блок `"ai"`.
 
 ### 3. Frontend (Vite)
 
@@ -79,54 +105,44 @@ npm install
 npm run dev
 ```
 
-Открыть: **http://127.0.0.1:5173** → `/auth` (регистрация / вход) → загрузка документа → генерация → CSV/DOCX.
+Открыть: **http://127.0.0.1:5173**
+
+1. `/auth` — регистрация / вход (Supabase Auth).  
+2. Главная — загрузить `.md` / `.pdf` / `.docx`.  
+3. **Генерировать тест-кейсы** → таблица → скачать CSV / DOCX.  
+4. (Опционально) Dashboard Supabase → Table Editor: есть строки после генерации.
 
 ---
 
 ## Только UI в Docker
 
-Нужен установленный **Docker Desktop**. Flask и Supabase при этом настраиваются отдельно (или UI работает в ограниченном режиме без полного backend).
+Нужен **Docker Desktop**. Полный e2e (Auth + generate + БД) требует отдельно запущенный Flask и ключи Supabase — см. «Быстрый старт».
 
 ```bash
 docker compose up --build
-```
-
-Открыть: **http://localhost:8080**
-
-```bash
+# http://localhost:8080
 docker compose down
 ```
-
----
-
-## Что проверить после запуска
-
-1. Зарегистрируйтесь / войдите на `/auth`.
-2. **Настройки** — при необходимости отметьте наличие API-токена (`has_api_token`; сам токен Leopold — в server `.env`).
-3. На главной загрузите `.md` / `.pdf` / `.docx`.
-4. **Генерировать тест-кейсы** → дождитесь таблицы → скачайте CSV или DOCX.
-5. Убедитесь, что в Supabase появляются строки в `documents` / `generation_runs` / `test_cases` (при `PERSIST_BACKEND=auto|supabase`).
-
-Негативные сценарии (по имени файла, mock-эвристики UI): `empty`, `fail`, `corrupt`, `slow`.
 
 ---
 
 ## API (кратко)
 
 Публичные: `GET /api/health`, `POST /api/ai/ping`.  
-Остальные `/api/*` — `Authorization: Bearer <Supabase JWT>` (или `AUTH_DEV_BYPASS=1` только для локальной отладки).
+Остальные `/api/*` — заголовок `Authorization: Bearer <Supabase JWT>`.  
+(`AUTH_DEV_BYPASS=1` — **только** локальная отладка, не для проверки безопасности.)
 
 | Метод | Path | Назначение |
 |-------|------|------------|
 | `POST` | `/api/documents/upload` | multipart upload + extract |
-| `GET`/`POST` | `/api/documents` | список / создать meta |
+| `GET`/`POST` | `/api/documents` | список / meta |
 | `GET`/`POST`/`DELETE` | `/api/runs`, `/api/runs/<id>` | прогоны |
 | `POST` | `/api/runs/<id>/generate` | AI → тест-кейсы |
 | `GET` | `/api/runs/<id>/test-cases` | кейсы |
 | `PATCH` | `/api/test-cases/<id>` | правка кейса |
 | `GET`/`PATCH` | `/api/settings` | chunk-настройки |
 
-Полное описание и curl-примеры: [`backend_documentation.md`](backend_documentation.md) §3–§4.
+Примеры curl: [`backend_documentation.md`](backend_documentation.md) §4.
 
 ---
 
@@ -134,26 +150,16 @@ docker compose down
 
 | Команда / документ | Назначение |
 |--------------------|------------|
-| `pytest tests/ -q` | Backend unit/API (из корня, с venv) |
+| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводка Full QA (основной отчёт для сдачи) |
+| `pytest tests/…` | Backend unit/API |
 | `cd qa-assistant && npm test` | Frontend Vitest |
-| `scripts/live_api_full_qa.py` | Live matrix API |
-| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводка Full QA |
-| [`docs/TESTING_REPORT.md`](docs/TESTING_REPORT.md) | Адаптив / UI-регресс (исторический) |
+| `scripts/live_api_full_qa.py` | Live matrix API (нужен запущенный Flask) |
 
 ```bash
-# Backend
 source .venv/bin/activate
 pytest tests/test_api_smoke.py tests/test_api_error_contract.py tests/test_business_logic_full.py -q
 
-# Frontend
 cd qa-assistant && npm test && npm run build
-```
-
-UI E2E (Selenium, нужен запущенный app):
-
-```bash
-cd tests
-QA_ASSISTANT_BASE_URL=http://localhost:5173 pytest -m "ui or security" -v
 ```
 
 ---
@@ -163,23 +169,24 @@ QA_ASSISTANT_BASE_URL=http://localhost:5173 pytest -m "ui or security" -v
 | Путь | Назначение |
 |------|------------|
 | `qa-assistant/` | Frontend (React + Vite + Tailwind) |
-| `app/` | Flask HTTP (тонкие routes, auth, CORS) |
-| `core/` | Домен / use cases (generate, parse, doc_reader, …) |
+| `app/` | Flask HTTP (routes, auth, CORS) |
+| `core/` | Use cases (generate, parse, doc_reader, …) |
 | `infrastructure/` | Supabase REST/store, logging, storage |
 | `integrations/` | AI client (Ollama / Leopold) |
 | `supabase/migrations/` | SQL схема Variant B + RLS |
-| `tests/` | Pytest (API) + Selenium |
+| `tests/` | Pytest + Selenium |
 | `docs/` | QA-отчёты |
 | `backend_documentation.md` | Документация Backend ДЗ |
 | `docker-compose.yml` | UI-образ на порту 8080 |
 
-Подробнее по frontend: [`qa-assistant/README.md`](qa-assistant/README.md)
+Frontend-only заметки: [`qa-assistant/README.md`](qa-assistant/README.md)
 
 ---
 
-## Полезные ссылки
+## Issues / журнал
 
-- Backend ДЗ (сдача docs): https://github.com/Sintik1/Qa_Asistant/issues/33
-- Full QA: https://github.com/Sintik1/Qa_Asistant/issues/29 · https://github.com/Sintik1/Qa_Asistant/issues/32
-- DB persistence: https://github.com/Sintik1/Qa_Asistant/issues/31
-- UI: `/` — генерация, `/settings` — настройки, `/auth` — вход/регистрация
+- Сдача docs (шаг 9): https://github.com/Sintik1/Qa_Asistant/issues/33  
+- Full QA: https://github.com/Sintik1/Qa_Asistant/issues/29 · https://github.com/Sintik1/Qa_Asistant/issues/32  
+- DB persistence: https://github.com/Sintik1/Qa_Asistant/issues/31  
+
+UI: `/` — генерация, `/settings` — настройки, `/auth` — вход / регистрация.

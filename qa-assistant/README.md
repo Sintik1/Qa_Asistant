@@ -2,6 +2,8 @@
 
 React + TypeScript + Vite + Tailwind CSS — UI для **QA Assistant**.
 
+Полный стек (Flask + Supabase + Auth + инструкции для проверяющего) — в корневом [`README.md`](../README.md) и [`backend_documentation.md`](../backend_documentation.md). Этот файл — только про frontend / Docker UI.
+
 ---
 
 ## Требования

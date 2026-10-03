@@ -51,6 +51,7 @@
 39. Autonomous DB+UI E2E (agent) — **done** (см. [#31](https://github.com/Sintik1/Qa_Asistant/issues/31)): SQL user seed (429 signup), API+Chrome UI PASS, docs updated)
 40. Единый отчёт Full QA — **done (awaiting OK)** (см. [#32](https://github.com/Sintik1/Qa_Asistant/issues/32); `docs/FULL_QA_REPORT.md`)
 41. Backend ДЗ шаг 9 — оформление сдачи (`backend_documentation.md` + README) — **done** (см. [#33](https://github.com/Sintik1/Qa_Asistant/issues/33), closed; Backend ДЗ шаг 9 → `backend_documentation.md` §5.10 / §6)
+42. README для проверяющего (локальный стенд без публичного деплоя) — **done (awaiting OK)** (см. [#34](https://github.com/Sintik1/Qa_Asistant/issues/34))
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -97,6 +98,15 @@
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: README для проверяющего
+
+**Запрос:** актуализировать README — как проверяющий увидит работоспособность без бюджета на деплой.
+
+**Результат:** Issue [#34](https://github.com/Sintik1/Qa_Asistant/issues/34).
+- Корневой `README.md`: блок «Для проверяющего» (отчёт / docs / локальный стенд / тесты)
+- Явно: публичный деплой не обязателен; стенд = Supabase Free + локальные Flask/Vite/Ollama
+- `qa-assistant/README.md` → ссылка на корневой README
 
 ### Промпт: Backend ДЗ шаг 9 — оформление сдачи
 
@@ -566,6 +576,7 @@
 31. Шаг 8 Full QA: методика → OK → live/DevTools → фиксы → автотесты; на macOS избегать `:5000` (AirTunes) и синхронизировать CORS с origin (`localhost` vs `127.0.0.1`) ([#29](https://github.com/Sintik1/Qa_Asistant/issues/29)).
 32. Persistence: не считать FE↔API интеграцию готовой, пока `persist!=supabase` и таблицы пустые; для signup нужен confirm email / service role ([#31](https://github.com/Sintik1/Qa_Asistant/issues/31)).
 33. Сдача ДЗ: один вход — `backend_documentation.md` (архитектура/деплой/API/примеры) + README со стеком FE+BE; не оставлять в README формулировку «только mock» ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)).
+34. Без бюджета на VPS: для проверяющего достаточно инструкций + FULL_QA + воспроизводимый локальный стенд; публичный URL не обязателен ([#34](https://github.com/Sintik1/Qa_Asistant/issues/34)).
 
 ---
 
@@ -610,6 +621,7 @@
 | DB persistence signup+happy path | [#31](https://github.com/Sintik1/Qa_Asistant/issues/31) | done (awaiting OK): Supabase repos; autonomous API+UI PASS; docs→`DB_PERSISTENCE_TEST_REPORT.md` |
 | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK): `docs/FULL_QA_REPORT.md` |
 | Backend ДЗ шаг 9 — docs + README | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed): `backend_documentation.md` + `README.md`; → §5.10 / §6 |
+| README для проверяющего (без деплоя) | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (awaiting OK): блок в корневом README |
 
 ---
 
