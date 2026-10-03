@@ -40,6 +40,8 @@
 28. Тест API + Ollama — **done** (см. [#24](https://github.com/Sintik1/Qa_Asistant/issues/24)): Pytest 16/16, live 17/17)
 29. Backend ДЗ шаг 5 — безопасность (Auth/RLS/CORS/secrets) — **done (awaiting OK)** (см. [#25](https://github.com/Sintik1/Qa_Asistant/issues/25); `backend_documentation.md` §1.8)
 30. Backend ДЗ шаг 6 — интеграция Frontend ↔ Backend — **done (awaiting OK)** (см. [#26](https://github.com/Sintik1/Qa_Asistant/issues/26); вариант **B**; `backend_documentation.md` §4.4)
+31. Backend ДЗ шаг 7 — ошибки и логирование (3 варианта, gate) — **awaiting choice** (см. [#27](https://github.com/Sintik1/Qa_Asistant/issues/27); `backend_documentation.md` §6)
+32. Backend ДЗ шаг 7 — выбран **B** + реализация — **done (awaiting OK)** (см. [#27](https://github.com/Sintik1/Qa_Asistant/issues/27); `backend_documentation.md` §3.3.1 / §4.5)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -78,10 +80,21 @@
 | Security audit before code (gate) | Backend ДЗ шаг 5: проверка Supabase/RLS/CORS → proposal ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25)) |
 | FullStack wire-up proposal + gate | Backend ДЗ шаг 6: FE api/hooks vs mock; варианты A/B/C ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)) |
 | Bypass MCP Issue UI (no Submit) | Issue #26 через `~/.local/bin/gh issue create` |
+| Errors/logging options + gate | Backend ДЗ шаг 7: A/B/C → выбран B ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: Backend ДЗ шаг 7 — ошибки и логирование (proposal → B)
+
+**Запрос:** Senior Backend (errors/logging); сеть 500/401/403, валидация, доступ; логи Flask + Supabase Logs; AI-анализ; сначала 3 варианта, после OK — код, commit/push. Затем **`b`**.
+
+**Результат:** Issue [#27](https://github.com/Sintik1/Qa_Asistant/issues/27).
+- BE: `infrastructure/logging_setup.py`, усиленные errorhandlers, `core/log_analyzer.py`, `POST /api/admin/analyze-logs`, `tools/analyze_logs.py`
+- FE: `resolveApiError`, `X-Request-Id`, redirect 401/403
+- Pytest logging/error **32** (выборка); Vitest `errors.test.ts` **4**
+- Docs: `backend_documentation.md` §3.3.1 / §4.5
 
 ### Промпт: Backend ДЗ шаг 6 — интеграция FE↔BE (proposal → B)
 
@@ -434,6 +447,8 @@
 | Storage: нет update/delete на debug, update на exports | Migration `security_storage_policies` |
 | MCP `issue_write` без кнопки Submit | Шаг 6: `~/.local/bin/gh issue create` → [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) |
 | Нет `/generate` и multipart upload на Flask | В proposal: вариант B добавляет thin generate; A оставляет mock |
+| `caplog` пуст при `propagate=False` у app logger | Тест вешает in-memory Handler на `qa_assistant` |
+| npm не в PATH агента | `/Users/vlad/.local/node/bin` для Vitest |
 
 ---
 
@@ -467,6 +482,7 @@
 26. Шаг 4: hybrid C + Qwen/Leopold; Flask memory repos для тестов; JWT→Supabase — на шаге 5.
 27. Шаг 5: не писать свой Auth — схема уже на `auth.users`+RLS; JWT middleware + FE signup/login реализованы ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25)); следующий — шаг 6 FE↔API с Bearer.
 28. Шаг 6: Axios не нужен (`apiFetch` + Supabase); вариант **B** реализован — FE api/hooks + `POST …/generate` ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)); PDF extract на сервере — later.
+29. Шаг 7: structured JSON logs + `request_id` + AI analyze (CLI/API); Supabase Logs через Dashboard/MCP, не дублировать в свою таблицу без нужды ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)).
 
 ---
 
@@ -503,6 +519,7 @@
 | Тест API endpoints + Ollama live | [#24](https://github.com/Sintik1/Qa_Asistant/issues/24) | done: pytest 16/16, live 17/17 |
 | Backend ДЗ шаг 5 — Auth / RLS / CORS / secrets | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK): JWT + FE Auth + Storage RLS |
 | Backend ДЗ шаг 6 — FE ↔ Backend API | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK / commit); Backend ДЗ шаг 6 → `backend_documentation.md` §4.4 |
+| Backend ДЗ шаг 7 — ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK): вариант **B**; Backend ДЗ шаг 7 → `backend_documentation.md` §3.3.1 |
 
 ---
 

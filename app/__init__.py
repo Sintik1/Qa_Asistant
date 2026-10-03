@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import os
+import time
+import uuid
 
 from dotenv import load_dotenv
 from flask import Flask, g, jsonify, request
 from flask_cors import CORS
 
 from app.auth import verify_supabase_access_token
-from core.errors import AppError, UnauthorizedError
+from core.errors import AppError, ForbiddenError, UnauthorizedError
 from core.messages import ERROR_MESSAGES
 from core.services import (
     DocumentService,
@@ -18,6 +20,7 @@ from core.services import (
     SettingsService,
     TestCaseService,
 )
+from infrastructure.logging_setup import configure_logging, get_logger
 from infrastructure.memory_store import (
     MemoryDocumentRepository,
     MemoryRunRepository,
@@ -34,10 +37,21 @@ def _cors_origins() -> list[str]:
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 
+def _error_body(code: str, status_code: int, message: str | None = None) -> dict:
+    msg = message or ERROR_MESSAGES.get(code, ERROR_MESSAGES["INTERNAL_ERROR"])
+    body: dict = {"error": {"code": code, "message": msg}}
+    request_id = getattr(g, "request_id", None)
+    if request_id:
+        body["error"]["request_id"] = request_id
+    return body
+
+
 def create_app(testing: bool = False) -> Flask:
     load_dotenv()
     app = Flask(__name__)
     app.config["TESTING"] = testing
+    logger = configure_logging(testing=testing)
+    app.extensions["logger"] = logger
 
     CORS(
         app,
@@ -50,8 +64,10 @@ def create_app(testing: bool = False) -> Flask:
                     "Content-Type",
                     "X-User-Id",
                     "X-Skip-Auth",
+                    "X-Request-Id",
+                    "X-Admin-Token",
                 ],
-                "expose_headers": ["Content-Type"],
+                "expose_headers": ["Content-Type", "X-Request-Id"],
                 "supports_credentials": True,
             }
         },
@@ -81,6 +97,16 @@ def create_app(testing: bool = False) -> Flask:
     from app.routes import api_bp
 
     app.register_blueprint(api_bp)
+
+    @app.before_request
+    def bind_request_context() -> None:
+        g.request_id = (
+            request.headers.get("X-Request-Id", "").strip() or str(uuid.uuid4())
+        )
+        g.request_started_at = time.perf_counter()
+        g.user_id = None
+        g.access_token = None
+        g.user_email = None
 
     @app.before_request
     def load_user() -> None:
@@ -119,32 +145,111 @@ def create_app(testing: bool = False) -> Flask:
 
         raise UnauthorizedError()
 
+    @app.after_request
+    def access_log(response):
+        if not request.path.startswith("/api/"):
+            return response
+        response.headers["X-Request-Id"] = getattr(g, "request_id", "")
+        started = getattr(g, "request_started_at", None)
+        duration_ms = (
+            round((time.perf_counter() - started) * 1000, 2) if started else None
+        )
+        get_logger().info(
+            "request",
+            extra={
+                "request_id": getattr(g, "request_id", None),
+                "user_id": getattr(g, "user_id", None),
+                "method": request.method,
+                "path": request.path,
+                "status": response.status_code,
+                "duration_ms": duration_ms,
+                "remote_addr": request.headers.get("X-Forwarded-For", request.remote_addr),
+            },
+        )
+        return response
+
     @app.errorhandler(AppError)
     def handle_app_error(exc: AppError):
-        return jsonify(exc.to_dict()), exc.status_code
+        level = logging_level_for_status(exc.status_code)
+        get_logger().log(
+            level,
+            "app_error %s",
+            exc.code,
+            extra={
+                "request_id": getattr(g, "request_id", None),
+                "user_id": getattr(g, "user_id", None),
+                "method": request.method,
+                "path": request.path,
+                "status": exc.status_code,
+                "error_code": exc.code,
+            },
+        )
+        return jsonify(_error_body(exc.code, exc.status_code, exc.message)), exc.status_code
 
     @app.errorhandler(404)
     def handle_404(_exc):
-        return jsonify(AppError(code="NOT_FOUND", status_code=404).to_dict()), 404
+        get_logger().warning(
+            "not_found",
+            extra={
+                "request_id": getattr(g, "request_id", None),
+                "user_id": getattr(g, "user_id", None),
+                "method": request.method,
+                "path": request.path,
+                "status": 404,
+                "error_code": "NOT_FOUND",
+            },
+        )
+        return jsonify(_error_body("NOT_FOUND", 404)), 404
+
+    @app.errorhandler(403)
+    def handle_http_403(_exc):
+        return jsonify(_error_body("FORBIDDEN", 403)), 403
+
+    @app.errorhandler(401)
+    def handle_http_401(_exc):
+        return jsonify(_error_body("UNAUTHORIZED", 401)), 401
 
     @app.errorhandler(405)
     def handle_405(_exc):
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "VALIDATION_ERROR",
-                        "message": ERROR_MESSAGES["VALIDATION_ERROR"],
-                    }
-                }
-            ),
-            405,
-        )
+        return jsonify(_error_body("VALIDATION_ERROR", 405)), 405
 
     @app.errorhandler(Exception)
-    def handle_unexpected(_exc):
+    def handle_unexpected(exc: Exception):
+        get_logger().exception(
+            "unhandled_exception",
+            extra={
+                "request_id": getattr(g, "request_id", None),
+                "user_id": getattr(g, "user_id", None),
+                "method": request.method,
+                "path": request.path,
+                "status": 500,
+                "error_code": "INTERNAL_ERROR",
+            },
+        )
         if app.config.get("TESTING"):
             raise
-        return jsonify(AppError(code="INTERNAL_ERROR", status_code=500).to_dict()), 500
+        return jsonify(_error_body("INTERNAL_ERROR", 500)), 500
+
+    if testing:
+
+        @app.get("/api/__test__/forbidden")
+        def _test_forbidden():
+            raise ForbiddenError()
+
+        @app.get("/api/__test__/internal")
+        def _test_internal():
+            raise AppError(code="INTERNAL_ERROR", status_code=500)
 
     return app
+
+
+def logging_level_for_status(status_code: int) -> int:
+    import logging
+
+    if status_code >= 500:
+        return logging.ERROR
+    if status_code in {401, 403}:
+        return logging.WARNING
+    if status_code >= 400:
+        return logging.INFO
+    return logging.INFO

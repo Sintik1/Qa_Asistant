@@ -1,5 +1,10 @@
 export { isApiConfigured, apiJson } from './client'
-export { ApiRequestError, messageForApiError } from './errors'
+export {
+  ApiRequestError,
+  messageForApiError,
+  resolveApiError,
+} from './errors'
+export type { ApiErrorAction } from './errors'
 export { createDocument, listDocuments } from './documents'
 export {
   createRun,

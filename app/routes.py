@@ -2,13 +2,27 @@
 
 from __future__ import annotations
 
+import os
+
 from flask import Blueprint, current_app, g, jsonify, request
 
-from core.errors import AppError, ValidationError
+from core.errors import AppError, ForbiddenError, ValidationError
+from core.log_analyzer import analyze_log_file, analyze_log_text
 from core.models import CreateDocumentCommand, CreateRunCommand, UpdateTestCaseCommand
 from integrations.ai_client import ai_status_dict, build_ai_client
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
+
+
+def _require_log_analyze_access() -> None:
+    """Gate for AI log analysis: feature flag + optional admin token."""
+    if os.getenv("LOG_ANALYZE_ENABLED", "1").strip() == "0":
+        raise ForbiddenError()
+    expected = os.getenv("LOG_ANALYZE_ADMIN_TOKEN", "").strip()
+    if expected:
+        provided = request.headers.get("X-Admin-Token", "").strip()
+        if provided != expected:
+            raise ForbiddenError()
 
 
 def _svc(name: str):
@@ -191,3 +205,24 @@ def patch_settings():
     data = request.get_json(silent=True) or {}
     settings = _svc("settings_service").update(g.user_id, data)
     return jsonify(settings.to_dict())
+
+
+@api_bp.post("/admin/analyze-logs")
+def analyze_logs():
+    """AI analysis of server log tail or inline log text (ops / homework)."""
+    _require_log_analyze_access()
+    data = request.get_json(silent=True) or {}
+    ai = current_app.extensions.get("ai_client")
+    inline = (data.get("text") or data.get("log_text") or "").strip()
+    try:
+        max_lines = int(data.get("max_lines", 200))
+    except (TypeError, ValueError) as exc:
+        raise ValidationError(
+            code="VALIDATION_ERROR", message="max_lines must be integer"
+        ) from exc
+
+    if inline:
+        result = analyze_log_text(inline, ai, source="inline")
+    else:
+        result = analyze_log_file(ai, max_lines=max_lines)
+    return jsonify(result.to_dict())

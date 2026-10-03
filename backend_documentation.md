@@ -406,7 +406,33 @@ Frontend → только Flask. Flask с JWT пользователя (или s
 | Внешний AI | 502 / 503 / 429 | `API_UNAVAILABLE`, `API_503`, `API_429`, `API_EMPTY` | ТЗ |
 | Сервер | 500 | `INTERNAL_ERROR` | без stack/token leak |
 
-Дополнительно: CORS errors → понятный FE fallback; network timeout → retry UX (шаг 7).
+Дополнительно: CORS errors → понятный FE fallback; network / 401 / 403 UX — шаг 7 (ниже).
+
+### 3.3.1. Шаг 7 — ошибки и логирование (вариант B, реализовано)
+
+Issue: [#27](https://github.com/Sintik1/Qa_Asistant/issues/27)
+
+**Обработка ошибок (Flask):**
+- Единый JSON + опциональный `request_id`:  
+  `{ "error": { "code", "message", "request_id" } }`
+- HTTP: **401** `UNAUTHORIZED`, **403** `FORBIDDEN`, **422** validation, **404**, **500** `INTERNAL_ERROR` (без stack/token leak клиенту)
+- FE: `resolveApiError` → сообщения ТЗ; 401/403 → `/auth`; `INVALID_TOKEN`/`MISSING_TOKEN` → `/settings`; сеть (`TypeError`) → `API_UNAVAILABLE`
+- Корреляция: FE шлёт `X-Request-Id`, Flask эхо в ответе и в логах
+
+**Логи на сервере (self-hosted Flask):**
+- Модуль `infrastructure/logging_setup.py` — JSON lines (stdout + `logs/app.log`, rotating)
+- Поля: `ts`, `level`, `request_id`, `user_id`, `method`, `path`, `status`, `error_code`, `duration_ms`
+- Env: `LOG_LEVEL`, `LOG_JSON`, `LOG_TO_FILE`, `LOG_DIR`, `LOG_FILE` (см. `.env.example`)
+
+**Supabase Logs:**
+- Dashboard → Project → **Logs** (API / Postgres / Auth / Storage)
+- Cursor MCP `user-supabase` → `query_logs` (ClickHouse SQL по таблице `logs`, окно ≤24h)
+- Пример: вставить фрагмент из Dashboard в `python tools/analyze_logs.py --stdin`
+
+**AI-анализ логов:**
+- CLI: `python tools/analyze_logs.py` / `--file` / `--stdin`
+- API: `POST /api/admin/analyze-logs` (JWT; опц. `X-Admin-Token` = `LOG_ANALYZE_ADMIN_TOKEN`; флаг `LOG_ANALYZE_ENABLED`)
+- Use case: `core/log_analyzer.py` → текущий AI provider (Ollama/Leopold)
 
 ### 3.4. Выбранный вариант API — **C (реализовано)**
 
@@ -439,6 +465,7 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `PATCH` | `/api/test-cases/<id>` | **U**pdate case | done |
 | `GET`/`PATCH` | `/api/settings` | settings | done |
 | `POST` | `/api/runs/<id>/generate` | AI generate → cases | done (шаг 6) |
+| `POST` | `/api/admin/analyze-logs` | AI анализ логов (шаг 7) | done |
 
 **Supabase REST (автоматический, параллельно для FE):**  
 `GET/POST/PATCH/DELETE https://revyywfeeqdmlgrbakpj.supabase.co/rest/v1/{documents|generation_runs|test_cases|user_settings}` + JWT + RLS.
@@ -454,13 +481,21 @@ pytest tests/test_api_smoke.py tests/test_api_error_contract.py -q
 
 Текущий persistence Flask-слоя: **in-memory repositories** (pytest/local). Подключение Flask→Supabase PostgREST service role — следующий инкремент (Auth шаг 5).
 
-### 3.5. Формат ошибок (реализовано)
+### 3.5. Формат ошибок (реализовано + шаг 7)
 
 ```json
-{ "error": { "code": "INVALID_FORMAT", "message": "Поддерживаются только PDF, DOCX, DOC и Markdown-файлы" } }
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Требуется авторизация.",
+    "request_id": "fe-…-uuid"
+  }
+}
 ```
 
 Коды: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `INVALID_FORMAT`, `FILE_TOO_LARGE`, `MISSING_TOKEN`, `INVALID_TOKEN`, `API_*`, `INTERNAL_ERROR`.
+
+Pytest: `tests/test_logging_and_errors.py` + `tests/test_api_error_contract.py`.
 
 ---
 
@@ -554,6 +589,30 @@ Pytest: `tests/test_api_generate.py`, `tests/test_case_parser.py` (+ smoke/error
 **Поток:** validate file → read text (.md) / metadata stub (pdf/docx) → `POST /api/documents` → `POST /api/runs` → `POST …/generate` → CSV download как раньше.
 
 **Ограничения шага:** multipart Storage upload и серверный extract PDF/DOCX — следующие инкременты; Leopold token остаётся в server `.env`, UI ставит `has_api_token`.
+
+### 4.5. Ошибки, логи, AI-анализ (шаг 7)
+
+```bash
+# 401 без auth — смотри request_id в JSON и заголовке
+curl -si http://localhost:5000/api/runs -H 'X-Skip-Auth: 1' -H 'X-Request-Id: demo-401'
+
+# 403 доступ (test endpoint только при TESTING=1 / pytest)
+# В проде: FORBIDDEN при LOG_ANALYZE_ENABLED=0 или неверном X-Admin-Token
+
+# AI-анализ inline-лога (нужен AUTH_DEV_BYPASS=1 или JWT + AI)
+curl -s -X POST http://localhost:5000/api/admin/analyze-logs \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-Id: 11111111-1111-4111-8111-111111111111' \
+  -d '{"text":"{\"level\":\"WARNING\",\"error_code\":\"UNAUTHORIZED\",\"status\":401}"}' | jq
+
+# CLI (файл или вставка Supabase Logs)
+python tools/analyze_logs.py --max-lines 150
+# Dashboard → Logs → copy →:
+# pbpaste | python tools/analyze_logs.py --stdin
+```
+
+**Supabase Logs (MCP):** `query_logs` с SQL вида  
+`select id, timestamp, event_message from logs where source = 'postgres_logs' order by timestamp desc limit 20`.
 
 ---
 
@@ -668,6 +727,23 @@ Senior Python Developer: проектирование схемы, миграци
 - Leopold 72B — переключение env без смены кода.
 - Шаг 5: JWT обязателен вне testing; FE Auth опционален только если нет `VITE_SUPABASE_*` (Vitest/mock).
 
+### 5.8. Шаг 7 — ошибки и логирование
+
+**Промпт:** Senior Backend (errors/logging); 3 варианта → выбор **B** → реализация → commit/push.
+
+**Результат ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)):**
+- Flask JSON logs + `request_id`; error JSON с `request_id`
+- FE `resolveApiError` + redirect 401/403
+- CLI `tools/analyze_logs.py` + `POST /api/admin/analyze-logs`
+- Docs: Supabase Logs (Dashboard + MCP `query_logs`)
+- Pytest: `tests/test_logging_and_errors.py` (+ suite) **32 passed** на выборке smoke/error/auth/generate/logging; Vitest errors **4 passed**
+
+**Проблемы / решения:**
+| Проблема | Решение |
+|----------|---------|
+| `caplog` не видит logger с `propagate=False` | Memory Handler в тесте |
+| MCP `issue_write` form без Submit | Issue #27 через GitHub REST + `GITHUB_TOKEN` |
+
 ### 5.7. Шаг 5 — безопасность (Auth / RLS / CORS / secrets)
 
 **Промпт:** Senior Backend + security; сначала аудит Supabase → proposal → OK → реализация.
@@ -701,10 +777,10 @@ Senior Python Developer: проектирование схемы, миграци
 | 4b | Тест endpoints + Ollama | [#24](https://github.com/Sintik1/Qa_Asistant/issues/24) | done | Pytest **16/16**; live **17/17** PASS; `docs/API_LIVE_TEST_REPORT.md` |
 | 5 | Безопасность (Auth, RLS, CORS) | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK) | Supabase Auth + JWT middleware + Storage RLS; pytest auth **10**; vitest **71** |
 | 6 | Интеграция Frontend | [#26](https://github.com/Sintik1/Qa_Asistant/issues/26) | done (awaiting OK) | **B**: FE `src/api` + hooks; `POST …/generate`; pytest **24**; §4.4 |
-| 7 | Ошибки и логирование | — | pending | |
+| 7 | Ошибки и логирование | [#27](https://github.com/Sintik1/Qa_Asistant/issues/27) | done (awaiting OK) | **B**: JSON logs + FE UX + analyze-logs; pytest logging **11** |
 | 8 | Тестирование | — | pending | |
 | 9 | Оформление сдачи | — | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-03 — шаг 6 вариант B реализован ([#26](https://github.com/Sintik1/Qa_Asistant/issues/26)); коммит после OK._
+_Последнее обновление: 2026-10-03 — шаг 7 вариант **B** реализован ([#27](https://github.com/Sintik1/Qa_Asistant/issues/27)); §3.3.1 / §4.5._

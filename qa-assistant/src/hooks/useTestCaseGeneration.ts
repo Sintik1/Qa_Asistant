@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type {
   ChunkSettings,
   GenerationResult,
@@ -14,7 +15,7 @@ import {
   getHealth,
   getSettings,
   isApiConfigured,
-  messageForApiError,
+  resolveApiError,
   settingsToChunk,
 } from '../api'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
@@ -80,6 +81,7 @@ function mapApiCases(
  * Реальный поток: document → run → generate → test-cases (Flask + JWT).
  */
 export function useTestCaseGeneration(): UseTestCaseGenerationResult {
+  const navigate = useNavigate()
   const [status, setStatus] = useState<GenerationStatus>('idle')
   const [progressLabel, setProgressLabel] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -220,10 +222,17 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
         setProgressLabel(null)
         maybeNotify(next)
       } catch (err) {
-        failGeneration(messageForApiError(err))
+        const resolved = resolveApiError(err)
+        if (resolved.requestId) {
+          console.warn('[api]', resolved.message, 'request_id=', resolved.requestId)
+        }
+        failGeneration(resolved.message)
+        if (resolved.redirectTo) {
+          navigate(resolved.redirectTo)
+        }
       }
     },
-    [failGeneration, maybeNotify],
+    [failGeneration, maybeNotify, navigate],
   )
 
   const generate = useCallback(
