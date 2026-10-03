@@ -874,7 +874,7 @@ Senior Python Developer: проектирование схемы, миграци
 | 8e | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK) | `docs/FULL_QA_REPORT.md` |
 | 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
 | 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed) | локальный стенд; деплой не обязателен |
-| 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (awaiting OK) | демо-вход, checklist, bypass, compose UI-only, screencast `docs/screencast/` |
+| 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed) | демо-вход, checklist, bypass, compose UI-only, screencast; `ddd6fcf` |
 
 ---
 
