@@ -7,11 +7,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-
 
 BASE_URL = os.environ.get("QA_ASSISTANT_BASE_URL", "http://localhost:5173")
 
@@ -23,6 +18,12 @@ def base_url() -> str:
 
 @pytest.fixture
 def driver():
+    pytest.importorskip("selenium")
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+    from webdriver_manager.chrome import ChromeDriverManager
+
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--window-size=1280,900")

@@ -28,8 +28,19 @@
 16. Behavior-preserving refactor — **done** (см. [#16](https://github.com/Sintik1/Qa_Asistant/issues/16), commit `6dc1eed`)
 17. Оптимизация вёрстки (perf markup/CSS) — **done** (см. [#17](https://github.com/Sintik1/Qa_Asistant/issues/17)); регресс PASS; commit после OK
 18. Selenium fix + Vitest bump + component tests + docs sync — **done** (см. [#18](https://github.com/Sintik1/Qa_Asistant/issues/18), commit `53e1583`)
+19. Backend ДЗ — workflow + `backend_documentation.md` + rules (все `.cursorrules` в силе) — **in progress** (см. [#19](https://github.com/Sintik1/Qa_Asistant/issues/19); `backend_documentation.md` §5–§6)
+20. Backend ДЗ шаг 1 — проектирование БД (3 варианта схем, gate) — **awaiting choice** (см. [#20](https://github.com/Sintik1/Qa_Asistant/issues/20); детали в `backend_documentation.md` §1.4–1.7)
+21. Backend ДЗ шаг 1 — выбор **B** + SQL-миграция — **done (awaiting OK)** (см. [#20](https://github.com/Sintik1/Qa_Asistant/issues/20); `supabase/migrations/20260928143000_init_variant_b.sql`)
+22. Backend ДЗ шаг 2 — инфраструктура **A Supabase** (vs self-hosted) — **done (awaiting OK)** (см. [#21](https://github.com/Sintik1/Qa_Asistant/issues/21); `backend_documentation.md` §2.0)
+23. Backend ДЗ шаг 3 — MCP + deploy schema на `revyywfeeqdmlgrbakpj` — **done (awaiting OK)** (см. [#22](https://github.com/Sintik1/Qa_Asistant/issues/22); §2.2)
+24. Backend ДЗ шаг 4 — API endpoints (варианты A/B/C, gate) — **awaiting choice** (см. Issue шаг 4; `backend_documentation.md` §3)
+25. Backend ДЗ шаг 4 — выбран **C** + Flask API + Qwen/Leopold — **done (awaiting OK)** (см. [#23](https://github.com/Sintik1/Qa_Asistant/issues/23); pytest 8/8)
+26. Ollama + qwen2.5:7b/14b для учёбы (`AI_PROVIDER=ollama`) — **done** (см. [#23](https://github.com/Sintik1/Qa_Asistant/issues/23); pytest 15/15)
+27. MacBook Air M1 8GB / macOS 13: Ollama **v0.6.5** + **qwen2.5:1.5b** — **done** (latest Ollama 0.35 требует macOS 14)
+28. Тест API + Ollama — **done** (см. [#24](https://github.com/Sintik1/Qa_Asistant/issues/24)): Pytest 16/16, live 17/17)
+29. Backend ДЗ шаг 5 — безопасность (Auth/RLS/CORS/secrets) — **done (awaiting OK)** (см. [#25](https://github.com/Sintik1/Qa_Asistant/issues/25); `backend_documentation.md` §1.8)
 
-Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`).
+Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
 ---
 
@@ -59,10 +70,93 @@
 | Prompt template § refactor (Role/Task) | Stage 16: анализ → proposal → gate «не менять без OK» |
 | Prompt template §4 perf layout | Stage 17: узкие места → код → что ускорилось; без OK не менять |
 | Quality hardening batch | Stage 18: Selenium order fix, oxlint, Vitest CVE, RTL components, docs |
+| DB architect: ТЗ → 3 схемы + gate | Backend ДЗ шаг 1: варианты A/B/C до SQL ([#20](https://github.com/Sintik1/Qa_Asistant/issues/20)) |
+| Infra decision matrix (BaaS vs VPS) | Backend ДЗ шаг 2: выбран Supabase ([#21](https://github.com/Sintik1/Qa_Asistant/issues/21)) |
+| Supabase MCP auth + apply_migration | Backend ДЗ шаг 3: remote schema на `revyywfeeqdmlgrbakpj` ([#22](https://github.com/Sintik1/Qa_Asistant/issues/22)) |
+| API design options + error matrix (gate) | Backend ДЗ шаг 4: A/B/C до реализации |
+| Security audit before code (gate) | Backend ДЗ шаг 5: проверка Supabase/RLS/CORS → proposal ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: Backend ДЗ шаг 5 — безопасность (gate → реализация)
+
+**Запрос:** Senior Backend + security; Auth, RLS/middleware, CORS, secrets; сначала проверить Supabase, предложить решение, код только после OK. Затем «ок».
+
+**Результат:** Issue [#25](https://github.com/Sintik1/Qa_Asistant/issues/25).
+- Supabase **подключена**; выбран **A: Supabase Auth**
+- Flask: `app/auth.py` JWT verify; CORS whitelist; `X-User-Id` только testing/dev bypass
+- FE: `/auth` signup/login, `RequireAuth`, `@supabase/supabase-js`
+- Storage RLS gap-fill migration applied
+- Pytest auth+API **26 passed**; Vitest **71**; build OK
+- MCP Issue form без Submit → Issue через GitHub REST API
+
+### Промпт: Ollama + Qwen 7B/14B для учёбы
+
+**Запрос:** сразу сделать opensource бесплатный путь Ollama + qwen2.5:7b (или 14B).
+
+**Результат:**
+- `integrations/ai_client.py` — factory `AI_PROVIDER=ollama|leopold`
+- Default учёба: Ollama `qwen2.5:7b`; `AI_OLLAMA_SIZE=14b` → 14B
+- `POST /api/ai/ping`, `scripts/setup_ollama.sh`
+- Pytest: **15 passed** (Ollama на машине агента не установлен — нужен локальный install)
+
+### Промпт: Backend ДЗ шаг 4 — выбор C + Qwen + реализация
+
+**Запрос:** `с` + «можно ли Qwen?» + «продолжай».
+
+**Результат:** Issue [#23](https://github.com/Sintik1/Qa_Asistant/issues/23).
+- **Да, Qwen** — это модель ТЗ через Leopold (`Qwen/Qwen2.5-72B-Instruct`)
+- Hybrid C: Flask CRUD + error contract + Leopold client
+- Pytest API: **8 passed**
+- Где была форма Issue: в чате Cursor (карточка Create issue); обошли через `~/.local/bin/gh`
+
+### Промпт: Backend ДЗ шаг 4 — API (варианты до кода)
+
+**Запрос:** Senior Backend; ≥3 CRUD; Supabase REST или свой API; все ошибки; сначала варианты, реализация после OK.
+
+**Результат:** варианты A/B/C в `backend_documentation.md` §3; затем выбран C.
+
+### Промпт: Backend ДЗ шаг 3 — MCP + развёртывание
+
+**Запрос:** настроить MCP (`project_ref=revyywfeeqdmlgrbakpj`) и подключиться к проекту.
+
+**Результат:** Issue [#22](https://github.com/Sintik1/Qa_Asistant/issues/22).
+- `~/.cursor/mcp.json` → server `supabase` → namespace `user-supabase` (auth OK)
+- Project URL: `https://revyywfeeqdmlgrbakpj.supabase.co`
+- Applied: `init_variant_b` + `harden_auth_triggers`
+- Storage: buckets `documents`/`debug`/`exports` + path policies
+- `.env.example` с плейсхолдерами
+
+### Промпт: Backend ДЗ шаг 2 — выбор инфраструктуры
+
+**Запрос:** A Supabase vs B self-hosted Postgres на VPS; обосновать; VPS только если B.
+
+**Результат:** Issue [#21](https://github.com/Sintik1/Qa_Asistant/issues/21).
+- Решение: **A Supabase (BaaS)**
+- Причины: Auth/RLS/Storage/PostgREST под ДЗ; миграция уже на `auth.users`; Flask остаётся для Leopold; ниже ops и риск сроков
+- Self-hosted отклонён → VPS **не готовится**; fallback кратко в `backend_documentation.md` §2.5
+
+### Промпт: Backend ДЗ шаг 1 — выбор B + миграции
+
+**Запрос:** `b`
+
+**Результат:** Issue [#20](https://github.com/Sintik1/Qa_Asistant/issues/20).
+- Выбран **Variant B Operational** (6 таблиц)
+- Миграция: `supabase/migrations/20260928143000_init_variant_b.sql` (enums, FK, indexes, RLS, signup trigger)
+- Корректировки: denormalized `user_id` для RLS; токен не в БД; CHECK 100 МБ
+- Документация: `backend_documentation.md` §1.7
+
+### Промпт: Backend ДЗ шаг 1 — проектирование БД
+
+**Запрос:** Role архитектор БД; Task — сущности/связи/поля, SQL, миграции; Context — `technical_specification.md` + `project_description.md`; Format — сначала 2–3 варианта схем на выбор.
+
+**Результат:** Issue [#20](https://github.com/Sintik1/Qa_Asistant/issues/20).
+- Требования к данным выведены из MUST/SHOULD/NICE ТЗ
+- Варианты: **A** Minimal (4 табл.), **B** Operational (6), **C** Extended (9–10)
+- Рекомендация: **B**; миграции после явного выбора
+- Фиксация: `backend_documentation.md` §1.4–1.7, §5–§6
 
 ### Промпт: Stage 18 — качество frontend (Selenium / Vitest / docs)
 
@@ -317,6 +411,14 @@
 | Vitest 3.2.7: 2 moderate (`@vitest/mocker` path traversal) | Upgrade to Vitest **4.1.11** → audit 0 |
 | npm arborist `edgesOut` на peer set Vitest 4/5 | Clean install + `--legacy-peer-deps` |
 | Vitest 4 removed `environmentMatchGlobs` | Единый `environment: 'jsdom'` (+ RTL cleanup в setup) |
+| Схема БД: риск over-engineering под learning JSON | Шаг 1: три варианта A/B/C; SQL только после выбора ([#20](https://github.com/Sintik1/Qa_Asistant/issues/20)) |
+| Токен Leopold в таблице vs ТЗ «только .env» | В схемах — `has_api_token` / Vault; plaintext token не в Postgres |
+| Self-hosted потребовал бы переписать Auth/RLS/Storage | Шаг 2: выбран Supabase; VPS не готовим ([#21](https://github.com/Sintik1/Qa_Asistant/issues/21)) |
+| MCP не сразу в каталоге tools | Namespace `user-supabase` + `mcp_auth` |
+| Advisors: search_path / SECURITY DEFINER RPC | `harden_auth_triggers` + revoke EXECUTE |
+| MCP `issue_write` UI без кнопки Submit | Создать Issue через `curl` + `GITHUB_TOKEN` (REST API) |
+| Flask Auth stub принимает `X-User-Id` без JWT | Шаг 5: verify Supabase JWT; header только в tests / `AUTH_DEV_BYPASS` |
+| Storage: нет update/delete на debug, update на exports | Migration `security_storage_policies` |
 
 ---
 
@@ -343,6 +445,12 @@
 19. Stage 17: layout perf — сначала CSS/DOM (без новых libs); JS media только если CSS нельзя; gate перед apply.
 20. Stage 17: при CSS dual-view не смешивать Tailwind `hidden`/`md:hidden` с кастомным `display` того же узла — specificity/cascade ломает адаптив.
 21. Stage 18: для origin-bound Storage в Selenium — всегда navigate first; media hooks — `useSyncExternalStore`; Vitest ≥4.1.11 закрывает mocker CVE.
+22. Backend ДЗ шаг 1: сначала варианты схем и gate; SQL/миграции только после выбора A/B/C; рекомендация — **B Operational** (см. `backend_documentation.md` §1).
+23. После выбора B: одна init-миграция с RLS и trigger signup; применение на живой Supabase — шаг 3 ДЗ.
+24. Шаг 2: infra = Supabase; не смешивать с self-hosted без явной смены решения; следующий фокус — создать cloud-проект и `db push`.
+25. Шаг 3: MCP к `revyywfeeqdmlgrbakpj` работает; схема в cloud; дальше API/Auth, не трогать prod schema без миграции.
+26. Шаг 4: hybrid C + Qwen/Leopold; Flask memory repos для тестов; JWT→Supabase — на шаге 5.
+27. Шаг 5: не писать свой Auth — схема уже на `auth.users`+RLS; JWT middleware + FE signup/login реализованы ([#25](https://github.com/Sintik1/Qa_Asistant/issues/25)); следующий — шаг 6 FE↔API с Bearer.
 
 ---
 
@@ -368,6 +476,16 @@
 | Шаг 16 — Behavior-preserving refactor | [#16](https://github.com/Sintik1/Qa_Asistant/issues/16) | completed, commit `6dc1eed` |
 | Шаг 17 — Оптимизация вёрстки (perf) | [#17](https://github.com/Sintik1/Qa_Asistant/issues/17) | completed (closed), commits `69ace4a` / `45187c4` |
 | Шаг 18 — Selenium + Vitest + RTL + docs | [#18](https://github.com/Sintik1/Qa_Asistant/issues/18) | completed, commit `53e1583` (close после OK) |
+| Backend ДЗ — процесс + backend_documentation.md | [#19](https://github.com/Sintik1/Qa_Asistant/issues/19) | in progress |
+| Backend ДЗ шаг 1 — проектирование БД (A/B/C) | [#20](https://github.com/Sintik1/Qa_Asistant/issues/20) | choice done → migration B |
+| Backend ДЗ шаг 1 — миграция Variant B | [#20](https://github.com/Sintik1/Qa_Asistant/issues/20) | done (awaiting OK to close) |
+| Backend ДЗ шаг 2 — infra Supabase vs VPS | [#21](https://github.com/Sintik1/Qa_Asistant/issues/21) | done (awaiting OK): **A Supabase** |
+| Backend ДЗ шаг 3 — MCP + schema deploy | [#22](https://github.com/Sintik1/Qa_Asistant/issues/22) | done (awaiting OK): project live |
+| Backend ДЗ шаг 4 — API варианты A/B/C | [#23](https://github.com/Sintik1/Qa_Asistant/issues/23) | choice → C |
+| Backend ДЗ шаг 4 — Flask hybrid C + Qwen | [#23](https://github.com/Sintik1/Qa_Asistant/issues/23) | done (awaiting OK), pytest 8/8 |
+| Ollama qwen2.5 7b/14b study mode | [#23](https://github.com/Sintik1/Qa_Asistant/issues/23) | done, pytest 15/15 |
+| Тест API endpoints + Ollama live | [#24](https://github.com/Sintik1/Qa_Asistant/issues/24) | done: pytest 16/16, live 17/17 |
+| Backend ДЗ шаг 5 — Auth / RLS / CORS / secrets | [#25](https://github.com/Sintik1/Qa_Asistant/issues/25) | done (awaiting OK): JWT + FE Auth + Storage RLS |
 
 ---
 
@@ -392,6 +510,7 @@
 ### Rules
 
 - `.cursor/rules/process-tracking.mdc` — **alwaysApply: true** (§10–11)
+- `.cursor/rules/backend-homework-dz.mdc` — **alwaysApply: true** (§12, backend ДЗ + все прочие rules)
 - `.cursor/rules/ui-figma-workflow.mdc`
 - `.cursor/rules/backend-data-workflow.mdc`
 

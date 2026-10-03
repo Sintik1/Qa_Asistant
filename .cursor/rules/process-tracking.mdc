@@ -29,10 +29,16 @@ Update root `development_report.md` on **every** stage with:
 
 Commit/push the report with the stage deliverable when the stage includes git changes.
 
+## `backend_documentation.md` (backend homework only)
+
+When working on **ДЗ steps 1–9** (DB, Supabase, API): update root `backend_documentation.md` in the same cycle. See `.cursor/rules/backend-homework-dz.mdc`.
+
 ## Before the final reply for a stage
 
 - [ ] Issue created/updated  
-- [ ] `development_report.md` updated  
-- [ ] User reply includes Issue link + note that the report was updated  
+- [ ] `development_report.md` updated (all required sections for that stage, not only journal)  
+- [ ] Backend ДЗ step → `backend_documentation.md` updated (§6 minimum)  
+- [ ] Code quality rules still applied (architecture, tests, secrets — `.cursorrules` + relevant skills)  
+- [ ] User reply includes Issue link + note that report(s) were updated  
 
-Related skill: `qa-assistant-process`.
+Related skill: `qa-assistant-process`. Backend ДЗ: `.cursor/rules/backend-homework-dz.mdc`.

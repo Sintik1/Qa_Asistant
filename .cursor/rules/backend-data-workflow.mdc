@@ -14,3 +14,4 @@ When changing Python files:
 4. Secrets only in `.env`; `uploads/` gitignored.
 5. New logic → Pytest; TZ error strings stay in sync with frontend.
 6. Process: GitHub Issue + `development_report.md` (`qa-assistant-process`).
+7. Backend homework (ДЗ steps 1–9): also update `backend_documentation.md` — see `.cursor/rules/backend-homework-dz.mdc`.

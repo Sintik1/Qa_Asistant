@@ -1,0 +1,49 @@
+---
+description: Backend homework (DB, Supabase, API) — update backend_documentation.md each DZ step
+alwaysApply: true
+---
+
+# Backend homework (ДЗ): Supabase + API
+
+When the user prompt refers to **шаг N ДЗ**, **backend homework**, **Supabase**, **миграции**, or **backend API** for QA Assistant:
+
+## Deliverables per step
+
+1. **Execute** the step scope (schema, deploy, API, frontend integration, tests, docs as requested).
+2. **`backend_documentation.md`** (root) — update in the **same work cycle**:
+   - §1 Architecture — when schema or components change
+   - §2 Deployment — when infra/env changes
+   - §3 API endpoints — when routes or PostgREST usage change
+   - §4 Request examples — when endpoints are testable
+   - §5 AI process — prompts, techniques, problems/solutions for this step
+   - §6 Journal — always: step row, Issue link, status
+3. **GitHub Issue** — one Issue per DZ step (or update epic); comment with decisions and commit SHAs.
+4. **`development_report.md`** — add/update journal row + short pointer: «Backend ДЗ шаг N → `backend_documentation.md` §6».
+
+## Still mandatory (`.cursorrules` §10–11)
+
+Do **not** skip Issues or `development_report.md`. `backend_documentation.md` is **additional** (submission artifact), not a replacement.
+
+## All other project rules stay in force
+
+Backend ДЗ does **not** relax:
+
+- `.cursorrules` §10–11 (Issues + full `development_report.md` sections, not only journal)
+- Architecture: thin routes, `core/` business logic, Repository + UoW, no string-built SQL
+- Secrets in `.env` only; `uploads/` gitignored
+- New backend logic → Pytest; API errors aligned with TZ / `qa-assistant-api`
+- Scope: no features outside TZ + Figma; ask when migrations, auth, or contracts are ambiguous
+- Frontend steps: existing UI rules (`ui-figma-workflow`, React/Tailwind conventions)
+- User gate: do not mark a DZ step done without user OK when the plan requires it
+- Git: commit/push only when the user explicitly asks
+
+## Skills
+
+Use as applicable: `qa-assistant-process` (always), `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`; for FE integration `qa-assistant-ui`, `qa-assistant-react`.
+
+## Before final reply for a DZ step
+
+- [ ] Issue created/updated
+- [ ] `backend_documentation.md` updated (§6 at minimum)
+- [ ] `development_report.md` updated (journal + link)
+- [ ] User reply: Issue link + both docs mentioned
