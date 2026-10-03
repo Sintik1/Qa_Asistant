@@ -873,7 +873,7 @@ Senior Python Developer: проектирование схемы, миграци
 | 8d | DB persistence signup+happy path | [#31](https://github.com/Sintik1/Qa_Asistant/issues/31) | done (awaiting OK) | PostgREST; autonomous API+UI PASS; user docs=2 runs=2 cases=10 |
 | 8e | Единый отчёт Full QA | [#32](https://github.com/Sintik1/Qa_Asistant/issues/32) | done (awaiting OK) | `docs/FULL_QA_REPORT.md` |
 | 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
-| 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (awaiting OK) | локальный стенд; деплой не обязателен |
+| 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed) | локальный стенд; деплой не обязателен |
 
 ---
 
