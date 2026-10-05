@@ -18,7 +18,7 @@ import {
   DEFAULT_PROJECT_ID,
   ERROR_MESSAGES,
 } from '../utils/constants'
-import { isApiConfigured } from '../api'
+import { getHealth, isApiConfigured } from '../api'
 
 /**
  * Главный экран: загрузка → API-генерация → экспорт CSV/DOCX
@@ -52,8 +52,14 @@ export function HomePage() {
     setFormError(null)
   }
 
-  const ensureTokenReady = (): boolean => {
+  const ensureTokenReady = async (): Promise<boolean> => {
     if (generation.apiReady) return true
+    try {
+      const health = await getHealth()
+      if (health.ai?.configured) return true
+    } catch {
+      // fall through to form error
+    }
     setFormError(ERROR_MESSAGES.MISSING_TOKEN)
     return false
   }
@@ -75,7 +81,7 @@ export function HomePage() {
       return
     }
 
-    if (!ensureTokenReady()) return
+    if (!(await ensureTokenReady())) return
 
     await generation.generate(requirements.file, generationContext)
   }
@@ -84,7 +90,7 @@ export function HomePage() {
     if (!requirements.file || isBusy) return
     setFormError(null)
     generation.clearError()
-    if (!ensureTokenReady()) return
+    if (!(await ensureTokenReady())) return
     await generation.generate(requirements.file, generationContext)
   }
 

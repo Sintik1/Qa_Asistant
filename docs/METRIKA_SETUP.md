@@ -48,6 +48,22 @@ SPA pageviews use `ym(id, 'hit', path)` on every React Router change (`MetrikaRo
 
 ## 5. Verify
 
-1. DevTools → Network: requests to `mc.yandex.ru`.
+1. DevTools → Network: requests to `mc.yandex.ru` / `watch/113444012`.
 2. Metrika → Real-time (online) after login / generate / CSV.
 3. Vitest: `npm test -- src/analytics/metrika.test.ts` (no network).
+
+### 5.1. Live verification (2026-10-05)
+
+Counter **`113444012`**, local Vite + Flask.
+
+| Check | Result |
+|-------|--------|
+| Vitest `metrika.test.ts` | **4/4 PASS** |
+| `tag.js` loaded | **PASS** (`mc.yandex.ru/metrika/tag.js`) |
+| `ym(…, 'init')` with id `113444012` | **PASS** |
+| SPA `hit` on `/auth`, `/` | **PASS** (`watch/113444012` in Network) |
+| Goal `auth_login` after demo password login | **PASS** |
+| Goals via `reachGoal` (upload/generate/csv/chat/…) | **PASS** (ym + watch requests) |
+| Metrika JS goals in UI | create once in Metrika → Goals (JS event ids from §3) |
+
+Note: full generate→CSV path may still need working Flask JWT (`SUPABASE_JWT_SECRET` or Auth API reachability). Analytics itself does **not** depend on that — counter + hits + goals are verified independently.

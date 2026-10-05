@@ -106,10 +106,19 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
     let cancelled = false
     void (async () => {
       try {
-        const [health, settings] = await Promise.all([getHealth(), getSettings()])
+        const health = await getHealth()
         if (cancelled) return
-        setChunkSettings(settingsToChunk(settings))
-        setApiReady(Boolean(health.ai?.configured || settings.has_api_token))
+        let hasToken = false
+        try {
+          const settings = await getSettings()
+          if (cancelled) return
+          setChunkSettings(settingsToChunk(settings))
+          hasToken = Boolean(settings.has_api_token)
+        } catch {
+          // Settings may 401 before session is fully ready; health.ai is enough for generate.
+        }
+        if (cancelled) return
+        setApiReady(Boolean(health.ai?.configured || hasToken))
       } catch {
         if (!cancelled) setApiReady(false)
       }

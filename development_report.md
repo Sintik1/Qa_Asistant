@@ -59,7 +59,7 @@
 47. CI/CD ДЗ шаг 1 — GitHub Actions CI — **done (awaiting OK)** (см. [#38](https://github.com/Sintik1/Qa_Asistant/issues/38); CI/CD ДЗ шаг 1 → `cicd_integrations_documentation.md` §2)
 48. CI/CD ДЗ шаг 2 — Security audit — **done (awaiting OK)** remediations applied (см. [#39](https://github.com/Sintik1/Qa_Asistant/issues/39); → `docs/SECURITY_AUDIT.md` + §3)
 49. CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex — **done (awaiting OK)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); → `docs/OAUTH_SETUP.md` + `cicd_integrations_documentation.md` §4)
-50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10); counter `113444012` в `.env.local` + docs
+50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10); counter `113444012`; live verify tag/hit/`auth_login` PASS (`docs/METRIKA_SETUP.md` §5.1)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -631,6 +631,7 @@
 | `AUTH_DEV_BYPASS` мог утечь на Railway | Игнор при PaaS markers / `PUBLIC_DEPLOY` / production ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
 | MCP `issue_write` без Submit (CI/CD ДЗ шаг 0) | `#37` через `~/.local/bin/gh issue create` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Метрика без счётчика ломала бы CI/local | No-op без `VITE_YANDEX_METRIKA_ID`; id только public ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
+| `getSettings` 401 гасил `apiReady` при живом AI | Settings optional; health.ai.configured + live re-check before generate ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 
 ---
 

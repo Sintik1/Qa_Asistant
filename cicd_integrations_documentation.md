@@ -443,7 +443,7 @@ _TBD при выборе B/C._
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
 | 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
 | 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
-| 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | Яндекс.Метрика; → `docs/METRIKA_SETUP.md` §5 |
+| 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | TBD | pending | UptimeRobot (G8 A) |
 | 7 | Логирование | TBD | pending | |
