@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { MetrikaRouteTracker } from './analytics/MetrikaRouteTracker'
 import { AuthProvider } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppLayout } from './components/layout/AppLayout'
@@ -13,6 +14,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <MetrikaRouteTracker />
         <Routes>
           <Route element={<AuthLayout />}>
             <Route path="auth" element={<AuthPage />} />

@@ -16,7 +16,7 @@
 | 1 | CI/CD пайплайн | **done (awaiting OK)** — [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) |
 | 2 | Аудит безопасности | **done (awaiting OK)** — remediations applied [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) |
 | 3 | OAuth2 (Google + Yandex) | **done (awaiting OK)** — [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) |
-| 4 | Аналитика (Яндекс.Метрика) | pending |
+| 4 | Аналитика (Яндекс.Метрика) | **done (awaiting OK)** — [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) |
 | 5 | Платежи (опционально) | **skipped** (G7) |
 | 6 | Мониторинг (UptimeRobot) | pending |
 | 7 | Логирование | pending |
@@ -281,24 +281,48 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) · Гайд: [`do
 
 ## 5. Аналитика
 
-> Заполняется на **шаге 4**.
+**Статус:** done (awaiting OK) — [#41](https://github.com/Sintik1/Qa_Asistant/issues/41).  
+Инструкция: [`docs/METRIKA_SETUP.md`](docs/METRIKA_SETUP.md).
 
 ### 5.1. Сервис
 
-_TBD после G6._
+**Яндекс.Метрика** (G6 = A).
 
-### 5.2. События (черновик)
+- Публичный counter id: `VITE_YANDEX_METRIKA_ID` (Vite FE).
+- Без id → no-op (CI / локально без счётчика).
+- Скрипт: `https://mc.yandex.ru/metrika/tag.js`.
+- SPA: `ym(id, 'hit', path)` на смене React Router (`MetrikaRouteTracker`).
+- Цели: `ym(id, 'reachGoal', name[, params])`.
+- Webvisor **выключен** по умолчанию (меньше PII в сессиях).
 
-| Событие | Когда |
-|---------|-------|
-| `page_view` | роуты Home / Settings / Chat / Auth |
-| `auth_login` / `auth_signup` | успех Auth |
-| `auth_oauth_start` | клик OAuth |
-| `document_upload` | успешный upload |
-| `generate_start` / `generate_success` / `generate_error` | генерация |
-| `csv_download` | скачивание CSV |
+### 5.2. События
 
-Env: `VITE_ANALYTICS_*` (без секретов в клиенте, только public counter id).
+| Событие | Когда | Где |
+|---------|-------|-----|
+| `hit` (page_view) | смена роута | `MetrikaRouteTracker` |
+| `auth_login` | успешный login / OAuth callback | `AuthPage`, `AuthCallbackPage` |
+| `auth_signup` | успешная регистрация | `AuthPage` |
+| `auth_oauth_start` | клик Google/Yandex | `AuthPage` |
+| `document_upload` | успешный `uploadDocument` | `useTestCaseGeneration` |
+| `generate_start` / `generate_success` / `generate_error` | пайплайн генерации | `useTestCaseGeneration` |
+| `csv_download` | экспорт CSV | `useTestCaseGeneration` |
+| `chat_send` | отправка RAG-вопроса | `ChatPage` |
+
+### 5.3. Код
+
+| Файл | Назначение |
+|------|------------|
+| `qa-assistant/src/analytics/metrika.ts` | init / hit / reachGoal |
+| `qa-assistant/src/analytics/MetrikaRouteTracker.tsx` | SPA hits |
+| `qa-assistant/src/analytics/metrika.test.ts` | Vitest |
+
+### 5.4. Env
+
+```env
+VITE_YANDEX_METRIKA_ID=12345678
+```
+
+Только public id. Секреты Metrika API (если понадобятся отчёты с сервера) — только в `.env`, не в `VITE_*`.
 
 ---
 
@@ -363,9 +387,19 @@ _TBD при выборе B/C._
 | Уточнения + gate до кода | Шаг 0 (этот документ) |
 | Генерация CI YAML через AI + ручной review secrets | Шаг 1 |
 | AI security review + `npm audit` / pip-audit | Шаг 2 |
+| SPA analytics wrapper + Vitest no-op without id | Шаг 4 (Метрика) |
 | … | … |
 
 ### 9.3. Примеры промптов и результатов
+
+#### Промпт: шаг 4 — Яндекс.Метрика
+
+**Запрос:** делать по ДЗ, использовать Яндекс.Метрику.
+
+**Результат ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)):**
+- `src/analytics/metrika.ts` + `MetrikaRouteTracker` + goals на Auth/upload/generate/CSV/chat
+- `VITE_YANDEX_METRIKA_ID`, `docs/METRIKA_SETUP.md`
+- Vitest: disabled without id; init + reachGoal when set
 
 #### Промпт: шаг 1 — CI/CD пайплайн
 
@@ -409,7 +443,7 @@ _TBD при выборе B/C._
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
 | 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
 | 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
-| 4 | Аналитика | TBD | pending | Яндекс.Метрика (G6 A) |
+| 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | Яндекс.Метрика; → `docs/METRIKA_SETUP.md` §5 |
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | TBD | pending | UptimeRobot (G8 A) |
 | 7 | Логирование | TBD | pending | |
@@ -418,4 +452,4 @@ _TBD при выборе B/C._
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 3 OAuth2 [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)._
+_Последнее обновление: 2026-10-05 — шаг 4 Яндекс.Метрика [#41](https://github.com/Sintik1/Qa_Asistant/issues/41)._

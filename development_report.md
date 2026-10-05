@@ -59,6 +59,7 @@
 47. CI/CD ДЗ шаг 1 — GitHub Actions CI — **done (awaiting OK)** (см. [#38](https://github.com/Sintik1/Qa_Asistant/issues/38); CI/CD ДЗ шаг 1 → `cicd_integrations_documentation.md` §2)
 48. CI/CD ДЗ шаг 2 — Security audit — **done (awaiting OK)** remediations applied (см. [#39](https://github.com/Sintik1/Qa_Asistant/issues/39); → `docs/SECURITY_AUDIT.md` + §3)
 49. CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex — **done (awaiting OK)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); → `docs/OAUTH_SETUP.md` + `cicd_integrations_documentation.md` §4)
+50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -105,10 +106,21 @@
 | Bypass MCP Issue UI (no Submit) | Issue #36 через `~/.local/bin/gh issue create` |
 | CI/CD ДЗ: отдельный артефакт + gate до кода | Шаг 0: `cicd_integrations_documentation.md` + G1–G9 ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Bypass MCP Issue UI (no Submit) | Issue #37 через `~/.local/bin/gh issue create` |
+| SPA analytics wrapper + Vitest no-op | CI/CD ДЗ шаг 4: Яндекс.Метрика ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: CI/CD ДЗ шаг 4 — Яндекс.Метрика
+
+**Запрос:** делать по ДЗ, использовать Яндекс.Метрику.
+
+**Результат ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)):**
+- `qa-assistant/src/analytics/metrika.ts` + `MetrikaRouteTracker` (SPA `hit`)
+- Goals: auth / upload / generate / csv / chat; env `VITE_YANDEX_METRIKA_ID`
+- Docs: `docs/METRIKA_SETUP.md` + `cicd_integrations_documentation.md` §5
+- Vitest: disabled without id; init + reachGoal when set
 
 ### Промпт: CI/CD ДЗ шаг 2 — security audit
 
@@ -618,12 +630,14 @@
 | Signup rate-limit / invalid email для демо | SQL seed `auth.users` + `scripts/ensure_demo_reviewer.sql` ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
 | `AUTH_DEV_BYPASS` мог утечь на Railway | Игнор при PaaS markers / `PUBLIC_DEPLOY` / production ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
 | MCP `issue_write` без Submit (CI/CD ДЗ шаг 0) | `#37` через `~/.local/bin/gh issue create` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Метрика без счётчика ломала бы CI/local | No-op без `VITE_YANDEX_METRIKA_ID`; id только public ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 
 ---
 
 ## 5. Выводы и рекомендации
 
 0. CI/CD ДЗ: отдельный артефакт `cicd_integrations_documentation.md` + rule; решения G1–G9 до кода; OAuth предпочтительно через Supabase Providers; платежи — optional gate ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+0a. Аналитика: Яндекс.Метрика через тонкий wrapper + SPA `hit`; цели как JS events; Webvisor off по умолчанию ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)).
 0b. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
@@ -714,6 +728,7 @@
 | CI/CD ДЗ шаг 1 — GitHub Actions | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK): `ci.yml`; → §2 |
 | CI/CD ДЗ шаг 2 — Security audit | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK): remediations landed; → `docs/SECURITY_AUDIT.md` |
 | CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK): → `docs/OAUTH_SETUP.md` §4 |
+| CI/CD ДЗ шаг 4 — Яндекс.Метрика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK): → `docs/METRIKA_SETUP.md` + `cicd_integrations_documentation.md` §5/§10 |
 
 ---
 

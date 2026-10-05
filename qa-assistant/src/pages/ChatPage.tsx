@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { trackGoal } from '../analytics/metrika'
 import { chatRequirements, type ChatCitation } from '../api/chat'
 import { messageForApiError, resolveApiError } from '../api/errors'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -26,6 +27,7 @@ export function ChatPage() {
     setError(null)
     setTurns((prev) => [...prev, { role: 'user', text: q }])
     setQuestion('')
+    trackGoal('chat_send')
     try {
       const res = await chatRequirements({
         question: q,

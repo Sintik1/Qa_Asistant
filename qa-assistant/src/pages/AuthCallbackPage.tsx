@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { trackGoal } from '../analytics/metrika'
 import { useAuth } from '../auth/AuthContext'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -37,6 +38,7 @@ export function AuthCallbackPage() {
             setError(message)
             return
           }
+          trackGoal('auth_login', { method: 'oauth' })
           navigate('/', { replace: true })
         })()
         return
@@ -45,6 +47,7 @@ export function AuthCallbackPage() {
 
     // Google / email: wait for supabase session from URL
     if (!loading && user) {
+      trackGoal('auth_login', { method: 'oauth' })
       navigate('/', { replace: true })
     }
   }, [applySessionTokens, loading, navigate, user])

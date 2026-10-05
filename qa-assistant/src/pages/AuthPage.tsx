@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { trackGoal } from '../analytics/metrika'
 import { useAuth } from '../auth/AuthContext'
 import { Button } from '../components/ui/Button'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
@@ -50,6 +51,7 @@ export function AuthPage() {
           setError(message)
           return
         }
+        trackGoal('auth_login', { method: 'password' })
         navigate('/', { replace: true })
         return
       }
@@ -59,6 +61,7 @@ export function AuthPage() {
         setError(message)
         return
       }
+      trackGoal('auth_signup', { method: 'password' })
       setInfo(
         'Регистрация принята. Если включено подтверждение email — проверьте почту, иначе можно сразу войти.',
       )
@@ -77,6 +80,7 @@ export function AuthPage() {
         setError('Для Yandex OAuth задайте VITE_API_BASE_URL (Flask).')
         return
       }
+      trackGoal('auth_oauth_start', { provider })
       const message = await signInWithOAuth(provider)
       if (message) setError(message)
     } finally {

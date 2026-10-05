@@ -18,6 +18,7 @@ import {
   settingsToChunk,
   uploadDocument,
 } from '../api'
+import { trackGoal } from '../analytics/metrika'
 import { ERROR_MESSAGES, NOTIFY_AFTER_MS } from '../utils/constants'
 import { buildCsvFileName } from '../utils/buildCsvFileName'
 import { downloadCsv, type DownloadCsvOptions } from '../utils/csvExport'
@@ -127,6 +128,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
     setError(message)
     setResult(null)
     resultRef.current = null
+    trackGoal('generate_error')
   }, [])
 
   const maybeNotify = useCallback((next: GenerationResult) => {
@@ -176,6 +178,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
       setWarning(null)
       setStatus('extracting')
       setProgressLabel('Извлечение текста.')
+      trackGoal('generate_start')
 
       try {
         const uploaded = await uploadDocument(file.file)
@@ -184,6 +187,9 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
           failGeneration(ERROR_MESSAGES.EMPTY_FILE)
           return
         }
+        trackGoal('document_upload', {
+          document_id: uploaded.document.id.slice(0, 8),
+        })
 
         setStatus('generating')
         setProgressLabel('Генерация тест-кейсов...')
@@ -214,6 +220,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
         resultRef.current = next
         setStatus('success')
         setProgressLabel(null)
+        trackGoal('generate_success', { cases: cases.length })
         maybeNotify(next)
       } catch (err) {
         const resolved = resolveApiError(err)
@@ -252,6 +259,7 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
         buildCsvFileName(ctx.taskName ?? '', ctx.requirementsFileName),
       ),
     )
+    trackGoal('csv_download', { cases: current.cases.length })
     if (built.truncated) {
       setWarning(ERROR_MESSAGES.STEPS_TRUNCATED)
     }
