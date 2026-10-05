@@ -269,6 +269,18 @@ def create_app(testing: bool = False) -> Flask:
         raise UnauthorizedError()
 
     @app.after_request
+    def security_headers(response):
+        """Baseline browser hardening (B1a — no aggressive CSP yet)."""
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()",
+        )
+        return response
+
+    @app.after_request
     def access_log(response):
         if not request.path.startswith("/api/"):
             return response

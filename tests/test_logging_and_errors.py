@@ -87,9 +87,7 @@ def test_analyze_logs_inline_with_mock_ai(client):
     app.extensions["ai_client"] = FakeAi()
     res = c.post(
         "/api/admin/analyze-logs",
-        json={
-            "text": '{"level":"WARNING","error_code":"UNAUTHORIZED","status":401}\n'
-        },
+        json={"text": '{"level":"WARNING","error_code":"UNAUTHORIZED","status":401}\n'},
         headers={"X-User-Id": "u1"},
     )
     assert res.status_code == 200
@@ -114,9 +112,7 @@ def test_analyze_logs_disabled(client, monkeypatch):
 def test_analyze_logs_admin_token(client, monkeypatch):
     monkeypatch.setenv("LOG_ANALYZE_ADMIN_TOKEN", "secret-admin")
     c, app = client
-    app.extensions["ai_client"] = type(
-        "A", (), {"generate": lambda self, s, u: "ok"}
-    )()
+    app.extensions["ai_client"] = type("A", (), {"generate": lambda self, s, u: "ok"})()
 
     denied = c.post(
         "/api/admin/analyze-logs",
@@ -131,6 +127,32 @@ def test_analyze_logs_admin_token(client, monkeypatch):
         headers={"X-User-Id": "u1", "X-Admin-Token": "secret-admin"},
     )
     assert ok.status_code == 200
+
+
+def test_analyze_logs_requires_admin_token_outside_testing(client, monkeypatch):
+    """B2a: without LOG_ANALYZE_ADMIN_TOKEN, non-testing app returns 403."""
+    monkeypatch.delenv("LOG_ANALYZE_ADMIN_TOKEN", raising=False)
+    monkeypatch.setenv("AUTH_DEV_BYPASS", "1")
+    c, app = client
+    app.config["TESTING"] = False
+    app.extensions["ai_client"] = type("A", (), {"generate": lambda self, s, u: "ok"})()
+    res = c.post(
+        "/api/admin/analyze-logs",
+        json={"text": "x"},
+        headers={"X-User-Id": "u1"},
+    )
+    assert res.status_code == 403
+    assert res.get_json()["error"]["code"] == "FORBIDDEN"
+
+
+def test_security_headers_present(client):
+    c, _ = client
+    res = c.get("/api/health")
+    assert res.status_code == 200
+    assert res.headers.get("X-Content-Type-Options") == "nosniff"
+    assert res.headers.get("X-Frame-Options") == "DENY"
+    assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+    assert "camera=()" in (res.headers.get("Permissions-Policy") or "")
 
 
 def test_read_log_tail(tmp_path: Path):

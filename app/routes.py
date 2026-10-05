@@ -15,14 +15,19 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 
 def _require_log_analyze_access() -> None:
-    """Gate for AI log analysis: feature flag + optional admin token."""
+    """Gate for AI log analysis: feature flag + admin token (required outside tests)."""
     if os.getenv("LOG_ANALYZE_ENABLED", "1").strip() == "0":
         raise ForbiddenError()
     expected = os.getenv("LOG_ANALYZE_ADMIN_TOKEN", "").strip()
-    if expected:
-        provided = request.headers.get("X-Admin-Token", "").strip()
-        if provided != expected:
-            raise ForbiddenError()
+    testing = bool(current_app.config.get("TESTING"))
+    if not expected:
+        # Pytest convenience only — production/local must set LOG_ANALYZE_ADMIN_TOKEN.
+        if testing:
+            return
+        raise ForbiddenError()
+    provided = request.headers.get("X-Admin-Token", "").strip()
+    if provided != expected:
+        raise ForbiddenError()
 
 
 def _svc(name: str):

@@ -46,7 +46,7 @@ export const ERROR_MESSAGES = {
   GENERATION_DONE_NOTIFY: 'Генерация завершена. Скачать результат?',
 } as const
 
-/** Ключ localStorage для mock API-токена (до появления бэкенда). */
+/** Legacy key — cleared on Settings mount; do not store secrets here. */
 export const API_TOKEN_STORAGE_KEY = 'qa_assistant_api_token'
 
 /** Порог длительности генерации для уведомления (S3). */

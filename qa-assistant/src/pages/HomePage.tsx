@@ -15,7 +15,6 @@ import { ProgressBar } from '../components/ui/ProgressBar'
 import { useFileUpload } from '../hooks/useFileUpload'
 import { useTestCaseGeneration } from '../hooks/useTestCaseGeneration'
 import {
-  API_TOKEN_STORAGE_KEY,
   DEFAULT_PROJECT_ID,
   ERROR_MESSAGES,
 } from '../utils/constants'
@@ -54,8 +53,6 @@ export function HomePage() {
   }
 
   const ensureTokenReady = (): boolean => {
-    const localToken = localStorage.getItem(API_TOKEN_STORAGE_KEY)?.trim()
-    if (localToken) return true
     if (generation.apiReady) return true
     setFormError(ERROR_MESSAGES.MISSING_TOKEN)
     return false

@@ -3,7 +3,7 @@
 **Дата:** 2026-10-05  
 **Issue:** [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Эпик [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)  
 **Метод:** `npm audit`, `pip-audit`, ручной + AI-разбор кода (OWASP Top 10)  
-**Статус:** отчёт готов; **фиксы не применены** — ждут согласования
+**Статус:** remediations **применены** (gate A2+B1a+B2a+B3a+B4b+B5b+C1+C2)
 
 Сводка также в [`cicd_integrations_documentation.md`](../cicd_integrations_documentation.md) §3.
 
@@ -133,12 +133,22 @@ Prod + dev дерево: без critical/high/moderate/low на момент а�
 
 ---
 
-## 7. Следующий шаг
+## 7. Remediations applied (2026-10-05)
 
-Ответь, например:
+| Package | Action |
+|---------|--------|
+| A2 | `flask-cors>=6`; dotenv/click/anyio/pytest fixed on Python ≥3.10 (CI 3.11); markers for 3.9 residual |
+| B1a | Headers: `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` |
+| B2a | `LOG_ANALYZE_ADMIN_TOKEN` required when not `TESTING` |
+| B3a | Settings: no secret in localStorage; purge legacy key; Home uses `apiReady` only |
+| B4b / B5b | skipped as agreed |
+| C1 | CI: `npm audit --audit-level=high`, `pip-audit` |
+| C2 | README § Security |
 
-```text
-OK: A2, B1a, B2a, B3a, B4b, B5b, C1, C2
-```
+Verify: pytest **101** (excl ui/security), vitest **78**, build OK.
 
-или свой набор ID. После согласования — реализация, тесты, commit/push, обновление журнала.
+---
+
+## 8. Следующий шаг
+
+Шаг 2 закрывается после OK пользователя → далее **шаг 3 OAuth2**.

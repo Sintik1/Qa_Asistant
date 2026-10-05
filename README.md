@@ -209,9 +209,21 @@ cd qa-assistant && npm test && npm run build
 
 ### CI (GitHub Actions)
 
-На каждый push/PR в `main`/`master`: lint → test → build (frontend + backend). Auto-deploy **выключен** (локальный Flask/Ollama) — см. [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) §2 · Issue [#38](https://github.com/Sintik1/Qa_Asistant/issues/38).
+На каждый push/PR в `main`/`master`: lint → test → build (frontend + backend) + **npm audit** / **pip-audit**. Auto-deploy **выключен** (локальный Flask/Ollama) — см. [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) §2 · Issue [#38](https://github.com/Sintik1/Qa_Asistant/issues/38).
 
 Локально повторить CI: §2.3 в том же документе.
+
+### Security
+
+Аудит и remediations: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) · Issue [#39](https://github.com/Sintik1/Qa_Asistant/issues/39).
+
+| Мера | Где |
+|------|-----|
+| JWT + RLS; `AUTH_DEV_BYPASS` hard-disable на PaaS | Flask / Supabase |
+| Security headers (`nosniff`, `DENY` frame, Referrer-Policy) | Flask `after_request` |
+| Admin log analysis | `LOG_ANALYZE_ADMIN_TOKEN` + `X-Admin-Token` (обязателен вне tests) |
+| AI token | только server `.env`; UI не пишет секреты в `localStorage` |
+| Deps | `npm audit` / `pip-audit` в CI |
 
 ---
 

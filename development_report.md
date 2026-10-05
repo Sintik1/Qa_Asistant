@@ -57,7 +57,7 @@
 45. RAG независимая проверка + автотесты (user scenarios) — **done (awaiting OK)** (см. [#36](https://github.com/Sintik1/Qa_Asistant/issues/36); pytest **31**, vitest **3**, live smoke memory+Supabase **PASS**)
 46. CI/CD + integrations ДЗ — workflow + `cicd_integrations_documentation.md` — **done (awaiting OK)** шаг 0 (см. [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); G1 A, **G2 C**, **G3 N/A**, G4 local, G5 C, G6 A, G7 skip, G8 A)
 47. CI/CD ДЗ шаг 1 — GitHub Actions CI — **done (awaiting OK)** (см. [#38](https://github.com/Sintik1/Qa_Asistant/issues/38); CI/CD ДЗ шаг 1 → `cicd_integrations_documentation.md` §2)
-48. CI/CD ДЗ шаг 2 — Security audit — **audit done, remediations awaiting OK** (см. [#39](https://github.com/Sintik1/Qa_Asistant/issues/39); → `docs/SECURITY_AUDIT.md` + `cicd_integrations_documentation.md` §3)
+48. CI/CD ДЗ шаг 2 — Security audit — **done (awaiting OK)** remediations applied (см. [#39](https://github.com/Sintik1/Qa_Asistant/issues/39); → `docs/SECURITY_AUDIT.md` + §3)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -114,9 +114,9 @@
 **Запрос:** Senior security; npm audit / pip-audit; OWASP; AI review; сначала отчёт → варианты → после OK фиксы.
 
 **Результат ([#39](https://github.com/Sintik1/Qa_Asistant/issues/39)):**
-- `npm audit`: 0; `pip-audit`: 8 advisories (flask-cors High)
-- OWASP: XSS/CSRF/SQLi низкий риск; gaps — headers, admin analyze-logs, legacy localStorage, CI audit
-- Отчёт: `docs/SECURITY_AUDIT.md`; фиксы не применены (gate)
+- Отчёт → gate `делай` → remediations A2/B1a/B2a/B3a/C1/C2
+- flask-cors 6; security headers; admin token gate; Settings без localStorage secrets; CI audits
+- pytest 101 / vitest 78
 
 ### Промпт: CI/CD + integrations ДЗ — план и каркас документации
 
@@ -701,7 +701,7 @@
 | RAG verify + autotests (user scenarios) | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK): pytest 31 / vitest 3 / live smoke PASS; → `backend_documentation.md` §5.11 |
 | CI/CD + integrations ДЗ — workflow + docs | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | шаг 0 done (awaiting OK): G2=C CI-only; → `cicd_integrations_documentation.md` §0/§10 |
 | CI/CD ДЗ шаг 1 — GitHub Actions | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK): `ci.yml`; → §2 |
-| CI/CD ДЗ шаг 2 — Security audit | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | audit done (awaiting remediations OK); → `docs/SECURITY_AUDIT.md` |
+| CI/CD ДЗ шаг 2 — Security audit | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK): remediations landed; → `docs/SECURITY_AUDIT.md` |
 
 ---
 

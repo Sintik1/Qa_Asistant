@@ -14,7 +14,7 @@
 |-----|-----------|--------|
 | 0 | Каркас документа + план + уточнения | **done (awaiting OK)** — все G1–G9 locked |
 | 1 | CI/CD пайплайн | **done (awaiting OK)** — [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) |
-| 2 | Аудит безопасности | **audit done — awaiting remediations OK** — [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) |
+| 2 | Аудит безопасности | **done (awaiting OK)** — remediations applied [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) |
 | 3 | OAuth2 (Google + Yandex) | pending |
 | 4 | Аналитика (Яндекс.Метрика) | pending |
 | 5 | Платежи (опционально) | **skipped** (G7) |
@@ -236,14 +236,15 @@ Issue: [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Полный �
 
 | ID | Severity | Находка | Исправление |
 |----|----------|---------|-------------|
-| D1 | High | flask-cors 5.0.1 (3 CVE) | ⏳ gate → bump ≥6.0 |
-| D2 | Low–Med | dotenv / pytest / click / anyio | ⏳ gate → bump |
-| C1 | Medium | нет security headers | ⏳ gate → B1a |
-| C2 | Medium | analyze-logs без обязательного admin token | ⏳ gate → B2a |
-| C3 | Low | Settings пишет token в localStorage | ⏳ gate → B3a |
-| C4 | Low | нет audit в CI | ⏳ gate → C1 |
+| D1 | High | flask-cors 5.0.1 (3 CVE) | ✅ `flask-cors>=6.0,<7` |
+| D2 | Low–Med | dotenv / pytest / click / anyio | ✅ pins с markers (≥3.10 = fixed; CI Python **3.11**) |
+| C1 | Medium | нет security headers | ✅ B1a в `app/__init__.py` |
+| C2 | Medium | analyze-logs без обязательного admin token | ✅ B2a — token required вне `TESTING` |
+| C3 | Low | Settings писал token в localStorage | ✅ B3a — только `has_api_token` + purge legacy key |
+| C4 | Low | нет audit в CI | ✅ C1 — `npm audit` + `pip-audit` в `ci.yml` |
+| — | — | README Security | ✅ C2 |
 
-Фиксы **не применены** до ответа пользователя по вариантам в `docs/SECURITY_AUDIT.md` §5.
+Полный отчёт: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md). Gate: **A2+B1a+B2a+B3a+B4b+B5b+C1+C2**.
 
 ---
 
@@ -401,7 +402,7 @@ _TBD при выборе B/C._
 |--------|------|-------|--------|------------|
 | 0 | План + каркас `cicd_integrations_documentation.md` | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | G1 A; **G2 C**; **G3 N/A**; G4 local; G5 C; G6 A; G7 skip; G8 A; G9 agent |
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
-| 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | audit done (awaiting remediations) | отчёт `docs/SECURITY_AUDIT.md`; фиксы после OK |
+| 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
 | 3 | OAuth2 | TBD | pending | Google + Yandex (G5 C) |
 | 4 | Аналитика | TBD | pending | Яндекс.Метрика (G6 A) |
 | 5 | Платежи | — | **skipped** | G7 |
@@ -412,4 +413,4 @@ _TBD при выборе B/C._
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 2 security audit report [#39](https://github.com/Sintik1/Qa_Asistant/issues/39)._
+_Последнее обновление: 2026-10-05 — шаг 2 remediations [#39](https://github.com/Sintik1/Qa_Asistant/issues/39)._

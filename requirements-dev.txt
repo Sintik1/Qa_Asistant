@@ -1,3 +1,4 @@
-# Local / CI dev tools (optional; CI also pip-installs ruff)
+# Local / CI dev tools
 -r requirements.txt
 ruff>=0.9,<1
+pip-audit>=2.7,<3
