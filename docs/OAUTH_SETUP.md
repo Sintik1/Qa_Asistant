@@ -2,7 +2,7 @@
 
 Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)
 
-Секреты хранятся **только** в корневом `.env` (gitignored). Никогда в `VITE_*`, никогда в git.
+Секреты хранятся **только** в корневом `.env` (gitignored). Никогда в `VITE_*`, никогда в git, Issues или чат.
 
 ## Архитектура
 
@@ -13,7 +13,7 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)
 
 Общий endpoint профиля: `GET /api/auth/me` (Bearer JWT).
 
-> Оба провайдера идут через **Flask** (не требуют включения Google в Supabase Dashboard Providers). Нужен `SUPABASE_SERVICE_ROLE_KEY` (или новый `sb_secret_…`) для создания сессии.
+> Оба провайдера идут через **Flask** (не требуют включения Google в Supabase Dashboard Providers). Нужен server-only `SUPABASE_SERVICE_ROLE_KEY` (Dashboard → Settings → API) для создания сессии.
 
 ## 1. Google Cloud Console
 
@@ -22,7 +22,7 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)
 3. Authorized redirect URIs (обязательно):
    - `http://127.0.0.1:5001/api/auth/oauth/google/callback`
 4. (Опционально origins) `http://127.0.0.1:5173`  
-5. Client ID / Secret → `.env` (`GOOGLE_*`) или:
+5. Client ID / Secret → только `.env` (`GOOGLE_*`):
 
 ```bash
 python3 scripts/save_oauth_secrets.py
@@ -33,16 +33,16 @@ python3 scripts/save_oauth_secrets.py
 1. https://oauth.yandex.ru/client/new  
 2. Callback URI: `http://127.0.0.1:5001/api/auth/oauth/yandex/callback`  
 3. Права: `login:email`, `login:info`  
-4. ID / пароль → `.env` (`YANDEX_*`)
+4. ID / пароль → только `.env` (`YANDEX_*`) через `scripts/save_oauth_secrets.py`
 
 ## 3. Supabase (только service key)
 
-В `.env`:
+В `.env` (не коммитить):
 
 ```bash
-SUPABASE_URL=https://revyywfeeqdmlgrbakpj.supabase.co
-SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...   # legacy JWT service_role ИЛИ sb_secret_…
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_ANON_KEY=...                 # publishable / anon (можно в VITE_*)
+SUPABASE_SERVICE_ROLE_KEY=...         # server-only
 OAUTH_API_PUBLIC_URL=http://127.0.0.1:5001
 OAUTH_PUBLIC_APP_URL=http://127.0.0.1:5173
 ```
@@ -67,6 +67,8 @@ cd qa-assistant && npm test -- AuthPage.test.tsx
 | Правило | Как соблюдено |
 |---------|----------------|
 | Secret не в FE | только server `.env` |
-| Secret не в git | `.env` gitignored |
+| Secret не в git | `.env` gitignored; в репо только placeholders в `.env.example` |
+| Secret не в чат/Issues | вставлять через `save_oauth_secrets.py` или редактор `.env` |
+| Утечка в чат | **перевыпустить** ключи в консолях провайдеров |
 | State CSRF | one-time `state` per provider |
 | Tokens в URL | fragment `#`, не query |
