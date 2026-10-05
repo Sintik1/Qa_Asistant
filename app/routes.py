@@ -7,9 +7,10 @@ import os
 from flask import Blueprint, current_app, g, jsonify, request
 
 from core.errors import AppError, ForbiddenError, ValidationError
+from core.health import build_health_payload
 from core.log_analyzer import analyze_log_file, analyze_log_text
 from core.models import CreateDocumentCommand, CreateRunCommand, UpdateTestCaseCommand
-from integrations.ai_client import ai_status_dict, build_ai_client
+from integrations.ai_client import build_ai_client
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -36,23 +37,13 @@ def _svc(name: str):
 
 @api_bp.get("/health")
 def health():
-    emb = current_app.extensions.get("embedding_settings")
-    rag = current_app.extensions.get("rag_service")
-    return jsonify(
-        {
-            "status": "ok",
-            "api": "qa-assistant",
-            "mode": "hybrid-c",
-            "persist": current_app.extensions.get("persist_mode", "memory"),
-            "ai": ai_status_dict(),
-            "rag": {
-                "enabled": bool(rag and getattr(rag, "enabled", False)),
-                "embedding_provider": getattr(emb, "provider", None),
-                "embedding_model": getattr(emb, "model", None),
-                "embedding_dims": getattr(emb, "dims", None),
-            },
-        }
-    )
+    """Public liveness/readiness for UptimeRobot and local watchers.
+
+    Always HTTP 200 when the process is up; ``status`` may be ``ok`` / ``degraded`` / ``fail``.
+    UptimeRobot keyword monitor: expect ``\"status\":\"ok\"`` or ``\"api\":\"qa-assistant\"``.
+    """
+    payload = build_health_payload(current_app)
+    return jsonify(payload)
 
 
 @api_bp.post("/ai/ping")

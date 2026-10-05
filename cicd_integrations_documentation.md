@@ -18,7 +18,7 @@
 | 3 | OAuth2 (Google + Yandex) | **done (awaiting OK)** — [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) |
 | 4 | Аналитика (Яндекс.Метрика) | **done (awaiting OK)** — [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) |
 | 5 | Платежи (опционально) | **skipped** (G7) |
-| 6 | Мониторинг (UptimeRobot) | pending |
+| 6 | Мониторинг (UptimeRobot) | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 7 | Логирование | pending |
 | 8 | Тестирование и оптимизация | pending |
 | 9 | Оформление + README | pending |
@@ -342,17 +342,39 @@ _TBD при выборе B/C._
 
 ## 7. Мониторинг и Health Check
 
-> Заполняется на **шагах 6** (и частично 1 при деплое).
+**Статус:** in progress — [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) (шаг 6; отдельная Issue-форма MCP недоступна в UI).  
+Инструкция: [`docs/UPTIME_SETUP.md`](docs/UPTIME_SETUP.md).
 
-### 7.1. Существующий endpoint
+### 7.1. Endpoint
 
-`GET /api/health` — публичный; отчёт о `persist`, AI, RAG.
+`GET /api/health` — публичный (без JWT). HTTP **200**, пока процесс жив.
 
-### 7.2. План усиления
+Payload (`core/health.py`):
 
-- Расширить checks: БД (Supabase ping), AI ping (опционально soft-fail), disk/uploads.
-- Внешний uptime (UptimeRobot и т.п.) → URL health.
-- Алерты: email/Telegram при downtime.
+| Поле | Смысл |
+|------|--------|
+| `status` | `ok` / `degraded` / `fail` |
+| `api` | всегда `qa-assistant` (keyword для UptimeRobot) |
+| `checks.app` | процесс |
+| `checks.disk` | free space на `uploads/` |
+| `checks.db` | soft ping PostgREST (если `persist=supabase`) |
+| `checks.ai` | configured provider/model |
+
+### 7.2. UptimeRobot (G8=A)
+
+При публичном URL: HTTP(s) monitor → `/api/health`, keyword `qa-assistant`, alert email.  
+Пока G2=C (localhost) — внешний монитор не видит API; использовать локальный watcher.
+
+### 7.3. Локальный watcher
+
+```bash
+python scripts/watch_health.py
+INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
+```
+
+### 7.4. Тесты
+
+`tests/test_health_monitoring.py` — контракт `checks` + keyword.
 
 ---
 
@@ -388,9 +410,20 @@ _TBD при выборе B/C._
 | Генерация CI YAML через AI + ручной review secrets | Шаг 1 |
 | AI security review + `npm audit` / pip-audit | Шаг 2 |
 | SPA analytics wrapper + Vitest no-op without id | Шаг 4 (Метрика) |
+| Health checks + local watcher (G2=C) | Шаг 6 (UptimeRobot) |
 | … | … |
 
 ### 9.3. Примеры промптов и результатов
+
+#### Промпт: шаг 6 — мониторинг
+
+**Запрос:** подтверждаю / переходим дальше (после Метрики).
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- `core/health.py` + `checks` в `GET /api/health`
+- `docs/UPTIME_SETUP.md`, `scripts/watch_health.py`
+- Pytest `tests/test_health_monitoring.py`
+- MCP Create Issue UI недоступен у пользователя → трекинг в эпике #37
 
 #### Промпт: шаг 4 — Яндекс.Метрика
 
@@ -445,11 +478,11 @@ _TBD при выборе B/C._
 | 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
 | 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
 | 5 | Платежи | — | **skipped** | G7 |
-| 6 | Мониторинг | TBD | pending | UptimeRobot (G8 A) |
+| 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7 |
 | 7 | Логирование | TBD | pending | |
 | 8 | Тесты + оптимизация | TBD | pending | |
 | 9 | Docs + README | TBD | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 4 Яндекс.Метрика [#41](https://github.com/Sintik1/Qa_Asistant/issues/41)._
+_Последнее обновление: 2026-10-05 — шаг 6 мониторинг (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._
