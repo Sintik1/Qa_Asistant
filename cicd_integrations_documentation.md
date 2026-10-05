@@ -478,7 +478,7 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
 | 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
 | 5 | Платежи | — | **skipped** | G7 |
-| 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7 |
+| 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |
 | 7 | Логирование | TBD | pending | |
 | 8 | Тесты + оптимизация | TBD | pending | |
 | 9 | Docs + README | TBD | pending | |
