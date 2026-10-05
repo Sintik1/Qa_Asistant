@@ -9,7 +9,9 @@
 | Документ | Назначение |
 |----------|------------|
 | [`backend_documentation.md`](backend_documentation.md) | **Сдача Backend ДЗ:** архитектура, развёртывание, API, примеры, AI-процесс |
+| [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) | **Сдача CI/CD + integrations ДЗ:** пайплайн, security, OAuth, аналитика, мониторинг |
 | [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт: API + UI + DB (вердикт PASS) |
+| [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) | **Как пользоваться RAG:** документы, кейсы, чистка, Table Editor |
 | [`development_report.md`](development_report.md) | Журнал стадий + GitHub Issues |
 | [`technical_specification.md`](technical_specification.md) | Техническое задание |
 
@@ -205,6 +207,12 @@ pytest tests/test_api_smoke.py tests/test_api_error_contract.py tests/test_busin
 cd qa-assistant && npm test && npm run build
 ```
 
+### CI (GitHub Actions)
+
+На каждый push/PR в `main`/`master`: lint → test → build (frontend + backend). Auto-deploy **выключен** (локальный Flask/Ollama) — см. [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) §2 · Issue [#38](https://github.com/Sintik1/Qa_Asistant/issues/38).
+
+Локально повторить CI: §2.3 в том же документе.
+
 ---
 
 ## Структура репозитория
@@ -218,6 +226,7 @@ cd qa-assistant && npm test && npm run build
 | `integrations/` | AI client (Ollama / Leopold) |
 | `supabase/migrations/` | SQL схема Variant B + RLS |
 | `tests/` | Pytest + Selenium |
+| `.github/workflows/` | GitHub Actions (`ci.yml`) |
 | `docs/` | QA-отчёты |
 | `backend_documentation.md` | Документация Backend ДЗ |
 | `docker-compose.yml` | UI-образ на порту 8080 |

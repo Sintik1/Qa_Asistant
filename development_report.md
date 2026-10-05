@@ -54,6 +54,9 @@
 42. README для проверяющего (локальный стенд без публичного деплоя) — **done** (см. [#34](https://github.com/Sintik1/Qa_Asistant/issues/34), closed)
 43. Рекомендации проверяющего (демо-вход, Table Editor, bypass, compose, screencast) — **done** (см. [#35](https://github.com/Sintik1/Qa_Asistant/issues/35), closed; `ddd6fcf`)
 44. RAG на Supabase (pgvector) + section-parser + chat — **done (awaiting OK)** (см. [#36](https://github.com/Sintik1/Qa_Asistant/issues/36); Backend → `backend_documentation.md` §1/§3/§6)
+45. RAG независимая проверка + автотесты (user scenarios) — **done (awaiting OK)** (см. [#36](https://github.com/Sintik1/Qa_Asistant/issues/36); pytest **31**, vitest **3**, live smoke memory+Supabase **PASS**)
+46. CI/CD + integrations ДЗ — workflow + `cicd_integrations_documentation.md` — **done (awaiting OK)** шаг 0 (см. [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); G1 A, **G2 C**, **G3 N/A**, G4 local, G5 C, G6 A, G7 skip, G8 A)
+47. CI/CD ДЗ шаг 1 — GitHub Actions CI — **done (awaiting OK)** (см. [#38](https://github.com/Sintik1/Qa_Asistant/issues/38); CI/CD ДЗ шаг 1 → `cicd_integrations_documentation.md` §2)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -98,10 +101,32 @@
 | Submission doc sync | Шаг 9: итоговый блок в `backend_documentation.md` + README под реальный стек ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
 | Structure-aware parse + RAG design | Leaf-section parser → pgvector index → style/multi-doc/chat ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | Bypass MCP Issue UI (no Submit) | Issue #36 через `~/.local/bin/gh issue create` |
+| CI/CD ДЗ: отдельный артефакт + gate до кода | Шаг 0: `cicd_integrations_documentation.md` + G1–G9 ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Bypass MCP Issue UI (no Submit) | Issue #37 через `~/.local/bin/gh issue create` |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: CI/CD + integrations ДЗ — план и каркас документации
+
+**Запрос:** Senior developer; пошаговое ДЗ CI/CD / security / OAuth / analytics / payments / monitoring / logging; сначала уточнения; отдельный артефакт как `backend_documentation.md`; трекинг в Issues + `development_report.md`; план; MCP только по согласованию; шаги — отдельными промптами.
+
+**Результат ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- Создан `cicd_integrations_documentation.md` (разделы 0–10, gate G1–G9)
+- Rule `.cursor/rules/cicd-integrations-dz.mdc` (`alwaysApply`)
+- MCP Issue form без Submit → Issue через `~/.local/bin/gh`
+- CI/CD ДЗ шаг 0 → `cicd_integrations_documentation.md` §10
+
+### Промпт: протестируй RAG + покрой автотестами + user scenarios
+
+**Запрос:** самостоятельно проверить, что RAG работает; покрыть тестами/автотестами; проверить пользовательские сценарии.
+
+**Результат ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)):**
+- Live: `scripts/live_rag_smoke.py` — memory PASS; Supabase+demo JWT+Ollama PASS (upload→templates→chat citations→generate→index-cases)
+- Pytest: unit + API user scenarios (chat, templates enrich, multi-doc, no auto-index, hierarchical leaves) — **31**
+- Vitest: `chat.test.ts` + `ChatPage.test.tsx` — **3**
+- Backend ДЗ → `backend_documentation.md` §5.11 / §6
 
 ### Промпт: RAG все сценарии + парсер ТЗ
 
@@ -502,6 +527,9 @@
 | Проблема | Решение |
 |----------|---------|
 | MCP `issue_write` без кнопки Submit | Issue через `~/.local/bin/gh issue create` ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| Auto-index AI cases в RAG отравляет few-shot | Убран auto после generate; только `POST /api/rag/index-cases` / templates ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| Live upload + `AUTH_DEV_BYPASS` → RLS 401 на `documents` | Нет `SUPABASE_SERVICE_ROLE_KEY` в `.env` → anon; smoke с JWT demo.reviewer |
+| Leopold `API_EMPTY` ломал live generate | Smoke: Ollama 1.5b; fallback seed `test_cases` + `index-cases` |
 | DOCX таблицы отрывались от разделов | Extract в порядке body; Heading→`##` для парсера |
 | ТЗ без `3.1`, только Heading 2/3/4 | Hybrid parser: Word styles + явная нумерация |
 | pgvector `<=>` в schema `extensions` | RPC `set search_path = public, extensions` |
@@ -568,12 +596,14 @@
 | README всё ещё описывал «только mock frontend» | Шаг 9: переписан под FE+Flask+Supabase + ссылка на `backend_documentation.md` ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)) |
 | Signup rate-limit / invalid email для демо | SQL seed `auth.users` + `scripts/ensure_demo_reviewer.sql` ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
 | `AUTH_DEV_BYPASS` мог утечь на Railway | Игнор при PaaS markers / `PUBLIC_DEPLOY` / production ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)) |
+| MCP `issue_write` без Submit (CI/CD ДЗ шаг 0) | `#37` через `~/.local/bin/gh issue create` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 
 ---
 
 ## 5. Выводы и рекомендации
 
-0. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
+0. CI/CD ДЗ: отдельный артефакт `cicd_integrations_documentation.md` + rule; решения G1–G9 до кода; OAuth предпочтительно через Supabase Providers; платежи — optional gate ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+0b. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
 3. Issues + `development_report.md` обновлять сразу при закрытии шага.
@@ -609,6 +639,8 @@
 33. Сдача ДЗ: один вход — `backend_documentation.md` (архитектура/деплой/API/примеры) + README со стеком FE+BE; не оставлять в README формулировку «только mock» ([#33](https://github.com/Sintik1/Qa_Asistant/issues/33)).
 34. Без бюджета на VPS: для проверяющего достаточно инструкций + FULL_QA + воспроизводимый локальный стенд; публичный URL не обязателен ([#34](https://github.com/Sintik1/Qa_Asistant/issues/34)).
 35. Feedback: compose UI-only явно; демо-login + Table Editor checklist; `AUTH_DEV_BYPASS` hard-disable на PaaS; деплой/скринкаст — опция ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)).
+36. RAG: pytest user-scenarios + `live_rag_smoke.py` (memory и Supabase JWT); для cloud live нужен JWT или `SUPABASE_SERVICE_ROLE_KEY`, не только bypass ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
+37. CI/CD ДЗ: фиксировать в `cicd_integrations_documentation.md` + Issues; MCP Issue без Submit → `~/.local/bin/gh`; новые MCP только после OK ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 
 ---
 
@@ -655,7 +687,10 @@
 | Backend ДЗ шаг 9 — docs + README | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed): `backend_documentation.md` + `README.md`; → §5.10 / §6 |
 | README для проверяющего (без деплоя) | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed): блок в корневом README |
 | Reviewer feedback (demo + bypass) | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed): demo/checklist/bypass + screencast; commit `ddd6fcf` |
-| RAG + section parser (style/multi-doc/chat) | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK): pgvector + Chat UI; → `backend_documentation.md` §6 |
+| RAG + section parser (style/multi-doc/chat) | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK): pgvector + Chat UI; guide → [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) |
+| RAG verify + autotests (user scenarios) | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK): pytest 31 / vitest 3 / live smoke PASS; → `backend_documentation.md` §5.11 |
+| CI/CD + integrations ДЗ — workflow + docs | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | шаг 0 done (awaiting OK): G2=C CI-only; → `cicd_integrations_documentation.md` §0/§10 |
+| CI/CD ДЗ шаг 1 — GitHub Actions | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK): `ci.yml`; → §2 |
 
 ---
 
@@ -681,6 +716,7 @@
 
 - `.cursor/rules/process-tracking.mdc` — **alwaysApply: true** (§10–11)
 - `.cursor/rules/backend-homework-dz.mdc` — **alwaysApply: true** (§12, backend ДЗ + все прочие rules)
+- `.cursor/rules/cicd-integrations-dz.mdc` — **alwaysApply: true** (CI/CD + integrations ДЗ → `cicd_integrations_documentation.md`)
 - `.cursor/rules/ui-figma-workflow.mdc`
 - `.cursor/rules/backend-data-workflow.mdc`
 

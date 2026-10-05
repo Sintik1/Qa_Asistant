@@ -117,10 +117,7 @@ class SupabaseDocumentStorage:
             return None
         user_id, document_id = parts[1], parts[2]
         object_path = f"{user_id}/{document_id}/extracted.txt"
-        url = (
-            f"{self.base_url.rstrip('/')}/storage/v1/object/"
-            f"{self.bucket}/{quote(object_path, safe='/')}"
-        )
+        url = f"{self.base_url.rstrip('/')}/storage/v1/object/{self.bucket}/{quote(object_path, safe='/')}"
         headers = {
             "Authorization": f"Bearer {self.service_role_key}",
             "apikey": self.service_role_key,
@@ -135,10 +132,7 @@ class SupabaseDocumentStorage:
         return response.text
 
     def _put_object(self, object_path: str, data: bytes, content_type: str) -> None:
-        url = (
-            f"{self.base_url.rstrip('/')}/storage/v1/object/"
-            f"{self.bucket}/{quote(object_path, safe='/')}"
-        )
+        url = f"{self.base_url.rstrip('/')}/storage/v1/object/{self.bucket}/{quote(object_path, safe='/')}"
         headers = {
             "Authorization": f"Bearer {self.service_role_key}",
             "apikey": self.service_role_key,
@@ -148,9 +142,7 @@ class SupabaseDocumentStorage:
         with httpx.Client(timeout=120.0) as client:
             response = client.post(url, headers=headers, content=data)
         if response.status_code >= 400:
-            raise RuntimeError(
-                f"Supabase Storage upload failed: {response.status_code} {response.text[:200]}"
-            )
+            raise RuntimeError(f"Supabase Storage upload failed: {response.status_code} {response.text[:200]}")
 
 
 def build_document_storage(*, testing: bool = False) -> DocumentStorage:

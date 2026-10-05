@@ -116,3 +116,62 @@ def test_templates_and_style_enrich_generate():
     joined = "\n".join(seen_prompts)
     assert "CRM" in joined
     assert gen.get_json()["run"]["case_count"] >= 1
+
+
+def test_generate_does_not_auto_index_cases_into_rag():
+    """AI output must not poison case_chunks until explicit review index."""
+    application = create_app(testing=True)
+    client = application.test_client()
+    headers = {"X-User-Id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc"}
+
+    class FakeAi:
+        def generate(self, system_prompt: str, user_content: str) -> str:
+            return (
+                "Name,Status,Step,Expected Result\n"
+                "Bad AI case,Approved,Do wrong thing,Wrong ok\n"
+            )
+
+    application.extensions["ai_client"] = FakeAi()
+    doc = client.post(
+        "/api/documents",
+        json={"original_filename": "s.md", "size_bytes": 64},
+        headers=headers,
+    ).get_json()
+    run = client.post(
+        "/api/runs",
+        json={"document_id": doc["id"]},
+        headers=headers,
+    ).get_json()
+    gen = client.post(
+        f"/api/runs/{run['id']}/generate",
+        json={"requirements_text": "## 1. Auth\n1. Login with email\n"},
+        headers=headers,
+    )
+    assert gen.status_code == 200
+    cases = gen.get_json()["items"]
+    assert cases
+
+    # Memory case-chunk repo should still be empty for this user until opt-in.
+    case_repo = application.extensions["rag_service"]._cases  # noqa: SLF001
+    before = case_repo.match(
+        user_id=headers["X-User-Id"],
+        query_embedding=application.extensions["embedding_client"].embed("login"),
+        match_count=10,
+        source_types=["approved_case"],
+    )
+    assert before == []
+
+    indexed = client.post(
+        "/api/rag/index-cases",
+        json={"case_ids": [cases[0]["id"]]},
+        headers=headers,
+    )
+    assert indexed.status_code == 200
+    assert indexed.get_json()["indexed"] == 1
+    after = case_repo.match(
+        user_id=headers["X-User-Id"],
+        query_embedding=application.extensions["embedding_client"].embed("login"),
+        match_count=10,
+        source_types=["approved_case"],
+    )
+    assert len(after) >= 1

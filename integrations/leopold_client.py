@@ -27,9 +27,7 @@ class LeopoldClient:
         token = os.getenv("QA_ASISTANT_API_TOKEN", "").strip()
         if not url or not token:
             return None
-        model = (
-            os.getenv("QA_ASISTANT_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
-        )
+        model = os.getenv("QA_ASISTANT_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL
         client = build_ai_client(
             AiSettings(
                 provider="leopold",

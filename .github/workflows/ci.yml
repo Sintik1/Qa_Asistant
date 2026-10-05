@@ -1,0 +1,87 @@
+# QA Assistant — CI (gate G2=C: no auto-deploy to hosting; local Flask + Ollama).
+# See cicd_integrations_documentation.md §2.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (lint, test, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: qa-assistant
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qa-assistant/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      - name: Unit tests (Vitest)
+        run: npm run test
+
+      - name: Build (tsc + Vite)
+        run: npm run build
+
+  backend:
+    name: Backend (ruff, pytest)
+    runs-on: ubuntu-latest
+    env:
+      FLASK_ENV: testing
+      PERSIST_BACKEND: memory
+      EMBEDDING_PROVIDER: hash
+      AI_PROVIDER: ollama
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Ruff lint
+        run: ruff check app core infrastructure integrations wsgi.py
+
+      - name: Ruff format check
+        run: ruff format --check app core infrastructure integrations wsgi.py
+
+      - name: Pytest (exclude Selenium ui/security)
+        run: python -m pytest tests/ -m "not ui and not security" -q
+
+  deploy:
+    # Homework "deploy" stage: intentionally disabled (G2=C — no cloud budget / local AI).
+    # Re-enable when adding Vercel/Railway secrets and setting if: github.ref == 'refs/heads/main'.
+    name: Deploy (disabled — G2=C)
+    needs: [frontend, backend]
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Auto-deploy skipped: project uses CI-only + local backend/Ollama."
+          echo "See cicd_integrations_documentation.md §2.4"

@@ -1,0 +1,41 @@
+---
+description: CI/CD + integrations homework — update cicd_integrations_documentation.md each DZ step
+alwaysApply: true
+---
+
+# CI/CD & Integrations homework (ДЗ)
+
+When the user prompt refers to **шаг N** of CI/CD ДЗ, **CI/CD**, **OAuth2**, **аналитика**, **платежи**, **мониторинг**, **security audit** for this homework, or **cicd_integrations_documentation**:
+
+## Deliverables per step
+
+1. **Execute** the step scope (pipeline, audit, OAuth, analytics, payments, monitoring, logging, tests, docs as requested).
+2. **`cicd_integrations_documentation.md`** (root) — update in the **same work cycle**:
+   - Architecture / CI / Security / OAuth / Analytics / Payments / Monitoring / Logging — when that area changes
+   - §9 AI process — prompts, techniques, problems/solutions for this step
+   - §10 Journal — always: step row, Issue link, status
+3. **GitHub Issue** — one Issue per DZ step (or update epic [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)); comment with decisions and commit SHAs.
+4. **`development_report.md`** — add/update journal row + short pointer: «CI/CD ДЗ шаг N → `cicd_integrations_documentation.md` §10».
+
+## Still mandatory (`.cursorrules` §10–11)
+
+Do **not** skip Issues or `development_report.md`. `cicd_integrations_documentation.md` is **additional** (submission artifact), not a replacement. Backend ДЗ artifact `backend_documentation.md` stays separate — update it only if a step changes Backend API/deploy contracts.
+
+## All other project rules stay in force
+
+- Architecture: thin routes, Repository + UoW, no string-built SQL, secrets in `.env` only
+- New logic → Pytest / Vitest as applicable
+- User gate: do not mark a DZ step done without user OK when the plan requires it
+- Git: commit/push only when the user explicitly asks
+- **Do not add new MCP servers without explicit user approval**
+
+## Skills
+
+Use as applicable: `qa-assistant-process` (always), `qa-assistant-backend`, `qa-assistant-api`, `qa-assistant-testing`, `qa-assistant-ui`, `qa-assistant-react`.
+
+## Before final reply for a DZ step
+
+- [ ] Issue created/updated
+- [ ] `cicd_integrations_documentation.md` updated (§10 at minimum)
+- [ ] `development_report.md` updated (journal + link)
+- [ ] User reply: Issue link + docs mentioned

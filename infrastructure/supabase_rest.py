@@ -27,9 +27,7 @@ class SupabaseRestConfig:
         service = (os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
         if not url or url.startswith("your_"):
             return None
-        if (not anon or anon.startswith("your_")) and (
-            not service or service.startswith("your_")
-        ):
+        if (not anon or anon.startswith("your_")) and (not service or service.startswith("your_")):
             return None
         return cls(
             base_url=url,
@@ -111,9 +109,7 @@ class SupabaseRestClient:
             f"{self._config.rest_url}/{table}",
             params={"on_conflict": on_conflict},
             json=row,
-            headers=self._headers(
-                prefer="resolution=merge-duplicates,return=representation"
-            ),
+            headers=self._headers(prefer="resolution=merge-duplicates,return=representation"),
             timeout=self._timeout,
         )
         self._raise(response, f"UPSERT {table}")
@@ -168,6 +164,4 @@ class SupabaseRestClient:
     @staticmethod
     def _raise(response: httpx.Response, action: str) -> None:
         if response.status_code >= 400:
-            raise RuntimeError(
-                f"Supabase REST {action} failed: {response.status_code} {response.text[:400]}"
-            )
+            raise RuntimeError(f"Supabase REST {action} failed: {response.status_code} {response.text[:400]}")

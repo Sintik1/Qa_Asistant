@@ -56,9 +56,7 @@ class OpenAICompatibleClient:
         }
         try:
             with httpx.Client(timeout=self.settings.timeout_sec) as client:
-                response = client.post(
-                    self.settings.api_url, headers=headers, json=payload
-                )
+                response = client.post(self.settings.api_url, headers=headers, json=payload)
         except httpx.ConnectError as exc:
             raise AppError(code="API_UNAVAILABLE", status_code=502) from exc
         except httpx.TimeoutException as exc:
@@ -76,9 +74,7 @@ class OpenAICompatibleClient:
             raise AppError(code="API_UNAVAILABLE", status_code=502)
 
         data = response.json()
-        content = (
-            data.get("choices", [{}])[0].get("message", {}).get("content", "")
-        )
+        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
         if not str(content).strip():
             raise AppError(code="API_EMPTY", status_code=502)
         return str(content)
@@ -111,10 +107,7 @@ def load_ai_settings() -> AiSettings:
     if provider == "leopold":
         url = os.getenv("QA_ASISTANT_API_URL", "").strip()
         token = os.getenv("QA_ASISTANT_API_TOKEN", "").strip()
-        model = (
-            os.getenv("QA_ASISTANT_MODEL", LEOPOLD_DEFAULT_MODEL).strip()
-            or LEOPOLD_DEFAULT_MODEL
-        )
+        model = os.getenv("QA_ASISTANT_MODEL", LEOPOLD_DEFAULT_MODEL).strip() or LEOPOLD_DEFAULT_MODEL
         return AiSettings(
             provider="leopold",
             api_url=url,
@@ -124,10 +117,7 @@ def load_ai_settings() -> AiSettings:
         )
 
     # ollama (and any future openai_compat defaults)
-    url = (
-        os.getenv("QA_ASISTANT_API_URL", "").strip()
-        or OLLAMA_DEFAULT_URL
-    )
+    url = os.getenv("QA_ASISTANT_API_URL", "").strip() or OLLAMA_DEFAULT_URL
     token = os.getenv("QA_ASISTANT_API_TOKEN", "").strip() or "ollama"
     model = _ollama_model_from_env()
     return AiSettings(

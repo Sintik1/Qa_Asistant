@@ -14,9 +14,8 @@ Product rules:
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Iterable, Sequence
-
 
 # Numbered: "3. Title", "3.1 Title" — optional markdown hashes / "Раздел"
 _NUMBERED_HEADING_RE = re.compile(
@@ -39,9 +38,7 @@ _NUMBERED_ITEM_RE = re.compile(
 )
 
 # Bullets used in real specs: "• text", "- text", "* text", "– text"
-_BULLET_ITEM_RE = re.compile(
-    r"^\s*(?:[•●○▪◦‣·]|[-*+]|&bull;|–|—)\s+(?P<text>\S.*\S|\S)\s*$"
-)
+_BULLET_ITEM_RE = re.compile(r"^\s*(?:[•●○▪◦‣·]|[-*+]|&bull;|–|—)\s+(?P<text>\S.*\S|\S)\s*$")
 
 _FENCE_RE = re.compile(r"^\s*```")
 _TABLE_LINE_RE = re.compile(r"^\s*\|")
@@ -164,9 +161,7 @@ class _DetectedHeading:
     md_level: int | None  # 1..6 from # count; None if plain numbered line
 
 
-def detect_heading_line(
-    line: str, *, stack: Sequence[SectionNode] | None = None
-) -> _DetectedHeading | None:
+def detect_heading_line(line: str, *, stack: Sequence[SectionNode] | None = None) -> _DetectedHeading | None:
     """
     Detect a section heading from either:
     - Word/markdown styles: ``## СИСТЕМА 1``, ``### Калькулятор``
@@ -274,9 +269,7 @@ def _looks_like_work_item_not_section(title: str) -> bool:
     return len(title) > 80
 
 
-def extract_work_items(
-    body: str, *, paragraph_fallback: bool = True
-) -> tuple[WorkItem, ...]:
+def extract_work_items(body: str, *, paragraph_fallback: bool = True) -> tuple[WorkItem, ...]:
     """Numbered + bullet items; optional paragraph fallback for prose-only sections."""
     items: list[WorkItem] = []
     in_fence = False
@@ -288,15 +281,11 @@ def extract_work_items(
             continue
         m_num = _NUMBERED_ITEM_RE.match(raw)
         if m_num:
-            items.append(
-                WorkItem(index=int(m_num.group("n")), text=m_num.group("text").strip())
-            )
+            items.append(WorkItem(index=int(m_num.group("n")), text=m_num.group("text").strip()))
             continue
         m_bull = _BULLET_ITEM_RE.match(raw)
         if m_bull:
-            items.append(
-                WorkItem(index=len(items) + 1, text=m_bull.group("text").strip())
-            )
+            items.append(WorkItem(index=len(items) + 1, text=m_bull.group("text").strip()))
 
     if items or not paragraph_fallback:
         return tuple(items)
@@ -356,17 +345,11 @@ def parse_requirements_document(
             continue
 
         # Nest first (sibling index for synthetic numbers), then assign id.
-        _pop_stack_for_heading(
-            stack, number=detected.number, md_level=detected.md_level
-        )
+        _pop_stack_for_heading(stack, number=detected.number, md_level=detected.md_level)
 
         if detected.number:
             number = detected.number
-            level = (
-                detected.md_level
-                if detected.md_level is not None
-                else heading_level(number)
-            )
+            level = detected.md_level if detected.md_level is not None else heading_level(number)
         elif stack:
             number = f"{stack[-1].number}.{len(stack[-1].children) + 1}"
             level = detected.md_level or (stack[-1].level + 1)
@@ -398,9 +381,7 @@ def parse_requirements_document(
     return ParsedDocument(preamble=preamble, roots=tuple(roots), leaves=leaves)
 
 
-def _append_body(
-    stack: list[SectionNode], preamble_lines: list[str], line: str
-) -> None:
+def _append_body(stack: list[SectionNode], preamble_lines: list[str], line: str) -> None:
     if stack:
         stack[-1].body_lines.append(line)
     else:
@@ -462,9 +443,7 @@ def build_section_path(leaf: LeafSection) -> str:
 
 
 # Backward-compatible name used by earlier tests / callers
-def parse_heading_line(
-    line: str, *, stack: Sequence[SectionNode] | None = None
-) -> tuple[str, str] | None:
+def parse_heading_line(line: str, *, stack: Sequence[SectionNode] | None = None) -> tuple[str, str] | None:
     detected = detect_heading_line(line, stack=stack)
     if detected is None:
         return None

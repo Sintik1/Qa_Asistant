@@ -64,7 +64,7 @@ export function messageForApiError(error: unknown): string {
 
 export async function parseApiError(response: Response): Promise<ApiRequestError> {
   let code = 'INTERNAL_ERROR'
-  let message =
+  let message: string =
     ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES] ??
     'Внутренняя ошибка сервера. Повторите попытку позже.'
   let requestId = response.headers.get('X-Request-Id') ?? undefined
@@ -79,7 +79,7 @@ export async function parseApiError(response: Response): Promise<ApiRequestError
       error?: { code?: string; message?: string; request_id?: string }
     }
     if (body.error?.code) code = body.error.code
-    if (body.error?.message) message = body.error.message
+    if (body.error?.message) message = String(body.error.message)
     else {
       const known = ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES]
       if (known) message = known

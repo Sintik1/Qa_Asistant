@@ -48,15 +48,9 @@ class RagService:
 
     @property
     def enabled(self) -> bool:
-        return (
-            self._docs is not None
-            and self._cases is not None
-            and self._embedder is not None
-        )
+        return self._docs is not None and self._cases is not None and self._embedder is not None
 
-    def index_document_text(
-        self, *, user_id: str, document_id: str, text: str
-    ) -> int:
+    def index_document_text(self, *, user_id: str, document_id: str, text: str) -> int:
         if self._docs is None or self._embedder is None:
             return 0
         parsed = parse_requirements_document(text, options=self._parse_options)
@@ -141,9 +135,7 @@ class RagService:
             )
         return self._cases.upsert_many(commands)
 
-    def retrieve_style_examples(
-        self, *, user_id: str, query_text: str
-    ) -> list[CaseChunkRecord]:
+    def retrieve_style_examples(self, *, user_id: str, query_text: str) -> list[CaseChunkRecord]:
         if self._cases is None or self._embedder is None:
             return []
         emb = self._embedder.embed(query_text)
@@ -228,9 +220,7 @@ class RagService:
             f"[{i + 1}] path={h.section_path or '-'} doc={h.document_id}\n{h.content[:2000]}"
             for i, h in enumerate(hits)
         )
-        user_prompt = (
-            f"Вопрос:\n{question.strip()}\n\nФрагменты требований:\n{context}"
-        )
+        user_prompt = f"Вопрос:\n{question.strip()}\n\nФрагменты требований:\n{context}"
         answer = ai_generate(CHAT_SYSTEM_PROMPT, user_prompt)
         citations = [
             {
@@ -251,11 +241,7 @@ def _format_style_block(rows: list[CaseChunkRecord]) -> str:
         return ""
     parts = ["Примеры шаблонов / прошлых кейсов:"]
     for i, row in enumerate(rows, start=1):
-        parts.append(
-            f"{i}. [{row.source_type}] {row.name}\n"
-            f"Step: {row.step}\n"
-            f"Expected: {row.expected_result}"
-        )
+        parts.append(f"{i}. [{row.source_type}] {row.name}\nStep: {row.step}\nExpected: {row.expected_result}")
     return "\n".join(parts)
 
 
@@ -264,8 +250,5 @@ def _format_related_block(rows: list[DocumentChunkRecord]) -> str:
         return ""
     parts = ["Related requirements (другие документы пользователя):"]
     for i, row in enumerate(rows, start=1):
-        parts.append(
-            f"{i}. {row.section_path or row.title or row.document_id}\n"
-            f"{(row.content or '')[:1200]}"
-        )
+        parts.append(f"{i}. {row.section_path or row.title or row.document_id}\n{(row.content or '')[:1200]}")
     return "\n".join(parts)

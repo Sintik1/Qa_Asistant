@@ -13,6 +13,7 @@ from flask_cors import CORS
 from app.auth import verify_supabase_access_token
 from core.errors import AppError, ForbiddenError, UnauthorizedError
 from core.messages import ERROR_MESSAGES
+from core.rag_service import RagService
 from core.services import (
     DocumentService,
     GenerationService,
@@ -20,7 +21,6 @@ from core.services import (
     SettingsService,
     TestCaseService,
 )
-from core.rag_service import RagService
 from infrastructure.document_storage import build_document_storage
 from infrastructure.logging_setup import configure_logging, get_logger
 from infrastructure.memory_store import (
@@ -144,11 +144,7 @@ def create_app(testing: bool = False) -> Flask:
     logger = configure_logging(testing=testing)
     app.extensions["logger"] = logger
 
-    if (
-        not testing
-        and os.getenv("AUTH_DEV_BYPASS", "").strip() == "1"
-        and _is_public_or_production_env()
-    ):
+    if not testing and os.getenv("AUTH_DEV_BYPASS", "").strip() == "1" and _is_public_or_production_env():
         logger.warning(
             "AUTH_DEV_BYPASS=1 is set but ignored in public/production environment "
             "(FLASK_ENV/ENV/APP_ENV=production, PUBLIC_DEPLOY=1, or PaaS markers)."
@@ -207,7 +203,7 @@ def create_app(testing: bool = False) -> Flask:
     app.extensions["document_storage"] = doc_storage
     app.extensions["document_service"] = document_service
     app.extensions["run_service"] = RunService(runs_repo, docs_repo)
-    app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo)
+    app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo, rag_service)
     app.extensions["settings_service"] = SettingsService(settings_repo)
     app.extensions["rag_service"] = rag_service
     app.extensions["generation_service"] = GenerationService(
@@ -229,9 +225,7 @@ def create_app(testing: bool = False) -> Flask:
 
     @app.before_request
     def bind_request_context() -> None:
-        g.request_id = (
-            request.headers.get("X-Request-Id", "").strip() or str(uuid.uuid4())
-        )
+        g.request_id = request.headers.get("X-Request-Id", "").strip() or str(uuid.uuid4())
         g.request_started_at = time.perf_counter()
         g.user_id = None
         g.access_token = None
@@ -280,9 +274,7 @@ def create_app(testing: bool = False) -> Flask:
             return response
         response.headers["X-Request-Id"] = getattr(g, "request_id", "")
         started = getattr(g, "request_started_at", None)
-        duration_ms = (
-            round((time.perf_counter() - started) * 1000, 2) if started else None
-        )
+        duration_ms = round((time.perf_counter() - started) * 1000, 2) if started else None
         get_logger().info(
             "request",
             extra={

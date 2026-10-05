@@ -11,11 +11,11 @@ from core.doc_reader import extract_text, validate_upload_meta
 from core.errors import AppError, NotFoundError, ValidationError
 from core.messages import ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from core.models import (
+    CaseRow,
     CreateDocumentCommand,
     CreateRunCommand,
     Document,
     GenerationRun,
-    CaseRow,
     UpdateTestCaseCommand,
     UserSettings,
 )
@@ -26,7 +26,7 @@ from core.prompt_builder import (
 )
 from core.rag_service import RagService
 from core.repositories import DocumentRepository, RunRepository, SettingsRepository, TestCaseRepository
-from core.section_parser import ParseOptions, ParsedDocument, parse_requirements_document
+from core.section_parser import ParsedDocument, ParseOptions, parse_requirements_document
 
 
 class AiGenerator(Protocol):
@@ -175,9 +175,15 @@ class RunService:
 
 
 class TestCaseService:
-    def __init__(self, cases: TestCaseRepository, runs: RunRepository) -> None:
+    def __init__(
+        self,
+        cases: TestCaseRepository,
+        runs: RunRepository,
+        rag_service: RagService | None = None,
+    ) -> None:
         self._cases = cases
         self._runs = runs
+        self._rag = rag_service
 
     def list_for_run(self, run_id: str, user_id: str) -> list[CaseRow]:
         if self._runs.get(run_id, user_id) is None:
@@ -191,6 +197,37 @@ class TestCaseService:
         if updated is None:
             raise NotFoundError()
         return updated
+
+    def index_reviewed_to_rag(
+        self,
+        user_id: str,
+        *,
+        case_ids: list[str] | None = None,
+        run_id: str | None = None,
+    ) -> int:
+        """Explicit RAG index after human review — never called automatically from generate."""
+        if self._rag is None or not self._rag.enabled:
+            raise AppError(code="INTERNAL_ERROR", status_code=500, message="RAG unavailable")
+        selected: list[CaseRow] = []
+        if case_ids:
+            for cid in case_ids:
+                row = self._cases.get(cid, user_id)
+                if row is None:
+                    raise NotFoundError()
+                selected.append(row)
+        elif run_id:
+            selected = self.list_for_run(run_id, user_id)
+        else:
+            raise ValidationError(
+                code="VALIDATION_ERROR",
+                message="Provide case_ids[] and/or run_id after review",
+            )
+        if not selected:
+            raise ValidationError(code="VALIDATION_ERROR", message="No cases to index")
+        return self._rag.index_approved_cases(
+            user_id=user_id,
+            cases=[c.to_dict() for c in selected],
+        )
 
 
 class SettingsService:
@@ -237,12 +274,8 @@ class GenerationService:
         self._parse_options = parse_options or ParseOptions()
         self._rag = rag_service
 
-    def parse_document(
-        self, requirements_text: str, options: ParseOptions | None = None
-    ) -> ParsedDocument:
-        return parse_requirements_document(
-            requirements_text, options=options or self._parse_options
-        )
+    def parse_document(self, requirements_text: str, options: ParseOptions | None = None) -> ParsedDocument:
+        return parse_requirements_document(requirements_text, options=options or self._parse_options)
 
     def generate(
         self,
@@ -344,14 +377,8 @@ class GenerationService:
             for idx, item in enumerate(all_parsed)
         ]
         saved = self._cases.replace_for_run(run.id, user_id, case_rows)
-        if self._rag is not None:
-            try:
-                self._rag.index_approved_cases(
-                    user_id=user_id,
-                    cases=[c.to_dict() for c in saved],
-                )
-            except Exception:
-                pass
+        # Do NOT auto-index into RAG here: AI output may be wrong and would
+        # poison style retrieval. Use POST /api/rag/index-cases after review.
         run.status = "completed"
         run.case_count = len(saved)
         run.error_message = None

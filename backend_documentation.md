@@ -508,6 +508,7 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `POST` | `/api/runs/<id>/generate` | AI generate → cases (+ RAG enrich) | done (шаг 6 / [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/chat` | RAG Q&A по `document_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/rag/templates` | загрузка шаблонов кейсов в `case_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| `POST` | `/api/rag/index-cases` | явный index проверенных кейсов (не auto после generate) | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/admin/analyze-logs` | AI анализ логов (шаг 7) | done |
 
 **Supabase REST (автоматический, параллельно для FE):**  
@@ -853,8 +854,17 @@ Senior Python Developer: проектирование схемы, миграци
 - Leaf-section parser (`core/section_parser.py`); DOCX tables stay in-section
 - `document_chunks` / `case_chunks` + match RPC; index on upload
 - Generate: full leaf coverage + few-shot templates + related docs
-- `POST /api/chat`, `POST /api/rag/templates`, FE `/chat`
+- `POST /api/chat`, `POST /api/rag/templates`, `POST /api/rag/index-cases` (явный index после ревью), FE `/chat`
 - Env: `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` / `EMBEDDING_DIMS=768`
+- Пользовательская инструкция: [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md)
+
+**Верификация / автотесты (2026-10-03):**
+- Pytest RAG: `tests/test_rag.py` + `test_rag_unit.py` + `test_rag_user_scenarios.py` + `test_section_parser.py` → **31 passed**
+- Vitest: `src/api/chat.test.ts` + `src/pages/ChatPage.test.tsx` → **3 passed**
+- Live smoke `scripts/live_rag_smoke.py`:
+  - memory + `AUTH_DEV_BYPASS` → **PASS** (upload→templates→chat citations→generate→index-cases)
+  - Supabase + JWT `demo.reviewer@qatest.local` + Ollama 1.5b → **PASS** (те же шаги; `document_chunks`/`case_chunks` в Table Editor)
+- Замечание: без `SUPABASE_SERVICE_ROLE_KEY` bypass-upload в Supabase даёт RLS 401; для live нужен JWT пользователя
 
 ### 5.10. Шаг 9 — оформление сдачи
 
@@ -890,8 +900,9 @@ Senior Python Developer: проектирование схемы, миграци
 | 9 | Оформление сдачи (docs + README) | [#33](https://github.com/Sintik1/Qa_Asistant/issues/33) | done (closed) | `backend_documentation.md` + `README.md` |
 | 9b | README для проверяющего | [#34](https://github.com/Sintik1/Qa_Asistant/issues/34) | done (closed) | локальный стенд; деплой не обязателен |
 | 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed) | демо-вход, checklist, bypass, compose UI-only, screencast; `ddd6fcf` |
-| — | RAG + section parser | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | pgvector chunks; style/multi-doc/chat; FE `/chat` |
+| — | RAG + section parser | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | pgvector; pytest 31; vitest 3; live smoke memory+Supabase PASS |
+| — | RAG verify + autotests | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | user scenarios + `live_rag_smoke.py`; → §5.11 |
 
 ---
 
-_Последнее обновление: 2026-10-03 — RAG [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)._
+_Последнее обновление: 2026-10-03 — RAG verify/autotests [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)._

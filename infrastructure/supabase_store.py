@@ -221,6 +221,13 @@ class SupabaseTestCaseRepository:
     def __init__(self, client: SupabaseRestClient) -> None:
         self._client = client
 
+    def get(self, case_id: str, user_id: str) -> CaseRow | None:
+        rows = self._client.select(
+            "test_cases",
+            params={"id": f"eq.{case_id}", "user_id": f"eq.{user_id}", "limit": "1"},
+        )
+        return _case_from_row(rows[0]) if rows else None
+
     def list_for_run(self, run_id: str, user_id: str) -> list[CaseRow]:
         rows = self._client.select(
             "test_cases",
@@ -232,9 +239,7 @@ class SupabaseTestCaseRepository:
         )
         return [_case_from_row(r) for r in rows]
 
-    def replace_for_run(
-        self, run_id: str, user_id: str, cases: list[CaseRow]
-    ) -> list[CaseRow]:
+    def replace_for_run(self, run_id: str, user_id: str, cases: list[CaseRow]) -> list[CaseRow]:
         self._client.delete(
             "test_cases",
             params={"run_id": f"eq.{run_id}", "user_id": f"eq.{user_id}"},
@@ -258,9 +263,7 @@ class SupabaseTestCaseRepository:
         rows = self._client.insert("test_cases", payload)
         return [_case_from_row(r) for r in rows]
 
-    def update(
-        self, case_id: str, user_id: str, cmd: UpdateTestCaseCommand
-    ) -> CaseRow | None:
+    def update(self, case_id: str, user_id: str, cmd: UpdateTestCaseCommand) -> CaseRow | None:
         patch: dict[str, Any] = {}
         if cmd.name is not None:
             patch["name"] = cmd.name

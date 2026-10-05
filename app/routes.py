@@ -232,6 +232,23 @@ def chat_requirements():
     return jsonify(result)
 
 
+@api_bp.post("/rag/index-cases")
+def index_reviewed_cases_to_rag():
+    """Index only human-reviewed cases into case_chunks (explicit opt-in)."""
+    data = request.get_json(silent=True) or {}
+    case_ids = data.get("case_ids") or []
+    if case_ids is not None and not isinstance(case_ids, list):
+        raise ValidationError(code="VALIDATION_ERROR", message="case_ids must be a list")
+    run_id = (data.get("run_id") or "").strip() or None
+    ids = [str(x).strip() for x in case_ids if str(x).strip()]
+    count = _svc("testcase_service").index_reviewed_to_rag(
+        g.user_id,
+        case_ids=ids or None,
+        run_id=run_id,
+    )
+    return jsonify({"indexed": count, "source_type": "approved_case"})
+
+
 @api_bp.post("/rag/templates")
 def upsert_rag_templates():
     """Upload style templates (positive/negative/boundary) into case_chunks."""
@@ -325,9 +342,7 @@ def analyze_logs():
     try:
         max_lines = int(data.get("max_lines", 200))
     except (TypeError, ValueError) as exc:
-        raise ValidationError(
-            code="VALIDATION_ERROR", message="max_lines must be integer"
-        ) from exc
+        raise ValidationError(code="VALIDATION_ERROR", message="max_lines must be integer") from exc
 
     if inline:
         result = analyze_log_text(inline, ai, source="inline")

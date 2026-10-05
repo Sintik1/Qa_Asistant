@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { chatRequirements, type ChatCitation } from '../api/chat'
 import { messageForApiError, resolveApiError } from '../api/errors'
 import { PageHeader } from '../components/ui/PageHeader'

@@ -33,12 +33,17 @@ Commit/push the report with the stage deliverable when the stage includes git ch
 
 When working on **ДЗ steps 1–9** (DB, Supabase, API): update root `backend_documentation.md` in the same cycle. See `.cursor/rules/backend-homework-dz.mdc`.
 
+## `cicd_integrations_documentation.md` (CI/CD + integrations homework)
+
+When working on **CI/CD / OAuth / analytics / payments / monitoring / security audit** homework steps: update root `cicd_integrations_documentation.md` in the same cycle. See `.cursor/rules/cicd-integrations-dz.mdc`.
+
 ## Before the final reply for a stage
 
 - [ ] Issue created/updated  
 - [ ] `development_report.md` updated (all required sections for that stage, not only journal)  
 - [ ] Backend ДЗ step → `backend_documentation.md` updated (§6 minimum)  
+- [ ] CI/CD integrations ДЗ step → `cicd_integrations_documentation.md` updated (§10 minimum)  
 - [ ] Code quality rules still applied (architecture, tests, secrets — `.cursorrules` + relevant skills)  
 - [ ] User reply includes Issue link + note that report(s) were updated  
 
-Related skill: `qa-assistant-process`. Backend ДЗ: `.cursor/rules/backend-homework-dz.mdc`.
+Related skill: `qa-assistant-process`. Backend ДЗ: `.cursor/rules/backend-homework-dz.mdc`. CI/CD ДЗ: `.cursor/rules/cicd-integrations-dz.mdc`.

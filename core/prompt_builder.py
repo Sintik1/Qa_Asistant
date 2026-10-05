@@ -51,16 +51,12 @@ def build_leaf_user_prompt(
             parts.append(f"  {item.index}. {item.text}")
     else:
         parts.append("")
-        parts.append(
-            "Нумерованных пунктов не найдено — сформируй шаги основного кейса "
-            "из содержания раздела."
-        )
+        parts.append("Нумерованных пунктов не найдено — сформируй шаги основного кейса из содержания раздела.")
     if template_examples and template_examples.strip():
         parts.extend(
             [
                 "",
-                "Примеры шаблонов (RAG / библиотека) — добавь похожие доп. кейсы "
-                "к основному:",
+                "Примеры шаблонов (RAG / библиотека) — добавь похожие доп. кейсы к основному:",
                 template_examples.strip(),
             ]
         )
@@ -115,9 +111,7 @@ def iter_generation_prompts(
     return [
         (
             FLAT_SYSTEM_PROMPT,
-            build_flat_user_prompt(
-                text, task_name=task_name, extra_prompt=extra_prompt
-            ),
+            build_flat_user_prompt(text, task_name=task_name, extra_prompt=extra_prompt),
             None,
         )
     ]

@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Protocol
 
 from core.models import (
+    CaseRow,
     CreateDocumentCommand,
     CreateRunCommand,
     Document,
     GenerationRun,
-    CaseRow,
     UpdateTestCaseCommand,
     UserSettings,
 )
@@ -31,11 +31,10 @@ class RunRepository(Protocol):
 
 
 class TestCaseRepository(Protocol):
+    def get(self, case_id: str, user_id: str) -> CaseRow | None: ...
     def list_for_run(self, run_id: str, user_id: str) -> list[CaseRow]: ...
     def replace_for_run(self, run_id: str, user_id: str, cases: list[CaseRow]) -> list[CaseRow]: ...
-    def update(
-        self, case_id: str, user_id: str, cmd: UpdateTestCaseCommand
-    ) -> CaseRow | None: ...
+    def update(self, case_id: str, user_id: str, cmd: UpdateTestCaseCommand) -> CaseRow | None: ...
 
 
 class SettingsRepository(Protocol):

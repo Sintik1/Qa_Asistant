@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from core.rag_models import (
     CaseChunkRecord,
@@ -82,9 +83,7 @@ class SupabaseDocumentChunkRepository:
                     section_path=row.get("section_path"),
                     title=row.get("title"),
                     metadata=row.get("metadata") or {},
-                    similarity=float(row["similarity"])
-                    if row.get("similarity") is not None
-                    else None,
+                    similarity=float(row["similarity"]) if row.get("similarity") is not None else None,
                 )
             )
         return out
@@ -145,9 +144,7 @@ class SupabaseCaseChunkRepository:
                     step=str(row.get("step") or ""),
                     expected_result=str(row.get("expected_result") or ""),
                     tags=tuple(str(t) for t in tags),
-                    similarity=float(row["similarity"])
-                    if row.get("similarity") is not None
-                    else None,
+                    similarity=float(row["similarity"]) if row.get("similarity") is not None else None,
                 )
             )
         return out

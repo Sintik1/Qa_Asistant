@@ -42,11 +42,21 @@
 5. Правило Cursor: `.cursor/rules/backend-homework-dz.mdc` (`alwaysApply: true`).
 6. **§12 не отменяет остальные правила этого файла и skills проекта.** На каждом шаге backend ДЗ по-прежнему обязательны: Clean Architecture / тонкий HTTP-слой, Repository + Unit of Work, разделение ORM/DTO/domain, безопасность SQL и секретов (§19–20), Pytest для новой логики (§17), согласование scope с ТЗ/Figma (§3 агента), skills `qa-assistant-backend`, `qa-assistant-data`, `qa-assistant-api`, `qa-assistant-testing`; для UI-части шагов 6–8 — `qa-assistant-ui` / `qa-assistant-react`. Коммиты — только по явной просьбе пользователя.
 
+### 13. CI/CD + integrations ДЗ — `cicd_integrations_documentation.md`
+
+1. Домашнее задание (CI/CD, security audit, OAuth2, аналитика, опц. платежи, мониторинг, логирование) ведётся **отдельными промптами** на каждый шаг.
+2. Файл **`cicd_integrations_documentation.md`** в корне — обязательный артефакт сдачи и живой журнал. Обновлять **на каждом шаге** в том же цикле, что и Issue.
+3. Обязательные разделы: архитектура интеграций; CI/CD; безопасность; OAuth2; аналитика; платежи; мониторинг; логирование; AI-процесс; журнал шагов (§10).
+4. **`development_report.md`** (§11) обновляется параллельно со ссылкой: «CI/CD ДЗ шаг N → `cicd_integrations_documentation.md` §10».
+5. Правило Cursor: `.cursor/rules/cicd-integrations-dz.mdc` (`alwaysApply: true`).
+6. **§13 не отменяет §10–12 и остальные rules.** Новые MCP — только после явного OK пользователя. Коммиты — только по просьбе.
+
 ### Чеклист перед финальным ответом по стадии
 
 - [ ] Issue создан/обновлён
 - [ ] `development_report.md` обновлён
 - [ ] При работе по **шагам backend ДЗ** — `backend_documentation.md` обновлён
+- [ ] При работе по **шагам CI/CD + integrations ДЗ** — `cicd_integrations_documentation.md` обновлён
 - [ ] В ответе пользователю указаны ссылка на Issue и факт обновления отчёта(ов)
 
 ---

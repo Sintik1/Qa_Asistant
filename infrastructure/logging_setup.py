@@ -67,9 +67,7 @@ def configure_logging(*, testing: bool = False) -> logging.Logger:
     if os.getenv("LOG_JSON", "1").strip() != "0":
         formatter = JsonFormatter()
     else:
-        formatter = logging.Formatter(
-            "%(asctime)s %(levelname)s [%(name)s] %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
 
     stream = logging.StreamHandler(sys.stdout)
     stream.setFormatter(formatter)
