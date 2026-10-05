@@ -319,10 +319,10 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) · Гайд: [`do
 ### 5.4. Env
 
 ```env
-VITE_YANDEX_METRIKA_ID=12345678
+VITE_YANDEX_METRIKA_ID=113444012
 ```
 
-Только public id. Секреты Metrika API (если понадобятся отчёты с сервера) — только в `.env`, не в `VITE_*`.
+Только public id (счётчик ДЗ: `113444012`). Секреты Metrika API (если понадобятся отчёты с сервера) — только в `.env`, не в `VITE_*`.
 
 ---
 

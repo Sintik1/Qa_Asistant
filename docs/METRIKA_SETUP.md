@@ -8,12 +8,14 @@ Counter **id is public** (embedded in the frontend bundle). Do not put OAuth tok
 2. Add a counter for your app (local `http://127.0.0.1:5173` or production host).
 3. Copy the numeric **counter id**.
 
+**Project counter (ДЗ):** `113444012`
+
 ## 2. Configure the SPA
 
-In `qa-assistant/.env.local`:
+In `qa-assistant/.env.local` (or copy from `.env.example`):
 
 ```env
-VITE_YANDEX_METRIKA_ID=12345678
+VITE_YANDEX_METRIKA_ID=113444012
 ```
 
 Restart Vite (`npm run dev`). Empty / missing id → analytics is a no-op (safe for CI).
