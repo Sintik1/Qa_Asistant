@@ -52,6 +52,8 @@ PUBLIC_API_PATHS = frozenset(
         "/api/health",
         "/api/ai/ping",
         "/api/auth/oauth/status",
+        "/api/auth/oauth/google/start",
+        "/api/auth/oauth/google/callback",
         "/api/auth/oauth/yandex/start",
         "/api/auth/oauth/yandex/callback",
     }

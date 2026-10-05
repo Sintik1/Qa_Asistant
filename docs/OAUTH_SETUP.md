@@ -8,65 +8,54 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)
 
 | Провайдер | Flow |
 |-----------|------|
-| **Google** | Frontend `supabase.auth.signInWithOAuth({ provider: 'google' })` → Supabase Auth → JWT |
-| **Yandex** | Frontend → `GET /api/auth/oauth/yandex/start` → Yandex → Flask callback → Supabase Admin session → `/auth/callback#tokens` |
+| **Google** | FE → `GET /api/auth/oauth/google/start` → Google → Flask callback → Supabase Admin session → `/auth/callback#tokens` |
+| **Yandex** | FE → `GET /api/auth/oauth/yandex/start` → Yandex → Flask callback → Supabase Admin session → `/auth/callback#tokens` |
 
 Общий endpoint профиля: `GET /api/auth/me` (Bearer JWT).
+
+> Оба провайдера идут через **Flask** (не требуют включения Google в Supabase Dashboard Providers). Нужен `SUPABASE_SERVICE_ROLE_KEY` (или новый `sb_secret_…`) для создания сессии.
 
 ## 1. Google Cloud Console
 
 1. https://console.cloud.google.com/apis/credentials  
-2. Create OAuth client ID → **Web application**  
-3. Authorized JavaScript origins:
-   - `http://127.0.0.1:5173`
-   - `http://localhost:5173`
-   - `https://revyywfeeqdmlgrbakpj.supabase.co`
-4. Authorized redirect URIs:
-   - `https://revyywfeeqdmlgrbakpj.supabase.co/auth/v1/callback`
-5. Скопируйте **Client ID** и **Client Secret**.
-
-Сохранить локально:
+2. OAuth client → **Web application**  
+3. Authorized redirect URIs (обязательно):
+   - `http://127.0.0.1:5001/api/auth/oauth/google/callback`
+4. (Опционально origins) `http://127.0.0.1:5173`  
+5. Client ID / Secret → `.env` (`GOOGLE_*`) или:
 
 ```bash
 python3 scripts/save_oauth_secrets.py
-# или вручную в .env: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 ```
-
-В **Supabase Dashboard** → Authentication → Providers → **Google** → Enable → вставить те же Client ID/Secret → Save.
-
-Redirect URLs (Authentication → URL Configuration):
-
-- Site URL: `http://127.0.0.1:5173`
-- Redirect URLs: `http://127.0.0.1:5173/auth/callback`, `http://localhost:5173/auth/callback`
 
 ## 2. Yandex OAuth
 
 1. https://oauth.yandex.ru/client/new  
-2. Платформы: **Веб-сервисы**  
-3. Callback URI: `http://127.0.0.1:5001/api/auth/oauth/yandex/callback`  
-4. Права: `login:email`, `login:info`  
-5. Скопируйте ID и пароль приложения → `scripts/save_oauth_secrets.py` (`YANDEX_*`).
+2. Callback URI: `http://127.0.0.1:5001/api/auth/oauth/yandex/callback`  
+3. Права: `login:email`, `login:info`  
+4. ID / пароль → `.env` (`YANDEX_*`)
 
-Также в `.env` (server):
+## 3. Supabase (только service key)
+
+В `.env`:
 
 ```bash
-SUPABASE_SERVICE_ROLE_KEY=...   # Dashboard → Settings → API (secret!)
+SUPABASE_URL=https://revyywfeeqdmlgrbakpj.supabase.co
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...   # legacy JWT service_role ИЛИ sb_secret_…
 OAUTH_API_PUBLIC_URL=http://127.0.0.1:5001
 OAUTH_PUBLIC_APP_URL=http://127.0.0.1:5173
 ```
 
-## 3. Проверка
+## 4. Проверка
 
 ```bash
-# статус провайдеров (без секретов)
 curl -s http://127.0.0.1:5001/api/auth/oauth/status | jq
-
-# UI
-# http://127.0.0.1:5173/auth → «Войти через Google» / «Войти через Yandex»
-# После входа: GET /api/auth/me с Bearer JWT → user_id + email
+# UI: http://127.0.0.1:5173/auth → Google / Yandex
+# После входа: GET /api/auth/me с Bearer JWT
 ```
 
-Автотесты (моки, без реальных консолей):
+Автотесты:
 
 ```bash
 pytest tests/test_oauth.py -q
@@ -77,7 +66,7 @@ cd qa-assistant && npm test -- AuthPage.test.tsx
 
 | Правило | Как соблюдено |
 |---------|----------------|
-| Secret не в FE | только server `.env` / Supabase Dashboard |
-| Secret не в git | `.env` gitignored; в репо — `.env.example` placeholders |
-| State CSRF (Yandex) | one-time `state` в памяти процесса |
-| Tokens в URL | Yandex отдаёт tokens в **hash** (`#`), не в query |
+| Secret не в FE | только server `.env` |
+| Secret не в git | `.env` gitignored |
+| State CSRF | one-time `state` per provider |
+| Tokens в URL | fragment `#`, не query |

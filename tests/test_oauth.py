@@ -14,6 +14,8 @@ from integrations.oauth_yandex import YandexUserInfo
 def client(monkeypatch):
     monkeypatch.setenv("YANDEX_CLIENT_ID", "test-yandex-client")
     monkeypatch.setenv("YANDEX_CLIENT_SECRET", "test-yandex-secret")
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "test-google-client.apps.googleusercontent.com")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "test-google-secret")
     monkeypatch.setenv("OAUTH_API_PUBLIC_URL", "http://127.0.0.1:5001")
     monkeypatch.setenv("OAUTH_PUBLIC_APP_URL", "http://127.0.0.1:5173")
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
@@ -23,14 +25,26 @@ def client(monkeypatch):
     return application.test_client(), application
 
 
-def test_oauth_status_reports_yandex_configured(client):
+def test_oauth_status_reports_providers_configured(client):
     c, _ = client
     res = c.get("/api/auth/oauth/status")
     assert res.status_code == 200
     body = res.get_json()
     assert body["yandex"]["env_client_configured"] is True
-    assert body["google"]["flow"] == "supabase_fe_signInWithOAuth"
+    assert body["google"]["env_client_configured"] is True
+    assert body["google"]["flow"] == "flask_authorization_code"
+    assert "google/callback" in body["google"]["redirect_uri"]
     assert "yandex/callback" in body["yandex"]["redirect_uri"]
+
+
+def test_google_start_redirects(client):
+    c, _ = client
+    res = c.get("/api/auth/oauth/google/start", follow_redirects=False)
+    assert res.status_code in (302, 303)
+    loc = res.headers["Location"]
+    assert "accounts.google.com" in loc
+    assert "client_id=test-google-client" in loc
+    assert "state=" in loc
 
 
 def test_yandex_start_redirects(client):
@@ -113,8 +127,8 @@ def test_auth_me_requires_user(client):
 
 
 def test_yandex_start_without_config(monkeypatch):
-    monkeypatch.delenv("YANDEX_CLIENT_ID", raising=False)
-    monkeypatch.delenv("YANDEX_CLIENT_SECRET", raising=False)
+    monkeypatch.setenv("YANDEX_CLIENT_ID", "")
+    monkeypatch.setenv("YANDEX_CLIENT_SECRET", "")
     app = create_app(testing=True)
     res = app.test_client().get("/api/auth/oauth/yandex/start")
     assert res.status_code == 422

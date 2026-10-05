@@ -110,11 +110,11 @@ export function AuthPage() {
         </Button>
         {!isApiConfigured() ? (
           <p className="text-xs text-slate-500">
-            Yandex требует Flask API (`VITE_API_BASE_URL`). Сейчас: не задан.
+            OAuth требует Flask API (`VITE_API_BASE_URL`). Сейчас: не задан.
           </p>
         ) : (
           <p className="text-xs text-slate-500">
-            Yandex: {apiBaseUrl()}/api/auth/oauth/yandex/start
+            Google/Yandex: Flask `/api/auth/oauth/…/start` → `{apiBaseUrl()}`
           </p>
         )}
       </div>

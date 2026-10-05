@@ -256,7 +256,7 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) · Гайд: [`do
 
 | Провайдер | Реализация |
 |-----------|------------|
-| Google | Supabase Auth Provider + FE `signInWithOAuth` |
+| Google | Flask Authorization Code (`/api/auth/oauth/google/*`) → Supabase Admin session |
 | Yandex | Flask Authorization Code (`/api/auth/oauth/yandex/*`) → Supabase Admin session |
 
 ### 4.2. Backend

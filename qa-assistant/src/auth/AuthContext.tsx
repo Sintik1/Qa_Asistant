@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Provider, Session, User } from '@supabase/supabase-js'
+import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 import { apiBaseUrl } from '../api/client'
 
@@ -30,10 +30,6 @@ type AuthContextValue = {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
-
-function oauthCallbackUrl(): string {
-  return `${window.location.origin}/auth/callback`
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
@@ -88,24 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signInWithOAuth = useCallback(async (provider: OAuthProvider) => {
-    if (provider === 'yandex') {
-      const base = apiBaseUrl()
-      if (!base) {
-        return 'Не задан VITE_API_BASE_URL для Yandex OAuth (Flask).'
-      }
-      window.location.assign(`${base}/api/auth/oauth/yandex/start`)
-      return null
+    const base = apiBaseUrl()
+    if (!base) {
+      return `Не задан VITE_API_BASE_URL для ${provider} OAuth (Flask).`
     }
-
-    if (!supabase) return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google' as Provider,
-      options: {
-        redirectTo: oauthCallbackUrl(),
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
-    return error?.message ?? null
+    window.location.assign(`${base}/api/auth/oauth/${provider}/start`)
+    return null
   }, [])
 
   const signOut = useCallback(async () => {
