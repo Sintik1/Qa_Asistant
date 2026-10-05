@@ -1,4 +1,4 @@
-export { isApiConfigured, apiJson } from './client'
+export { isApiConfigured, apiBaseUrl, apiJson } from './client'
 export {
   ApiRequestError,
   messageForApiError,

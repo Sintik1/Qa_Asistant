@@ -11,6 +11,8 @@
 | [`backend_documentation.md`](backend_documentation.md) | **Сдача Backend ДЗ:** архитектура, развёртывание, API, примеры, AI-процесс |
 | [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) | **Сдача CI/CD + integrations ДЗ:** пайплайн, security, OAuth, аналитика, мониторинг |
 | [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт: API + UI + DB (вердикт PASS) |
+| [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) | Аудит безопасности + remediations |
+| [`docs/OAUTH_SETUP.md`](docs/OAUTH_SETUP.md) | OAuth2 Google + Yandex (секреты, redirect, checklist) |
 | [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) | **Как пользоваться RAG:** документы, кейсы, чистка, Table Editor |
 | [`development_report.md`](development_report.md) | Журнал стадий + GitHub Issues |
 | [`technical_specification.md`](technical_specification.md) | Техническое задание |

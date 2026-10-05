@@ -1,9 +1,12 @@
 import { apiFetch } from '../lib/apiClient'
 import { parseApiError } from './errors'
 
+export function apiBaseUrl(): string {
+  return ((import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '').trim().replace(/\/$/, '')
+}
+
 export function isApiConfigured(): boolean {
-  const base = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  return Boolean(base)
+  return Boolean(apiBaseUrl())
 }
 
 export async function apiJson<T>(

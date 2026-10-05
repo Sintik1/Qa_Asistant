@@ -5,14 +5,15 @@ import { Button } from '../components/ui/Button'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { PageHeader } from '../components/ui/PageHeader'
 import { INPUT_CLASS } from '../utils/formStyles'
+import { apiBaseUrl, isApiConfigured } from '../api/client'
 
 type Mode = 'login' | 'signup'
 
 /**
- * Регистрация / вход через Supabase Auth (email + password).
+ * Email/password + OAuth2 (Google via Supabase, Yandex via Flask).
  */
 export function AuthPage() {
-  const { configured, loading, user, signIn, signUp } = useAuth()
+  const { configured, loading, user, signIn, signUp, signInWithOAuth } = useAuth()
   const navigate = useNavigate()
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
@@ -20,6 +21,7 @@ export function AuthPage() {
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [oauthBusy, setOauthBusy] = useState<'google' | 'yandex' | null>(null)
 
   if (!loading && user) {
     return <Navigate to="/" replace />
@@ -66,12 +68,58 @@ export function AuthPage() {
     }
   }
 
+  const handleOAuth = async (provider: 'google' | 'yandex') => {
+    setError(null)
+    setInfo(null)
+    setOauthBusy(provider)
+    try {
+      if (provider === 'yandex' && !isApiConfigured()) {
+        setError('Для Yandex OAuth задайте VITE_API_BASE_URL (Flask).')
+        return
+      }
+      const message = await signInWithOAuth(provider)
+      if (message) setError(message)
+    } finally {
+      setOauthBusy(null)
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title={mode === 'login' ? 'Вход' : 'Регистрация'}
-        description="Аутентификация через Supabase Auth (email и пароль)."
+        description="Email/пароль или OAuth2 (Google / Yandex)."
       />
+
+      <div className="mb-6 flex w-full max-w-xl flex-col gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={submitting || loading || oauthBusy !== null}
+          onClick={() => void handleOAuth('google')}
+        >
+          {oauthBusy === 'google' ? 'Переход к Google…' : 'Войти через Google'}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={submitting || loading || oauthBusy !== null}
+          onClick={() => void handleOAuth('yandex')}
+        >
+          {oauthBusy === 'yandex' ? 'Переход к Yandex…' : 'Войти через Yandex'}
+        </Button>
+        {!isApiConfigured() ? (
+          <p className="text-xs text-slate-500">
+            Yandex требует Flask API (`VITE_API_BASE_URL`). Сейчас: не задан.
+          </p>
+        ) : (
+          <p className="text-xs text-slate-500">
+            Yandex: {apiBaseUrl()}/api/auth/oauth/yandex/start
+          </p>
+        )}
+      </div>
+
+      <p className="mb-4 max-w-xl text-sm text-slate-500">или email и пароль</p>
 
       <form className="w-full max-w-xl space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
@@ -115,13 +163,13 @@ export function AuthPage() {
         ) : null}
 
         <div className="app-actions flex flex-wrap gap-2">
-          <Button type="submit" disabled={submitting || loading}>
+          <Button type="submit" disabled={submitting || loading || oauthBusy !== null}>
             {mode === 'login' ? 'Войти' : 'Зарегистрироваться'}
           </Button>
           <Button
             type="button"
             variant="secondary"
-            disabled={submitting}
+            disabled={submitting || oauthBusy !== null}
             onClick={() => {
               setError(null)
               setInfo(null)

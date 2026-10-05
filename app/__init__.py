@@ -47,7 +47,15 @@ from infrastructure.supabase_store import (
 from integrations.ai_client import build_ai_client, load_ai_settings
 from integrations.embedding_client import build_embedding_client, load_embedding_settings
 
-PUBLIC_API_PATHS = frozenset({"/api/health", "/api/ai/ping"})
+PUBLIC_API_PATHS = frozenset(
+    {
+        "/api/health",
+        "/api/ai/ping",
+        "/api/auth/oauth/status",
+        "/api/auth/oauth/yandex/start",
+        "/api/auth/oauth/yandex/callback",
+    }
+)
 
 
 def _is_public_or_production_env() -> bool:
@@ -219,9 +227,11 @@ def create_app(testing: bool = False) -> Flask:
     app.extensions["embedding_settings"] = embedding_settings
     app.extensions["embedding_client"] = embedding_client
 
+    from app.oauth_routes import oauth_bp
     from app.routes import api_bp
 
     app.register_blueprint(api_bp)
+    app.register_blueprint(oauth_bp)
 
     @app.before_request
     def bind_request_context() -> None:

@@ -7,8 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Session, User } from '@supabase/supabase-js'
+import type { Provider, Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
+import { apiBaseUrl } from '../api/client'
+
+type OAuthProvider = 'google' | 'yandex'
 
 type AuthContextValue = {
   configured: boolean
@@ -18,10 +21,19 @@ type AuthContextValue = {
   accessToken: string | null
   signIn: (email: string, password: string) => Promise<string | null>
   signUp: (email: string, password: string) => Promise<string | null>
+  signInWithOAuth: (provider: OAuthProvider) => Promise<string | null>
+  applySessionTokens: (
+    accessToken: string,
+    refreshToken: string,
+  ) => Promise<string | null>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+function oauthCallbackUrl(): string {
+  return `${window.location.origin}/auth/callback`
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured)
@@ -63,6 +75,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return error?.message ?? null
   }, [])
 
+  const applySessionTokens = useCallback(
+    async (accessToken: string, refreshToken: string) => {
+      if (!supabase) return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
+      const { error } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+      return error?.message ?? null
+    },
+    [],
+  )
+
+  const signInWithOAuth = useCallback(async (provider: OAuthProvider) => {
+    if (provider === 'yandex') {
+      const base = apiBaseUrl()
+      if (!base) {
+        return 'Не задан VITE_API_BASE_URL для Yandex OAuth (Flask).'
+      }
+      window.location.assign(`${base}/api/auth/oauth/yandex/start`)
+      return null
+    }
+
+    if (!supabase) return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google' as Provider,
+      options: {
+        redirectTo: oauthCallbackUrl(),
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
+    })
+    return error?.message ?? null
+  }, [])
+
   const signOut = useCallback(async () => {
     if (!supabase) return
     await supabase.auth.signOut()
@@ -77,9 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accessToken: session?.access_token ?? null,
       signIn,
       signUp,
+      signInWithOAuth,
+      applySessionTokens,
       signOut,
     }),
-    [loading, session, signIn, signUp, signOut],
+    [loading, session, signIn, signUp, signInWithOAuth, applySessionTokens, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

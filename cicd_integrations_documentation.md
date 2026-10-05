@@ -15,7 +15,7 @@
 | 0 | Каркас документа + план + уточнения | **done (awaiting OK)** — все G1–G9 locked |
 | 1 | CI/CD пайплайн | **done (awaiting OK)** — [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) |
 | 2 | Аудит безопасности | **done (awaiting OK)** — remediations applied [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) |
-| 3 | OAuth2 (Google + Yandex) | pending |
+| 3 | OAuth2 (Google + Yandex) | **done (awaiting OK)** — [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) |
 | 4 | Аналитика (Яндекс.Метрика) | pending |
 | 5 | Платежи (опционально) | **skipped** (G7) |
 | 6 | Мониторинг (UptimeRobot) | pending |
@@ -250,28 +250,33 @@ Issue: [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Полный �
 
 ## 4. OAuth2
 
-> Заполняется на **шаге 3**.
+Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) · Гайд: [`docs/OAUTH_SETUP.md`](docs/OAUTH_SETUP.md)
 
-### 4.1. Провайдер
+### 4.1. Провайдер (G5=C)
 
-_TBD после G5. Рекомендация: Google (и/или Yandex) через **Supabase Auth → Providers**, без отдельного Flask OAuth server._
+| Провайдер | Реализация |
+|-----------|------------|
+| Google | Supabase Auth Provider + FE `signInWithOAuth` |
+| Yandex | Flask Authorization Code (`/api/auth/oauth/yandex/*`) → Supabase Admin session |
 
 ### 4.2. Backend
 
-- Проверка JWT как сейчас; возможно mapping `identities` / profile после первого OAuth login.
-- Не хранить Client Secret на frontend.
+- Публичные: `GET /api/auth/oauth/status`, Yandex start/callback
+- `GET /api/auth/me` — user_id/email из JWT (email/Google/Yandex)
+- Секреты: `GOOGLE_*`, `YANDEX_*`, `SUPABASE_SERVICE_ROLE_KEY` только в `.env` (скрипт `scripts/save_oauth_secrets.py`)
 
 ### 4.3. Frontend
 
-- Кнопки «Войти через …» на `/auth`.
-- Redirect URL в консоли провайдера + Supabase Redirect URLs.
+- `/auth` — кнопки Google / Yandex
+- `/auth/callback` — PKCE (Google) + hash tokens (Yandex)
 
-### 4.4. Тест-план
+### 4.4. Тесты
 
-- Успешный вход
-- Отмена / ошибка провайдера
-- Получение email / user id в UI и в Flask `g.user_id`
-
+| Проверка | Результат |
+|----------|-----------|
+| Pytest `tests/test_oauth.py` (start/state/success/me/errors) | **PASS** |
+| Vitest `AuthPage.test.tsx` (кнопки + error) | **PASS** |
+| Live Google/Yandex | после вставки Client ID/Secret в `.env` + Dashboard (см. OAUTH_SETUP) |
 ---
 
 ## 5. Аналитика
@@ -403,7 +408,7 @@ _TBD при выборе B/C._
 | 0 | План + каркас `cicd_integrations_documentation.md` | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | G1 A; **G2 C**; **G3 N/A**; G4 local; G5 C; G6 A; G7 skip; G8 A; G9 agent |
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
 | 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
-| 3 | OAuth2 | TBD | pending | Google + Yandex (G5 C) |
+| 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
 | 4 | Аналитика | TBD | pending | Яндекс.Метрика (G6 A) |
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | TBD | pending | UptimeRobot (G8 A) |
@@ -413,4 +418,4 @@ _TBD при выборе B/C._
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 2 remediations [#39](https://github.com/Sintik1/Qa_Asistant/issues/39)._
+_Последнее обновление: 2026-10-05 — шаг 3 OAuth2 [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)._

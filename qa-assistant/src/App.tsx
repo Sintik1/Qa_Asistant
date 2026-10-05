@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { AppLayout } from './components/layout/AppLayout'
 import { AuthLayout } from './components/layout/AuthLayout'
+import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { AuthPage } from './pages/AuthPage'
 import { ChatPage } from './pages/ChatPage'
 import { HomePage } from './pages/HomePage'
@@ -15,6 +16,7 @@ function App() {
         <Routes>
           <Route element={<AuthLayout />}>
             <Route path="auth" element={<AuthPage />} />
+            <Route path="auth/callback" element={<AuthCallbackPage />} />
           </Route>
 
           <Route element={<RequireAuth />}>

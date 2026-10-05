@@ -58,6 +58,7 @@
 46. CI/CD + integrations ДЗ — workflow + `cicd_integrations_documentation.md` — **done (awaiting OK)** шаг 0 (см. [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); G1 A, **G2 C**, **G3 N/A**, G4 local, G5 C, G6 A, G7 skip, G8 A)
 47. CI/CD ДЗ шаг 1 — GitHub Actions CI — **done (awaiting OK)** (см. [#38](https://github.com/Sintik1/Qa_Asistant/issues/38); CI/CD ДЗ шаг 1 → `cicd_integrations_documentation.md` §2)
 48. CI/CD ДЗ шаг 2 — Security audit — **done (awaiting OK)** remediations applied (см. [#39](https://github.com/Sintik1/Qa_Asistant/issues/39); → `docs/SECURITY_AUDIT.md` + §3)
+49. CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex — **done (awaiting OK)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); → `docs/OAUTH_SETUP.md` + `cicd_integrations_documentation.md` §4)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -117,6 +118,16 @@
 - Отчёт → gate `делай` → remediations A2/B1a/B2a/B3a/C1/C2
 - flask-cors 6; security headers; admin token gate; Settings без localStorage secrets; CI audits
 - pytest 101 / vitest 78
+
+### Промпт: CI/CD ДЗ шаг 3 — OAuth2
+
+**Запрос:** Senior FullStack; Google+Yandex (G5=C); secrets только в `.env`; тесты success/error/userinfo.
+
+**Результат ([#40](https://github.com/Sintik1/Qa_Asistant/issues/40)):**
+- Google: Supabase `signInWithOAuth`; Yandex: Flask code flow + Admin session
+- FE: кнопки + `/auth/callback`; BE: `/api/auth/me`, `/api/auth/oauth/*`
+- `scripts/save_oauth_secrets.py` + `docs/OAUTH_SETUP.md`
+- pytest oauth + vitest AuthPage; full suite 107 / 81
 
 ### Промпт: CI/CD + integrations ДЗ — план и каркас документации
 
@@ -702,6 +713,7 @@
 | CI/CD + integrations ДЗ — workflow + docs | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | шаг 0 done (awaiting OK): G2=C CI-only; → `cicd_integrations_documentation.md` §0/§10 |
 | CI/CD ДЗ шаг 1 — GitHub Actions | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK): `ci.yml`; → §2 |
 | CI/CD ДЗ шаг 2 — Security audit | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK): remediations landed; → `docs/SECURITY_AUDIT.md` |
+| CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK): → `docs/OAUTH_SETUP.md` §4 |
 
 ---
 
