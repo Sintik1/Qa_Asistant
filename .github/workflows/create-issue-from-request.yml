@@ -1,0 +1,78 @@
+name: Create issue from request file
+
+# When MCP Create Issue UI / local api.github.com are unavailable,
+# drop a markdown file under .github/issue-requests/ and push to main.
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".github/issue-requests/*.md"
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create issue from newest request
+        id: create
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const dir = '.github/issue-requests';
+            const files = fs.readdirSync(dir).filter(f => f.endsWith('.md')).sort();
+            if (!files.length) {
+              core.info('No request files');
+              return;
+            }
+            const file = files[files.length - 1];
+            const full = path.join(dir, file);
+            const raw = fs.readFileSync(full, 'utf8');
+            const lines = raw.split(/\r?\n/);
+            let title = file.replace(/\.md$/, '');
+            let i = 0;
+            if (lines[0] === '---') {
+              i = 1;
+              while (i < lines.length && lines[i] !== '---') {
+                const m = lines[i].match(/^title:\s*(.*)$/);
+                if (m) title = m[1].trim().replace(/^["']|["']$/g, '');
+                i++;
+              }
+              if (lines[i] === '---') i++;
+            }
+            const body = lines.slice(i).join('\n').trim();
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body: body || '(no body)',
+            });
+            core.info(`Created #${issue.data.number}: ${issue.data.html_url}`);
+            core.setOutput('number', String(issue.data.number));
+            core.setOutput('url', issue.data.html_url);
+            core.setOutput('file', full);
+      - name: Remove processed request file
+        if: steps.create.outputs.file
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const file = '${{ steps.create.outputs.file }}';
+            const fs = require('fs');
+            if (!fs.existsSync(file)) return;
+            const content = fs.readFileSync(file, 'utf8');
+            await github.rest.repos.deleteFile({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path: file,
+              message: `chore: remove processed issue request (${file}) → #${{ steps.create.outputs.number }}`,
+              sha: (await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: file,
+              })).data.sha,
+            });
+            core.info(`Removed ${file}`);
