@@ -72,7 +72,12 @@ jobs:
         run: ruff format --check app core infrastructure integrations wsgi.py
 
       - name: Pytest (exclude Selenium ui/security)
-        run: python -m pytest tests/ -m "not ui and not security" -q
+        run: |
+          python -m pytest tests/ \
+            -m "not ui and not security" \
+            --ignore=tests/test_ui_e2e.py \
+            --ignore=tests/test_security.py \
+            -q
 
   deploy:
     # Homework "deploy" stage: intentionally disabled (G2=C — no cloud budget / local AI).

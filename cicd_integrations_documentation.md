@@ -166,7 +166,7 @@ Issue: [#38](https://github.com/Sintik1/Qa_Asistant/issues/38)
 | `backend` | install | `pip install -r requirements.txt` + `ruff` |
 | | lint | `ruff check app core infrastructure integrations wsgi.py` |
 | | format | `ruff format --check …` |
-| | test | `pytest tests/ -m "not ui and not security"` |
+| | test | `pytest tests/ -m "not ui and not security"` + `--ignore` ui/security modules (no Selenium in CI) |
 | `deploy` | deploy | **disabled** (`if: false`) — см. §2.4 |
 
 **CI env (backend):** `FLASK_ENV=testing`, `PERSIST_BACKEND=memory`, `EMBEDDING_PROVIDER=hash`, `AI_PROVIDER=ollama`.
