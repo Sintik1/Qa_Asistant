@@ -14,7 +14,7 @@
 |-----|-----------|--------|
 | 0 | Каркас документа + план + уточнения | **done (awaiting OK)** — все G1–G9 locked |
 | 1 | CI/CD пайплайн | **done (awaiting OK)** — [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) |
-| 2 | Аудит безопасности | pending |
+| 2 | Аудит безопасности | **audit done — awaiting remediations OK** — [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) |
 | 3 | OAuth2 (Google + Yandex) | pending |
 | 4 | Аналитика (Яндекс.Метрика) | pending |
 | 5 | Платежи (опционально) | **skipped** (G7) |
@@ -207,33 +207,43 @@ python -m pytest tests/ -m "not ui and not security" -q
 
 ## 3. Безопасность
 
-> Заполняется на **шаге 2**. Отчёт аудита: раздел ниже + при необходимости `docs/SECURITY_AUDIT.md`.
+Issue: [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Полный отчёт: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md)
 
-### 3.1. Dependency audit
+### 3.1. Dependency audit (2026-10-05)
 
-- Frontend: `npm audit`
-- Backend: `pip-audit` / `safety` (по наличию в окружении)
+| Tool | Результат |
+|------|-----------|
+| `npm audit` (qa-assistant) | **0** vulnerabilities |
+| `pip-audit -r requirements.txt` | **8** advisories / **5** packages |
+| `safety` | не использован (interactive login) |
 
-### 3.2. OWASP Top 10 (чеклист)
+Ключевые backend: **flask-cors 5.0.1 → ≥6.0.0** (High); python-dotenv → 1.2.2; pytest → 9.0.3; transitive click/anyio.
 
-| Риск | Текущее состояние (предварительно) | План |
-|------|-----------------------------------|------|
-| Injection (SQL) | PostgREST / параметризация; string SQL запрещён rules | проверить + тесты |
-| XSS | React escaping; проверить `dangerouslySetInnerHTML` | audit FE |
-| CSRF | JWT Bearer (не cookie session) — низкий риск classic CSRF | документировать |
-| Broken Auth | Supabase + JWT; bypass disabled on PaaS | OAuth hardening |
-| Sensitive data | `.env` gitignored | secrets scan в CI |
-| Misconfig | CORS whitelist | проверить prod env |
-| Vulnerable deps | TBD audit | update |
-| Logging/monitoring | JSON logs + health | шаги 6–7 |
+### 3.2. OWASP Top 10 (итог аудита)
+
+| Риск | Состояние | Действие |
+|------|-----------|----------|
+| Injection (SQL) | PostgREST / нет string-SQL | OK |
+| XSS | React text; нет `dangerouslySetInnerHTML` | OK |
+| CSRF | Bearer JWT | OK (низкий classic CSRF) |
+| Broken Access | JWT + bypass hard-disable на PaaS | OK + усилить admin analyze-logs |
+| Sensitive data | `.env` / не коммитить | OK; legacy localStorage token — cleanup |
+| Misconfig | CORS whitelist; **нет security headers** | добавить headers |
+| Vulnerable deps | flask-cors и др. | обновить после gate |
+| Logging | JSON + analyze-logs | ужесточить admin token |
 
 ### 3.3. Найденные проблемы и исправления
 
-_Таблица заполнится на шаге 2._
-
 | ID | Severity | Находка | Исправление |
 |----|----------|---------|-------------|
-| — | — | — | — |
+| D1 | High | flask-cors 5.0.1 (3 CVE) | ⏳ gate → bump ≥6.0 |
+| D2 | Low–Med | dotenv / pytest / click / anyio | ⏳ gate → bump |
+| C1 | Medium | нет security headers | ⏳ gate → B1a |
+| C2 | Medium | analyze-logs без обязательного admin token | ⏳ gate → B2a |
+| C3 | Low | Settings пишет token в localStorage | ⏳ gate → B3a |
+| C4 | Low | нет audit в CI | ⏳ gate → C1 |
+
+Фиксы **не применены** до ответа пользователя по вариантам в `docs/SECURITY_AUDIT.md` §5.
 
 ---
 
@@ -391,7 +401,7 @@ _TBD при выборе B/C._
 |--------|------|-------|--------|------------|
 | 0 | План + каркас `cicd_integrations_documentation.md` | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | G1 A; **G2 C**; **G3 N/A**; G4 local; G5 C; G6 A; G7 skip; G8 A; G9 agent |
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
-| 2 | Аудит безопасности | TBD | pending | |
+| 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | audit done (awaiting remediations) | отчёт `docs/SECURITY_AUDIT.md`; фиксы после OK |
 | 3 | OAuth2 | TBD | pending | Google + Yandex (G5 C) |
 | 4 | Аналитика | TBD | pending | Яндекс.Метрика (G6 A) |
 | 5 | Платежи | — | **skipped** | G7 |
@@ -402,4 +412,4 @@ _TBD при выборе B/C._
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 1 CI [#38](https://github.com/Sintik1/Qa_Asistant/issues/38)._
+_Последнее обновление: 2026-10-05 — шаг 2 security audit report [#39](https://github.com/Sintik1/Qa_Asistant/issues/39)._
