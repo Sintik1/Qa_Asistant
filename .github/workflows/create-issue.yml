@@ -1,0 +1,37 @@
+name: Create homework issue
+
+# One-shot helper when local agent cannot call api.github.com (proxy) / MCP Create Issue UI missing.
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Issue title
+        required: true
+        type: string
+      body:
+        description: Issue body (markdown)
+        required: true
+        type: string
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - name: Create issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = ${{ toJson(inputs.title) }};
+            const body = ${{ toJson(inputs.body) }};
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+            });
+            core.info(`Created #${issue.data.number}: ${issue.data.html_url}`);
+            core.setOutput('number', issue.data.number);
+            core.setOutput('url', issue.data.html_url);
