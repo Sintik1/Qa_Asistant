@@ -43,5 +43,8 @@ htmlcov/
 .env.*
 !.env.example
 
+# Local toolchains (optional Node tarball downloads)
+.tools/
+
 # Runtime uploads / debug artifacts
 uploads/

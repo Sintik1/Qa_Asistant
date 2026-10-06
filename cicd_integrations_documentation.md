@@ -435,6 +435,15 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 
 ### 9.3. Примеры промптов и результатов
 
+#### Промпт: one-time Pages setup (agent)
+
+**Запрос:** «Сделай один раз вручную (иначе deploy упадёт) — сделай сам».
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- Settings → Pages → Source **GitHub Actions**
+- Repo Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- Unblock CI: `overrides.source-map-js=1.2.2` (CVE-2026-93749 / GHSA-68fv-2mgg-jv7q)
+
 #### Промпт: шаг 9 — оформление результатов
 
 **Запрос:** документация CI/CD / интеграции / security / мониторинг+логи; обновить README; сверить формат сдачи п.1–4.
@@ -531,7 +540,8 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 7 | Логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | scenarios + redact + `docs/LOGGING.md` §8; отдельная Issue UI недоступна — трек в эпике |
 | 8 | Тесты + оптимизация | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | → `docs/INTEGRATIONS_QA_STEP8.md`; Google redirect URI config residual |
 | 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; **G2=B Pages deploy** |
+| — | Pages one-time setup | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **in progress** | Settings→Pages Source=Actions; Variables `VITE_SUPABASE_*`; npm override `source-map-js@1.2.2` (GHSA-68fv-2mgg-jv7q) so CI deploy runs |
 
 ---
 
-_Последнее обновление: 2026-10-06 — acceptance fix: auto-deploy FE GitHub Pages (G2=B)._
+_Последнее обновление: 2026-10-06 — Pages/Actions vars + audit fix for first GitHub Pages deploy._
