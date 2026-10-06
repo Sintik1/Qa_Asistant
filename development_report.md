@@ -63,6 +63,7 @@
 51. CI/CD ДЗ шаг 6 — мониторинг UptimeRobot + health checks — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); шаг 5 skipped; → `docs/UPTIME_SETUP.md` + `cicd_integrations_documentation.md` §7/§10)
 52. CI/CD ДЗ шаг 7 — логирование — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10)
 53. CI/CD ДЗ шаг 8 — тестирование интеграций + оптимизация — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/INTEGRATIONS_QA_STEP8.md` + `cicd_integrations_documentation.md` §10)
+54. CI/CD ДЗ шаг 9 — оформление результатов — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -113,10 +114,19 @@
 | MCP Create Issue form invisible → epic comment | CI/CD ДЗ шаг 6 tracked on [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | Scenario prompts ×3 + redact before AI | CI/CD ДЗ шаг 7: logging package A ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Integrations QA + apply AI perf fixes | CI/CD ДЗ шаг 8 ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Submission filenames + format checklist | CI/CD ДЗ шаг 9: `integration_documentation.md` + `security_audit.md` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: CI/CD ДЗ шаг 9 — оформление
+
+**Запрос:** docs CI/CD / интеграции / security / мониторинг+логи; README; сверить формат сдачи п.1–4.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- Корневые `integration_documentation.md` (§0 чеклист) и `security_audit.md`
+- README блок сдачи; G2=C = инструкции + screencast вместо публичного URL
 
 ### Промпт: CI/CD ДЗ шаг 8 — тестирование и оптимизация
 
@@ -678,6 +688,7 @@
 0c. Мониторинг при G2=C: усиленный `/api/health` + local `watch_health.py`; UptimeRobot — когда появится публичный URL ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0d. Логирование: scenario prompts + redact до AI; централизация при G2=C = local rotating file ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0e. Шаг 8: integrations QA matrix + apply AI perf (code-split, hermetic tests, API_UNAVAILABLE mapping); Google OAuth needs Console redirect URI ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+0f. Шаг 9: файлы сдачи `integration_documentation.md` + `security_audit.md`; формат п.1–4 закрыт локальным стендом при G2=C ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0b. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
@@ -772,6 +783,7 @@
 | CI/CD ДЗ шаг 6 — UptimeRobot + health | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/UPTIME_SETUP.md` §7 (отдельная Issue UI недоступна) |
 | CI/CD ДЗ шаг 7 — логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10 |
 | CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10; pytest 121 / vitest 87 (`test_supabase_rest`, `AuthCallbackPage.test`) |
+| CI/CD ДЗ шаг 9 — оформление сдачи | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): `integration_documentation.md` + `security_audit.md` + README; → §10 |
 
 ---
 

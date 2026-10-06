@@ -6,14 +6,38 @@
 
 **Репозиторий:** https://github.com/Sintik1/Qa_Asistant
 
+---
+
+## Сдача CI/CD + Integrations ДЗ (формат)
+
+| Требование | Ссылка |
+|------------|--------|
+| Репозиторий | https://github.com/Sintik1/Qa_Asistant |
+| CI/CD | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| Документация интеграций | [`integration_documentation.md`](integration_documentation.md) |
+| Отчёт по безопасности | [`security_audit.md`](security_audit.md) |
+| Живой журнал шагов 0–9 | [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) |
+| Приложение (G2=C) | **Локальный стенд** ниже + [`docs/screencast/`](docs/screencast/) (публичный auto-deploy отключён) |
+| QA интеграций | [`docs/INTEGRATIONS_QA_STEP8.md`](docs/INTEGRATIONS_QA_STEP8.md) |
+
+Чеклист соответствия формату сдачи — в [`integration_documentation.md`](integration_documentation.md) §0.
+
+---
+
+## Документация
+
 | Документ | Назначение |
 |----------|------------|
-| [`backend_documentation.md`](backend_documentation.md) | **Сдача Backend ДЗ:** архитектура, развёртывание, API, примеры, AI-процесс |
-| [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) | **Сдача CI/CD + integrations ДЗ:** пайплайн, security, OAuth, аналитика, мониторинг |
-| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт: API + UI + DB (вердикт PASS) |
-| [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) | Аудит безопасности + remediations |
-| [`docs/OAUTH_SETUP.md`](docs/OAUTH_SETUP.md) | OAuth2 Google + Yandex (секреты, redirect, checklist) |
-| [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) | **Как пользоваться RAG:** документы, кейсы, чистка, Table Editor |
+| [`integration_documentation.md`](integration_documentation.md) | **Сдача CI/CD ДЗ:** CI, интеграции, мониторинг, логи, примеры конфигов |
+| [`security_audit.md`](security_audit.md) | **Сдача:** уязвимости, исправления, рекомендации |
+| [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) | Журнал CI/CD ДЗ (шаги 0–9, gates G1–G9) |
+| [`backend_documentation.md`](backend_documentation.md) | Сдача Backend ДЗ: архитектура, API, деплой |
+| [`docs/OAUTH_SETUP.md`](docs/OAUTH_SETUP.md) | OAuth2 Google + Yandex |
+| [`docs/METRIKA_SETUP.md`](docs/METRIKA_SETUP.md) | Яндекс.Метрика |
+| [`docs/UPTIME_SETUP.md`](docs/UPTIME_SETUP.md) | UptimeRobot + health |
+| [`docs/LOGGING.md`](docs/LOGGING.md) | JSON logs + AI scenarios |
+| [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт API + UI + DB |
+| [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) | RAG usage |
 | [`development_report.md`](development_report.md) | Журнал стадий + GitHub Issues |
 | [`technical_specification.md`](technical_specification.md) | Техническое задание |
 
@@ -22,6 +46,7 @@
 ## Для проверяющего
 
 Публичный cloud-деплой **не обязателен** (критерий ДЗ: «ссылка на деплой **или** инструкции»).  
+Gate **G2=C**: GitHub Actions = lint/test/build; auto-deploy `if: false` (локальный AI / Ollama).  
 `docker compose` поднимает **только UI**, не полный стек (см. комментарий в `docker-compose.yml`).
 
 | Слой | Где на стенде сдачи |
@@ -29,6 +54,7 @@
 | БД / Auth / Storage / RLS | **Supabase** (BaaS, Free tier) |
 | Backend (Flask) + Frontend (Vite) | **локально** (или опциональный PaaS — см. ниже) |
 | AI | **Ollama** локально или **Leopold** по токену в server `.env` |
+| CI | GitHub Actions → вкладка **Actions** → workflow **CI** |
 
 ### Демо-вход (Supabase Auth)
 
@@ -220,7 +246,7 @@ cd qa-assistant && npm test && npm run build
 
 ### Security
 
-Аудит и remediations: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) · Issue [#39](https://github.com/Sintik1/Qa_Asistant/issues/39).
+Аудит и remediations: [`security_audit.md`](security_audit.md) (файл сдачи) · журнал [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) · Issue [#39](https://github.com/Sintik1/Qa_Asistant/issues/39).
 
 | Мера | Где |
 |------|-----|

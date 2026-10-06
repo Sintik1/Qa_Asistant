@@ -4,6 +4,7 @@
 
 Репозиторий: https://github.com/Sintik1/Qa_Asistant  
 Эпик: [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)  
+**Файлы сдачи (формат ДЗ):** [`integration_documentation.md`](integration_documentation.md) · [`security_audit.md`](security_audit.md)  
 Связанные артефакты: [`backend_documentation.md`](backend_documentation.md) · [`development_report.md`](development_report.md) · [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md)
 
 **Стек приложения (база):** React (Vite) + Flask + Supabase Auth/Postgres/Storage + Ollama/Leopold.
@@ -21,7 +22,7 @@
 | 6 | Мониторинг (UptimeRobot) | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 7 | Логирование | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 8 | Тестирование и оптимизация | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
-| 9 | Оформление + README | pending |
+| 9 | Оформление + README | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 
 > Решения по платформам (CI, хостинг, OAuth-провайдер, аналитика, платежи) фиксируются после согласования с пользователем — см. §0 и §6.
 
@@ -207,7 +208,7 @@ python -m pytest tests/ -m "not ui and not security" -q
 
 ## 3. Безопасность
 
-Issue: [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Полный отчёт: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md)
+Issue: [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · **Файл сдачи:** [`security_audit.md`](security_audit.md) · Журнал: [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md)
 
 ### 3.1. Dependency audit (2026-10-05)
 
@@ -429,9 +430,19 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | SPA analytics wrapper + Vitest no-op without id | Шаг 4 (Метрика) |
 | Health checks + local watcher (G2=C) | Шаг 6 (UptimeRobot) |
 | Scenario prompts ×3 + redact before AI | Шаг 7 (логирование) |
-| Integrations QA matrix + AI perf apply | Шаг 8 (тесты + оптимизация) |
+| Integrations QA + apply AI perf fixes | Шаг 8 |
+| Submission docs (`integration_documentation.md`, `security_audit.md`) | Шаг 9 |
 
 ### 9.3. Примеры промптов и результатов
+
+#### Промпт: шаг 9 — оформление результатов
+
+**Запрос:** документация CI/CD / интеграции / security / мониторинг+логи; обновить README; сверить формат сдачи п.1–4.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- [`integration_documentation.md`](integration_documentation.md) — артефакт сдачи + чеклист §0
+- [`security_audit.md`](security_audit.md) — уязвимости / фиксы / рекомендации
+- README: блок «Сдача CI/CD ДЗ»; G2=C = инструкции + screencast
 
 #### Промпт: шаг 8 — тестирование и оптимизация
 
@@ -519,8 +530,8 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |
 | 7 | Логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | scenarios + redact + `docs/LOGGING.md` §8; отдельная Issue UI недоступна — трек в эпике |
 | 8 | Тесты + оптимизация | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | → `docs/INTEGRATIONS_QA_STEP8.md`; Google redirect URI config residual |
-| 9 | Docs + README | TBD | pending | |
+| 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0 |
 
 ---
 
-_Последнее обновление: 2026-10-06 — шаг 8 тестирование + оптимизация (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._
+_Последнее обновление: 2026-10-06 — шаг 9 оформление результатов (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._

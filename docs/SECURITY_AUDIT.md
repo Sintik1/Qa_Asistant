@@ -1,11 +1,14 @@
 # Security Audit Report — QA Assistant
 
+> **Файл сдачи ДЗ:** корневой [`security_audit.md`](../security_audit.md)  
+> Этот файл — расширенный дубликат / журнал аудита шага 2.
+
 **Дата:** 2026-10-05  
 **Issue:** [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) · Эпик [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)  
 **Метод:** `npm audit`, `pip-audit`, ручной + AI-разбор кода (OWASP Top 10)  
 **Статус:** remediations **применены** (gate A2+B1a+B2a+B3a+B4b+B5b+C1+C2)
 
-Сводка также в [`cicd_integrations_documentation.md`](../cicd_integrations_documentation.md) §3.
+Сводка также в [`cicd_integrations_documentation.md`](../cicd_integrations_documentation.md) §3 · [`integration_documentation.md`](../integration_documentation.md).
 
 ---
 
