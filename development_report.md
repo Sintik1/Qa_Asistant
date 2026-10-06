@@ -61,7 +61,7 @@
 49. CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex — **done (awaiting OK)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); → `docs/OAUTH_SETUP.md` + `cicd_integrations_documentation.md` §4)
 50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10); counter `113444012`; live verify tag/hit/`auth_login` PASS (`docs/METRIKA_SETUP.md` §5.1)
 51. CI/CD ДЗ шаг 6 — мониторинг UptimeRobot + health checks — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); шаг 5 skipped; → `docs/UPTIME_SETUP.md` + `cicd_integrations_documentation.md` §7/§10)
-52. CI/CD ДЗ шаг 7 — логирование — **proposal (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); код после согласования)
+52. CI/CD ДЗ шаг 7 — логирование — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -110,10 +110,20 @@
 | Bypass MCP Issue UI (no Submit) | Issue #37 через `~/.local/bin/gh issue create` |
 | SPA analytics wrapper + Vitest no-op | CI/CD ДЗ шаг 4: Яндекс.Метрика ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 | MCP Create Issue form invisible → epic comment | CI/CD ДЗ шаг 6 tracked on [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
+| Scenario prompts ×3 + redact before AI | CI/CD ДЗ шаг 7: logging package A ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: CI/CD ДЗ шаг 7 — логирование
+
+**Запрос:** Senior Backend; JSON + централизация (G2=C); промпты×3; после согласования выполнить. Пользователь: «ок».
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- `SCENARIO_PROMPTS` general/auth/cors/ai/persist + `redact_secrets`
+- JSON `service`/`env`/`event`; CLI `--scenario`; fixtures; `docs/LOGGING.md`
+- Pytest logging suite green; локальная централизация = `logs/app.log`
 
 ### Промпт: CI/CD ДЗ шаг 6 — мониторинг
 
@@ -652,6 +662,7 @@
 0. CI/CD ДЗ: отдельный артефакт `cicd_integrations_documentation.md` + rule; решения G1–G9 до кода; OAuth предпочтительно через Supabase Providers; платежи — optional gate ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0a. Аналитика: Яндекс.Метрика через тонкий wrapper + SPA `hit`; цели как JS events; Webvisor off по умолчанию ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)).
 0c. Мониторинг при G2=C: усиленный `/api/health` + local `watch_health.py`; UptimeRobot — когда появится публичный URL ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+0d. Логирование: scenario prompts + redact до AI; централизация при G2=C = local rotating file ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0b. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
@@ -744,6 +755,7 @@
 | CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK): → `docs/OAUTH_SETUP.md` §4 |
 | CI/CD ДЗ шаг 4 — Яндекс.Метрика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK): → `docs/METRIKA_SETUP.md` + `cicd_integrations_documentation.md` §5/§10 |
 | CI/CD ДЗ шаг 6 — UptimeRobot + health | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/UPTIME_SETUP.md` §7 (отдельная Issue UI недоступна) |
+| CI/CD ДЗ шаг 7 — логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10 |
 
 ---
 

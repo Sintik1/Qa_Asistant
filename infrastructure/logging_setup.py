@@ -20,8 +20,25 @@ class JsonFormatter(logging.Formatter):
             "ts": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
+            "service": os.getenv("LOG_SERVICE", "qa-assistant"),
+            "env": os.getenv("APP_ENV", os.getenv("FLASK_ENV", "development")),
             "msg": record.getMessage(),
         }
+        event = getattr(record, "event", None)
+        if event is None:
+            # Infer from message for legacy call sites
+            msg = record.getMessage()
+            if msg.startswith("request"):
+                event = "http_request"
+            elif msg.startswith("app_error"):
+                event = "app_error"
+            elif msg.startswith("not_found"):
+                event = "not_found"
+            elif msg.startswith("unhandled"):
+                event = "unhandled_exception"
+        if event is not None:
+            payload["event"] = event
+
         for key in (
             "request_id",
             "user_id",

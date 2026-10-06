@@ -335,13 +335,14 @@ def analyze_logs():
     data = request.get_json(silent=True) or {}
     ai = current_app.extensions.get("ai_client")
     inline = (data.get("text") or data.get("log_text") or "").strip()
+    scenario = (data.get("scenario") or "general").strip() or "general"
     try:
         max_lines = int(data.get("max_lines", 200))
     except (TypeError, ValueError) as exc:
         raise ValidationError(code="VALIDATION_ERROR", message="max_lines must be integer") from exc
 
     if inline:
-        result = analyze_log_text(inline, ai, source="inline")
+        result = analyze_log_text(inline, ai, source="inline", scenario=scenario)
     else:
-        result = analyze_log_file(ai, max_lines=max_lines)
+        result = analyze_log_file(ai, max_lines=max_lines, scenario=scenario)
     return jsonify(result.to_dict())

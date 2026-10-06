@@ -1,0 +1,4 @@
+{"ts":"2026-10-05T20:00:01Z","level":"INFO","service":"qa-assistant","env":"development","event":"http_request","msg":"request","request_id":"auth-1","method":"GET","path":"/api/health","status":200,"duration_ms":1.2}
+{"ts":"2026-10-05T20:00:02Z","level":"WARNING","service":"qa-assistant","env":"development","event":"app_error","msg":"app_error UNAUTHORIZED","request_id":"auth-2","method":"GET","path":"/api/runs","status":401,"error_code":"UNAUTHORIZED"}
+{"ts":"2026-10-05T20:00:03Z","level":"WARNING","service":"qa-assistant","env":"development","event":"app_error","msg":"app_error UNAUTHORIZED","request_id":"auth-3","method":"POST","path":"/api/documents","status":401,"error_code":"UNAUTHORIZED"}
+{"ts":"2026-10-05T20:00:04Z","level":"INFO","service":"qa-assistant","env":"development","event":"http_request","msg":"request","request_id":"auth-3","method":"POST","path":"/api/documents","status":401,"duration_ms":12.0}

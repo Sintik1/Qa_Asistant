@@ -8,8 +8,16 @@ import pytest
 
 from app import create_app
 from core.errors import ForbiddenError
-from core.log_analyzer import analyze_log_text, read_log_tail
+from core.log_analyzer import (
+    analyze_log_text,
+    list_scenarios,
+    read_log_tail,
+    redact_secrets,
+    resolve_scenario,
+)
 from core.messages import ERROR_MESSAGES
+from infrastructure.logging_setup import JsonFormatter
+import logging as py_logging
 
 
 @pytest.fixture()
@@ -76,6 +84,84 @@ def test_app_error_is_logged(client):
     assert any(getattr(r, "error_code", None) == "UNAUTHORIZED" for r in records)
 
 
+def test_json_formatter_includes_service_env_event():
+    record = py_logging.LogRecord(
+        name="qa_assistant",
+        level=py_logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="request",
+        args=(),
+        exc_info=None,
+    )
+    record.request_id = "r1"
+    record.event = "http_request"
+    line = JsonFormatter().format(record)
+    import json
+
+    data = json.loads(line)
+    assert data["level"] == "INFO"
+    assert data["service"] == "qa-assistant"
+    assert "env" in data
+    assert data["event"] == "http_request"
+    assert data["request_id"] == "r1"
+
+
+def test_redact_secrets_strips_jwt_and_bearer():
+    raw = (
+        'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.'
+        "eyJzdWIiOiIxIn0.signature "
+        "and sb_secret_abc123XYZ"
+    )
+    cleaned = redact_secrets(raw)
+    assert "eyJ" not in cleaned
+    assert "sb_secret_abc123XYZ" not in cleaned
+    assert "[REDACTED" in cleaned
+
+
+def test_scenarios_listed_and_resolved():
+    names = list_scenarios()
+    assert "general" in names
+    assert "auth" in names
+    assert resolve_scenario("auth") == "auth"
+    with pytest.raises(Exception) as exc:
+        resolve_scenario("nope")
+    assert getattr(exc.value, "code", None) == "VALIDATION_ERROR"
+
+
+def test_analyze_logs_scenario_auth_uses_prompt(client):
+    c, app = client
+    captured: dict[str, str] = {}
+
+    class FakeAi:
+        def generate(self, system_prompt: str, user_content: str) -> str:
+            captured["system"] = system_prompt
+            captured["user"] = user_content
+            assert "UNAUTHORIZED" in user_content or "401" in user_content
+            assert "Bearer" not in user_content or "[REDACTED" in user_content
+            return "| симптом | гипотеза | проверка |\n| 401 | нет JWT | login |"
+
+    app.extensions["ai_client"] = FakeAi()
+    fixture = Path("tests/fixtures/logs/auth_401.jsonl").read_text(encoding="utf-8")
+    # inject a secret line to prove redaction
+    fixture += (
+        '\n{"msg":"debug Authorization: Bearer '
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaa.bbb"}\n'
+    )
+    res = c.post(
+        "/api/admin/analyze-logs",
+        json={"text": fixture, "scenario": "auth"},
+        headers={"X-User-Id": "u1"},
+    )
+    assert res.status_code == 200
+    body = res.get_json()
+    assert body["scenario"] == "auth"
+    assert "JWT" in captured["system"] or "auth" in captured["system"].lower()
+    assert "UNAUTHORIZED" in captured["system"] or "401" in captured["system"]
+    assert "eyJhbGci" not in captured["user"]
+    assert "гипотеза" in body["analysis"] or "JWT" in body["analysis"]
+
+
 def test_analyze_logs_inline_with_mock_ai(client):
     c, app = client
 
@@ -93,6 +179,7 @@ def test_analyze_logs_inline_with_mock_ai(client):
     assert res.status_code == 200
     body = res.get_json()
     assert body["source"] == "inline"
+    assert body["scenario"] == "general"
     assert body["lines_used"] == 1
     assert "JWT" in body["analysis"]
 

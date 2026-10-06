@@ -19,7 +19,7 @@
 | 4 | Аналитика (Яндекс.Метрика) | **done (awaiting OK)** — [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) |
 | 5 | Платежи (опционально) | **skipped** (G7) |
 | 6 | Мониторинг (UptimeRobot) | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
-| 7 | Логирование | pending |
+| 7 | Логирование | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 8 | Тестирование и оптимизация | pending |
 | 9 | Оформление + README | pending |
 
@@ -380,19 +380,36 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 
 ## 8. Логирование
 
-> Частично уже реализовано (Backend ДЗ шаг 7). Шаг 7 этого ДЗ — доработка + промпты AI-анализа + (опц.) централизация.
+> База: Backend ДЗ шаг 7. **CI/CD ДЗ шаг 7** — scenarios AI-анализа, redact секретов, поля `service`/`env`/`event`, локальная централизация (G2=C). Полный гайд: [`docs/LOGGING.md`](docs/LOGGING.md).
 
-### 8.1. Текущее
+### 8.1. Формат и destination
 
-- JSON lines, уровни info/warning/error
-- `logs/app.log` (rotating) + stdout
-- Env: `LOG_LEVEL`, `LOG_JSON`, …
+- JSON lines: `infrastructure/logging_setup.py` → stdout + rotating `logs/app.log`
+- Поля: `ts`, `level`, `logger`, `service` (`LOG_SERVICE`), `env` (`APP_ENV`), `event`, `msg`, `request_id`, HTTP context
+- Env: `LOG_LEVEL`, `LOG_JSON`, `LOG_TO_FILE`, `LOG_DIR`, `LOG_FILE`, `LOG_SERVICE`, `APP_ENV`, …
 
-### 8.2. План доработки
+### 8.2. AI-анализ (сценарии)
 
-- Единый `request_id` уже есть — проверить покрытие всех routes
-- Промпты для AI-анализа логов (типовые ошибки Auth, CORS, AI timeout)
-- Опционально: отправка в PaaS log drain / Supabase Logs (документировать)
+| Scenario | Фокус |
+|----------|--------|
+| `general` | triage top errors |
+| `auth` | 401/403 / JWT / OAuth |
+| `cors` | CORS / Origin |
+| `ai` | Ollama / timeouts |
+| `persist` | Supabase / RLS |
+
+- CLI: `python tools/analyze_logs.py --scenario auth --file tests/fixtures/logs/auth_401.jsonl`
+- API: `POST /api/admin/analyze-logs` + `{"scenario":"auth",…}` (admin token вне tests)
+- Перед моделью: `redact_secrets` (Bearer JWT, `sb_secret_*`, api keys)
+
+### 8.3. Централизация (G2=C)
+
+Без cloud drain: файл на машине Flask. Опционально позже Vector/Promtail. Supabase Dashboard Logs — paste в `--stdin`.
+
+### 8.4. Тесты / фикстуры
+
+- `tests/test_logging_and_errors.py` — formatter, redact, scenarios, admin gate, error contracts
+- `tests/fixtures/logs/{auth_401,cors_noise,ai_timeout}.jsonl`
 
 ---
 
@@ -411,9 +428,18 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | AI security review + `npm audit` / pip-audit | Шаг 2 |
 | SPA analytics wrapper + Vitest no-op without id | Шаг 4 (Метрика) |
 | Health checks + local watcher (G2=C) | Шаг 6 (UptimeRobot) |
-| … | … |
+| Scenario prompts ×3 + redact before AI | Шаг 7 (логирование) |
 
 ### 9.3. Примеры промптов и результатов
+
+#### Промпт: шаг 7 — логирование
+
+**Запрос:** роль Senior Backend; JSON + централизация; промпты×3; после согласования выполнить. Пользователь: «ок».
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- `SCENARIO_PROMPTS` (general/auth/cors/ai/persist) + `redact_secrets`
+- JSON поля `service`/`env`/`event`; CLI `--scenario` / `--list-scenarios`
+- Fixtures + Pytest; `docs/LOGGING.md`
 
 #### Промпт: шаг 6 — мониторинг
 
@@ -479,10 +505,10 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |
-| 7 | Логирование | TBD | pending | |
+| 7 | Логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | scenarios + redact + `docs/LOGGING.md` §8; отдельная Issue UI недоступна — трек в эпике |
 | 8 | Тесты + оптимизация | TBD | pending | |
 | 9 | Docs + README | TBD | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-05 — шаг 6 мониторинг (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._
+_Последнее обновление: 2026-10-06 — шаг 7 логирование (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._

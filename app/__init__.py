@@ -302,6 +302,7 @@ def create_app(testing: bool = False) -> Flask:
         get_logger().info(
             "request",
             extra={
+                "event": "http_request",
                 "request_id": getattr(g, "request_id", None),
                 "user_id": getattr(g, "user_id", None),
                 "method": request.method,
@@ -321,6 +322,7 @@ def create_app(testing: bool = False) -> Flask:
             "app_error %s",
             exc.code,
             extra={
+                "event": "app_error",
                 "request_id": getattr(g, "request_id", None),
                 "user_id": getattr(g, "user_id", None),
                 "method": request.method,
@@ -336,6 +338,7 @@ def create_app(testing: bool = False) -> Flask:
         get_logger().warning(
             "not_found",
             extra={
+                "event": "not_found",
                 "request_id": getattr(g, "request_id", None),
                 "user_id": getattr(g, "user_id", None),
                 "method": request.method,
@@ -363,6 +366,7 @@ def create_app(testing: bool = False) -> Flask:
         get_logger().exception(
             "unhandled_exception",
             extra={
+                "event": "unhandled_exception",
                 "request_id": getattr(g, "request_id", None),
                 "user_id": getattr(g, "user_id", None),
                 "method": request.method,

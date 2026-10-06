@@ -141,7 +141,8 @@ flask --app wsgi run -p 5001
 
 Проверка: http://127.0.0.1:5001/api/health  
 Ожидание: `"status":"ok"`, `"api":"qa-assistant"`, `"persist":"supabase"` (при настроенных ключах), блоки `"ai"` и `"checks"`.  
-Мониторинг: [`docs/UPTIME_SETUP.md`](docs/UPTIME_SETUP.md) (UptimeRobot + `scripts/watch_health.py`).
+Мониторинг: [`docs/UPTIME_SETUP.md`](docs/UPTIME_SETUP.md) (UptimeRobot + `scripts/watch_health.py`).  
+Логирование: [`docs/LOGGING.md`](docs/LOGGING.md) (JSON + AI scenarios `tools/analyze_logs.py`).
 
 ### 3. Frontend (Vite)
 
