@@ -1,5 +1,5 @@
-# QA Assistant — CI (gate G2=C: no auto-deploy to hosting; local Flask + Ollama).
-# See cicd_integrations_documentation.md §2.
+# QA Assistant — CI + auto-deploy Frontend to GitHub Pages (G2=B).
+# API/AI remain local (Ollama). See integration_documentation.md §1.
 
 name: CI
 
@@ -13,6 +13,9 @@ on:
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   frontend:
@@ -85,13 +88,54 @@ jobs:
             -q
 
   deploy:
-    # Homework "deploy" stage: intentionally disabled (G2=C — no cloud budget / local AI).
-    # Re-enable when adding Vercel/Railway secrets and setting if: github.ref == 'refs/heads/main'.
-    name: Deploy (disabled — G2=C)
+    name: Deploy frontend (GitHub Pages)
     needs: [frontend, backend]
-    if: false
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    defaults:
+      run:
+        working-directory: qa-assistant
     steps:
-      - run: |
-          echo "Auto-deploy skipped: project uses CI-only + local backend/Ollama."
-          echo "See cicd_integrations_documentation.md §2.4"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: qa-assistant/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for GitHub Pages
+        env:
+          # Project-site path: https://<user>.github.io/Qa_Asistant/
+          VITE_BASE_PATH: /Qa_Asistant/
+          # Counter id is public; override via repo Variable if needed
+          VITE_YANDEX_METRIKA_ID: "113444012"
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: npm run build
+
+      - name: SPA fallback for GitHub Pages (client routes)
+        run: cp dist/index.html dist/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: qa-assistant/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

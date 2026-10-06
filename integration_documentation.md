@@ -17,14 +17,29 @@
 | 1a | Код с интеграциями | ✅ | OAuth (`app/oauth_routes.py`, `integrations/oauth_*`), Metrika (`qa-assistant/src/analytics/`), health/logs |
 | 1b | Конфигурация CI/CD | ✅ | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | 1c | Обновлённая документация | ✅ | этот файл + `security_audit.md` + README |
-| **2** | Работающее приложение | ✅\* | \*G2=C: **локальный стенд** + screencast (публичный auto-deploy отключён — локальный Ollama) |
-| 2a | Приложение развёрнуто и работает | ✅ | Инструкции ниже + демо-вход в README |
-| 2b | Интеграции функционируют | ✅ | См. [`docs/INTEGRATIONS_QA_STEP8.md`](docs/INTEGRATIONS_QA_STEP8.md) |
-| 2c | CI/CD пайплайн работает | ✅ | Actions workflow **CI** на push/PR; локальный parity: ruff / pytest / vitest / build |
+| **2** | Работающее приложение | ✅ | **Deploy:** https://sintik1.github.io/Qa_Asistant/ (GitHub Pages auto) + локальный Flask/AI |
+| 2a | Приложение развёрнуто и работает | ✅ | Pages UI + инструкции полного стека в README |
+| 2b | Интеграции функционируют | ✅ | OAuth2 + Метрика; см. [`docs/INTEGRATIONS_QA_STEP8.md`](docs/INTEGRATIONS_QA_STEP8.md) |
+| 2c | CI/CD пайплайн работает | ✅ | lint/test/build + **auto-deploy FE** на Pages (job `deploy`) |
 | **3** | `integration_documentation.md` | ✅ | **этот файл** |
 | **4** | `security_audit.md` | ✅ | [`security_audit.md`](security_audit.md) |
 
-\*Критерий курса допускает «ссылка на деплой **или** инструкции» ([#34](https://github.com/Sintik1/Qa_Asistant/issues/34)). Gate **G2=C**: CI-only, без автодеплоя на PaaS.
+\*Gate **G2=B**: CI собирает и **автодеплоит Frontend** на GitHub Pages; Flask + Ollama — локально (полный generate). Настройка Pages: [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md).
+
+## 0.1. Критерии приёмки (Acceptance) — статус
+
+| Критерий | Статус | Доказательство |
+|----------|--------|----------------|
+| Шаги 1–4, 6–7 | ✅ | Журнал § шаги; платежи 5 — optional skip |
+| CI собирает | ✅ | job `frontend` / `backend` |
+| CI **деплоит** | ✅ | job `deploy` → GitHub Pages |
+| Качество кода в CI | ✅ | ruff, oxlint, pytest, vitest, audits |
+| ≥2 интеграции | ✅ | OAuth2 + Яндекс.Метрика |
+| Security audit + отчёт | ✅ | `security_audit.md` |
+| Мониторинг + логи + health | ✅ | UptimeRobot/`status.json`, `LOGGING.md`, `/api/health` |
+| Docs + AI process | ✅ | этот файл §1–5, `cicd_integrations_documentation.md` §9 |
+
+**Публичный URL приложения:** https://sintik1.github.io/Qa_Asistant/
 
 ### Шаги ДЗ 1–9 → артефакты
 
@@ -49,15 +64,17 @@
 - **GitHub Actions** (gate G1=A)
 - Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 - Триггеры: `push` / `pull_request` на `main`|`master`, `workflow_dispatch`
-- **Auto-deploy отключён** (`deploy` job с `if: false`) — G2=C (локальный Flask + Ollama)
+- **Auto-deploy Frontend** на **GitHub Pages** после зелёных checks (gate **G2=B**)
+- Flask + Ollama: локально (полный AI); UI публично: https://sintik1.github.io/Qa_Asistant/
 
 ### 1.2. Stages
 
 | Job | Этапы |
 |-----|--------|
-| **frontend** | `npm ci` → `npm audit --audit-level=high` → lint (oxlint) → Vitest → `npm run build` |
-| **backend** | pip install → `pip-audit` → Ruff check/format → Pytest (`-m "not ui and not security"`) |
-| **deploy** | placeholder, **не выполняется** |
+| **frontend** | `npm ci` → `npm audit` → lint → Vitest → `npm run build` |
+| **backend** | pip → `pip-audit` → Ruff → Pytest |
+| **deploy** | rebuild с `VITE_BASE_PATH=/Qa_Asistant/` → **GitHub Pages** (только `push` на `main`) |
+
 
 Backend CI env: `FLASK_ENV=testing`, `PERSIST_BACKEND=memory`, `EMBEDDING_PROVIDER=hash`.
 
@@ -112,14 +129,13 @@ jobs:
       - run: ruff check app core infrastructure integrations wsgi.py
       - run: python -m pytest tests/ -m "not ui and not security" -q
   deploy:
-    if: false   # G2=C — no auto-deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [frontend, backend]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Deploy skipped"
+    # … actions/deploy-pages → https://sintik1.github.io/Qa_Asistant/
 ```
 
-Полный файл: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+Подробнее: [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md).  
+Полный workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ---
 
@@ -199,9 +215,10 @@ QA_ASISTANT_MODEL=qwen2.5:1.5b
 
 | Компонент | Описание |
 |-----------|----------|
-| `GET /api/health` | `status` + блок `checks` (app, disk, db, ai) |
-| UptimeRobot | Free HTTP(S) / keyword monitor на публичный URL health (когда появится) |
-| Local (G2=C) | `python scripts/watch_health.py` |
+| `GET /api/health` | Flask: `status` + `checks` (app, disk, db, ai) |
+| GitHub Pages status | https://sintik1.github.io/Qa_Asistant/status.json |
+| UptimeRobot | HTTP(S)/keyword на `status.json` (публичный URL) |
+| Local | `python scripts/watch_health.py` |
 
 Пример ответа:
 

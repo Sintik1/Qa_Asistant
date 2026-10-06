@@ -28,10 +28,16 @@ function RouteFallback() {
   )
 }
 
+function routerBasename(): string | undefined {
+  const base = import.meta.env.BASE_URL || '/'
+  const trimmed = base.replace(/\/$/, '')
+  return trimmed === '' ? undefined : trimmed
+}
+
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBasename()}>
         <MetrikaRouteTracker />
         <Suspense fallback={<RouteFallback />}>
           <Routes>

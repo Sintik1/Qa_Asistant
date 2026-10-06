@@ -51,8 +51,8 @@
 | # | Вопрос | Варианты / рекомендация | Решение |
 |---|--------|-------------------------|---------|
 | G1 | Платформа CI/CD | **A GitHub Actions** | ✅ **A** |
-| G2 | Что деплоить автоматически | CI-only (см. §0.1) | ✅ **C** — lint/test/build; auto-deploy отключён (локальный AI) |
-| G3 | Хостинг frontend | N/A при G2=C | ✅ **N/A** |
+| G2 | Что деплоить автоматически | CI + FE Pages | ✅ **B** — lint/test/build + **auto-deploy Frontend** на GitHub Pages; Flask/AI локально |
+| G3 | Хостинг frontend | GitHub Pages | ✅ **GitHub Pages** https://sintik1.github.io/Qa_Asistant/ |
 | G4 | Хостинг backend (Flask) + AI | нет бюджета на cloud AI | ✅ **только локально** (Flask + Ollama); Supabase уже Free cloud |
 | G5 | OAuth2 провайдер | Google + Yandex через Supabase | ✅ **C** оба |
 | G6 | Аналитика | Яндекс.Метрика | ✅ **A** |
@@ -168,7 +168,7 @@ Issue: [#38](https://github.com/Sintik1/Qa_Asistant/issues/38)
 | | lint | `ruff check app core infrastructure integrations wsgi.py` |
 | | format | `ruff format --check …` |
 | | test | `pytest tests/ -m "not ui and not security"` + `--ignore` ui/security modules (no Selenium in CI) |
-| `deploy` | deploy | **disabled** (`if: false`) — см. §2.4 |
+| `deploy` | deploy | **GitHub Pages** (push to main) — см. §2.4 |
 
 **CI env (backend):** `FLASK_ENV=testing`, `PERSIST_BACKEND=memory`, `EMBEDDING_PROVIDER=hash`, `AI_PROVIDER=ollama`.
 
@@ -191,12 +191,12 @@ python -m pytest tests/ -m "not ui and not security" -q
 
 ### 2.4. Автодеплой
 
-**Отключён** (G2=C). Job `deploy` в workflow существует для соответствия этапу «deploy» в задании, но не запускается.
+**Включён для Frontend (G2=B).** Job `deploy` после зелёных `frontend`+`backend` пушит Vite build на **GitHub Pages**.
 
-Чтобы включить позже (Vercel/Railway + Leopold в облаке):
-1. Убрать/изменить `if: false` на `if: github.ref == 'refs/heads/main'`.
-2. Добавить secrets (`VERCEL_TOKEN`, `RAILWAY_TOKEN`, …).
-3. Обновить §0 и README.
+- URL: https://sintik1.github.io/Qa_Asistant/
+- Monitor: https://sintik1.github.io/Qa_Asistant/status.json
+- Инструкция one-time Pages source: [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md)
+- Flask + Ollama **не** деплоятся в облако (G4); полный generate — локально.
 
 **Проверка пайплайна:** после `git push` в GitHub → вкладка **Actions** → workflow **CI**. Локально перед push: команды из §2.3 (на момент реализации: **99** pytest, **78** vitest).
 
@@ -522,7 +522,7 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | Шаг ДЗ | Тема | Issue | Статус | Примечание |
 |--------|------|-------|--------|------------|
 | 0 | План + каркас `cicd_integrations_documentation.md` | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | G1 A; **G2 C**; **G3 N/A**; G4 local; G5 C; G6 A; G7 skip; G8 A; G9 agent |
-| 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; deploy `if: false` |
+| 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; **G2=B** FE → GitHub Pages |
 | 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
 | 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
 | 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
@@ -530,8 +530,8 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |
 | 7 | Логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | scenarios + redact + `docs/LOGGING.md` §8; отдельная Issue UI недоступна — трек в эпике |
 | 8 | Тесты + оптимизация | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | → `docs/INTEGRATIONS_QA_STEP8.md`; Google redirect URI config residual |
-| 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0 |
+| 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; **G2=B Pages deploy** |
 
 ---
 
-_Последнее обновление: 2026-10-06 — шаг 9 оформление результатов (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._
+_Последнее обновление: 2026-10-06 — acceptance fix: auto-deploy FE GitHub Pages (G2=B)._

@@ -64,6 +64,7 @@
 52. CI/CD ДЗ шаг 7 — логирование — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10)
 53. CI/CD ДЗ шаг 8 — тестирование интеграций + оптимизация — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/INTEGRATIONS_QA_STEP8.md` + `cicd_integrations_documentation.md` §10)
 54. CI/CD ДЗ шаг 9 — оформление результатов — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0)
+55. Acceptance fix — G2=B GitHub Pages auto-deploy FE — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/DEPLOY_GITHUB_PAGES.md`)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -784,6 +785,7 @@
 | CI/CD ДЗ шаг 7 — логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10 |
 | CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10; pytest 121 / vitest 87 (`test_supabase_rest`, `AuthCallbackPage.test`) |
 | CI/CD ДЗ шаг 9 — оформление сдачи | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): `integration_documentation.md` + `security_audit.md` + README; → §10 |
+| Acceptance: G2=B Pages auto-deploy | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): deploy job → https://sintik1.github.io/Qa_Asistant/ |
 
 ---
 

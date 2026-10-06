@@ -17,7 +17,7 @@
 | Документация интеграций | [`integration_documentation.md`](integration_documentation.md) |
 | Отчёт по безопасности | [`security_audit.md`](security_audit.md) |
 | Живой журнал шагов 0–9 | [`cicd_integrations_documentation.md`](cicd_integrations_documentation.md) |
-| Приложение (G2=C) | **Локальный стенд** ниже + [`docs/screencast/`](docs/screencast/) (публичный auto-deploy отключён) |
+| Приложение (G2=B) | **https://sintik1.github.io/Qa_Asistant/** (auto-deploy) + локальный Flask/AI · [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md) |
 | QA интеграций | [`docs/INTEGRATIONS_QA_STEP8.md`](docs/INTEGRATIONS_QA_STEP8.md) |
 
 Чеклист соответствия формату сдачи — в [`integration_documentation.md`](integration_documentation.md) §0.
@@ -34,7 +34,7 @@
 | [`backend_documentation.md`](backend_documentation.md) | Сдача Backend ДЗ: архитектура, API, деплой |
 | [`docs/OAUTH_SETUP.md`](docs/OAUTH_SETUP.md) | OAuth2 Google + Yandex |
 | [`docs/METRIKA_SETUP.md`](docs/METRIKA_SETUP.md) | Яндекс.Метрика |
-| [`docs/UPTIME_SETUP.md`](docs/UPTIME_SETUP.md) | UptimeRobot + health |
+| [`docs/DEPLOY_GITHUB_PAGES.md`](docs/DEPLOY_GITHUB_PAGES.md) | Auto-deploy FE + UptimeRobot `status.json` |
 | [`docs/LOGGING.md`](docs/LOGGING.md) | JSON logs + AI scenarios |
 | [`docs/FULL_QA_REPORT.md`](docs/FULL_QA_REPORT.md) | Сводный отчёт API + UI + DB |
 | [`docs/RAG_USAGE.md`](docs/RAG_USAGE.md) | RAG usage |
@@ -45,16 +45,17 @@
 
 ## Для проверяющего
 
-Публичный cloud-деплой **не обязателен** (критерий ДЗ: «ссылка на деплой **или** инструкции»).  
-Gate **G2=C**: GitHub Actions = lint/test/build; auto-deploy `if: false` (локальный AI / Ollama).  
+Публичный **Frontend** деплоится автоматически на GitHub Pages (G2=B).  
+Полный стек (Flask + Ollama generate): **локально** (см. «Быстрый старт») + [`docs/screencast/`](docs/screencast/).  
 `docker compose` поднимает **только UI**, не полный стек (см. комментарий в `docker-compose.yml`).
 
 | Слой | Где на стенде сдачи |
 |------|---------------------|
+| Frontend (React) | **GitHub Pages** https://sintik1.github.io/Qa_Asistant/ |
 | БД / Auth / Storage / RLS | **Supabase** (BaaS, Free tier) |
-| Backend (Flask) + Frontend (Vite) | **локально** (или опциональный PaaS — см. ниже) |
-| AI | **Ollama** локально или **Leopold** по токену в server `.env` |
-| CI | GitHub Actions → вкладка **Actions** → workflow **CI** |
+| Backend (Flask) + AI | **локально** (Ollama) или Leopold по токену |
+| CI + deploy | GitHub Actions → **CI** → job Deploy (Pages) |
+| Мониторинг | UptimeRobot → `…/status.json` · локально `/api/health` |
 
 ### Демо-вход (Supabase Auth)
 

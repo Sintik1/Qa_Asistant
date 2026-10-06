@@ -1,0 +1,6 @@
+{
+  "api": "qa-assistant",
+  "status": "ok",
+  "surface": "github-pages",
+  "note": "Frontend static deploy. Flask /api/health is local or PaaS — see docs/UPTIME_SETUP.md"
+}

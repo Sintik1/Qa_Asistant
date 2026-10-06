@@ -1,14 +1,14 @@
 # UptimeRobot + health monitoring (CI/CD ДЗ шаг 6)
 
-G8 = **UptimeRobot free**. G2 = **C (CI-only)** — нет публичного Flask URL, пока AI локальный.
+G8 = **UptimeRobot free**. G2 = **B** — Frontend на GitHub Pages (auto-deploy); Flask/AI локально.
 
-## 1. Health endpoint
+## 1. Health endpoint (Flask)
 
 ```http
 GET /api/health
 ```
 
-Публичный (без JWT). HTTP **200**, пока процесс жив.
+Публичный (без JWT). HTTP **200**, пока процесс жив. Всегда включает блок `checks`.
 
 Пример ответа:
 
@@ -35,38 +35,48 @@ GET /api/health
 | `degraded` | процесс жив, но soft-check (часто DB) failed |
 | `fail` | критично (disk) |
 
-UptimeRobot **HTTP(s)** monitor: URL = `https://<public-host>/api/health`, keyword = `qa-assistant` (или `"status":"ok"` если хочешь алерт на degraded).
+## 2. Публичный монитор (GitHub Pages)
 
-## 2. UptimeRobot (когда появится публичный URL)
+После CI deploy UI доступен:
 
-1. Зарегистрируйся на [UptimeRobot](https://uptimerobot.com/) (free).
-2. **Add New Monitor** → type **HTTP(s)**.
-3. URL: `https://YOUR_HOST/api/health`
-4. Interval: 5 min (free).
-5. Alert Contacts: email (и опционально Telegram через webhook).
-6. Optional: Keyword Monitoring → `qa-assistant`.
+| URL | Назначение |
+|-----|------------|
+| https://sintik1.github.io/Qa_Asistant/ | Frontend |
+| https://sintik1.github.io/Qa_Asistant/status.json | Keyword target для UptimeRobot |
 
-Пока G2=C и API только на `127.0.0.1` — внешний монитор **не видит** localhost. Варианты:
-- временно публичный туннель (ngrok / Cloudflare Tunnel) только для health;
-- или ждать деплоя Flask (G2 A/B).
+### UptimeRobot — настроить сейчас
 
-## 3. Локальный watcher (сейчас)
+1. [UptimeRobot](https://uptimerobot.com/) → **Add New Monitor**
+2. Type: **HTTP(s)** (или Keyword)
+3. URL: `https://sintik1.github.io/Qa_Asistant/status.json`
+4. Keyword (optional): `qa-assistant` или `"status":"ok"`
+5. Interval: 5 min
+
+Это закрывает критерий «мониторинг приложения» на публичном URL.  
+Flask `/api/health` — локально / туннель / будущий PaaS (см. §3–4).
+
+## 3. Локальный watcher (Flask)
 
 ```bash
-# один ping
 python scripts/watch_health.py
-
-# каждые 30с, бесконечно
 INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 ```
 
 Env: `HEALTH_URL` (default `http://127.0.0.1:5001/api/health`).
 
-## 4. Код
+Перезапусти Flask после обновления кода, чтобы в ответе был блок `checks`.
+
+## 4. Опционально: публичный Flask health
+
+Туннель (ngrok / Cloudflare Tunnel) на `:5001` → второй монитор UptimeRobot на `/api/health`.
+
+## 5. Код
 
 | Файл | Роль |
 |------|------|
 | `core/health.py` | checks payload |
 | `app/routes.py` | `GET /api/health` |
+| `qa-assistant/public/status.json` | Pages monitor target |
 | `scripts/watch_health.py` | local monitor |
 | `tests/test_health_monitoring.py` | contract |
+| [`docs/DEPLOY_GITHUB_PAGES.md`](DEPLOY_GITHUB_PAGES.md) | auto-deploy |
