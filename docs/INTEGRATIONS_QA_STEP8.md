@@ -23,7 +23,7 @@ Date: 2026-10-06
 | Vitest Metrika | **PASS** | 85 FE tests incl. `metrika.test.ts` |
 | Live Metrika tag + SPA hit | **PASS** | `mc.yandex.ru/metrika/tag.js`, `watch/113444012` for `/auth` and `/` |
 | Payments | **N/A** | G7 |
-| Backend pytest (CI subset) | **PASS** | **120 passed** (incl. `test_supabase_rest.py`, bypass hermetic, health `UPLOADS_DIR`) |
+| Backend pytest (CI subset) | **PASS** | **121 passed** (incl. `test_supabase_rest.py`, bypass hermetic, health `UPLOADS_DIR`) |
 | FE Vitest | **PASS** | **87 passed** (incl. `AuthCallbackPage.test.tsx` OAuth query errors) |
 | FE build | **PASS** | code-split; no 500kB warning |
 | Ruff | **PASS** | check + format |
