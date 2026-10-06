@@ -65,7 +65,7 @@
 53. CI/CD ДЗ шаг 8 — тестирование интеграций + оптимизация — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/INTEGRATIONS_QA_STEP8.md` + `cicd_integrations_documentation.md` §10)
 54. CI/CD ДЗ шаг 9 — оформление результатов — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0)
 55. Acceptance fix — G2=B GitHub Pages auto-deploy FE — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/DEPLOY_GITHUB_PAGES.md`)
-56. Pages one-time setup (agent) — **in progress** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); Settings→Pages Actions + Variables; pin `source-map-js@1.2.2` for CI audit; → `cicd_integrations_documentation.md` §10)
+56. Pages one-time setup (agent) — **done** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); Pages+Variables; `source-map-js@1.2.2`; CI deploy green → https://sintik1.github.io/Qa_Asistant/; → `cicd_integrations_documentation.md` §10)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -788,7 +788,7 @@
 | CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10; pytest 121 / vitest 87 (`test_supabase_rest`, `AuthCallbackPage.test`) |
 | CI/CD ДЗ шаг 9 — оформление сдачи | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): `integration_documentation.md` + `security_audit.md` + README; → §10 |
 | Acceptance: G2=B Pages auto-deploy | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): deploy job → https://sintik1.github.io/Qa_Asistant/ |
-| Pages one-time setup + audit unblock | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | in progress: Pages Source=Actions; repo Variables; `source-map-js@1.2.2` override; CI/CD ДЗ → `cicd_integrations_documentation.md` §10 |
+| Pages one-time setup + audit unblock | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done: Pages+Variables; CI [run](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green; site live; → `cicd_integrations_documentation.md` §10 |
 
 ---
 
