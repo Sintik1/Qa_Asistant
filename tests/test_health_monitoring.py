@@ -27,3 +27,10 @@ def test_health_disk_uses_uploads_dir(tmp_path, monkeypatch):
     app = create_app(testing=True)
     body = app.test_client().get("/api/health").get_json()
     assert body["checks"]["disk"]["path"] == str(uploads)
+
+
+def test_health_keyword_for_uptime_robot():
+    """UptimeRobot keyword monitor can match a stable public string."""
+    app = create_app(testing=True)
+    raw = app.test_client().get("/api/health").get_data(as_text=True)
+    assert '"api":"qa-assistant"' in raw.replace(" ", "") or '"api": "qa-assistant"' in raw

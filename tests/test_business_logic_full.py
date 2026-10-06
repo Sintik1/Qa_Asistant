@@ -126,6 +126,18 @@ def test_auth_dev_bypass_defaults_user_without_header(bypass_client):
     assert res.get_json()["items"] == []
 
 
+def test_auth_dev_bypass_uses_memory_persist_not_supabase(bypass_client, monkeypatch):
+    """Step 8: non-testing bypass app must stay hermetic (no live PostgREST)."""
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("PostgREST must not be called when PERSIST_BACKEND=memory")
+
+    monkeypatch.setattr("infrastructure.supabase_rest.httpx.request", _boom)
+    res = bypass_client.get("/api/runs")
+    assert res.status_code == 200
+
+
 def test_auth_dev_bypass_still_honors_x_skip_auth(bypass_client):
     res = bypass_client.get("/api/runs", headers={"X-Skip-Auth": "1"})
     assert res.status_code == 401
