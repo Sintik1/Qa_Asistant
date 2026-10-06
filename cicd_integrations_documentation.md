@@ -257,27 +257,29 @@ Issue: [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) · Гайд: [`do
 
 | Провайдер | Реализация |
 |-----------|------------|
-| Google | Flask Authorization Code (`/api/auth/oauth/google/*`) → Supabase Admin session |
+| Google | **Supabase Auth Provider** — FE `signInWithOAuth({ provider: 'google' })` → `…/auth/v1/callback` |
 | Yandex | Flask Authorization Code (`/api/auth/oauth/yandex/*`) → Supabase Admin session |
+
+Legacy Flask Google routes (`/api/auth/oauth/google/*`) остаются опционально.
 
 ### 4.2. Backend
 
-- Публичные: `GET /api/auth/oauth/status`, Yandex start/callback
+- Публичные: `GET /api/auth/oauth/status` (`google.flow=supabase_auth_provider`), Yandex start/callback
 - `GET /api/auth/me` — user_id/email из JWT (email/Google/Yandex)
-- Секреты: `GOOGLE_*`, `YANDEX_*`, `SUPABASE_SERVICE_ROLE_KEY` только в `.env` (скрипт `scripts/save_oauth_secrets.py`)
+- Секреты: Google Client Secret → **Supabase Dashboard**; Yandex + `SUPABASE_SERVICE_ROLE_KEY` → `.env`
 
 ### 4.3. Frontend
 
-- `/auth` — кнопки Google / Yandex
-- `/auth/callback` — PKCE (Google) + hash tokens (Yandex)
+- `/auth` — Google (Supabase) / Yandex (Flask)
+- `/auth/callback` — PKCE session (Google) + hash tokens (Yandex)
 
 ### 4.4. Тесты
 
 | Проверка | Результат |
 |----------|-----------|
-| Pytest `tests/test_oauth.py` (start/state/success/me/errors) | **PASS** |
-| Vitest `AuthPage.test.tsx` (кнопки + error) | **PASS** |
-| Live Google/Yandex | после вставки Client ID/Secret в `.env` + Dashboard (см. OAUTH_SETUP) |
+| Pytest `tests/test_oauth.py` | **PASS** (status + Yandex + legacy Google start) |
+| Vitest `AuthPage.test.tsx` | **PASS** |
+| Live Google | после Enable Google в Dashboard + redirect URI Supabase callback (см. OAUTH_SETUP) |
 ---
 
 ## 5. Аналитика
@@ -444,6 +446,15 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 - Repo Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 - Unblock CI: `overrides.source-map-js=1.2.2` (CVE-2026-93749 / GHSA-68fv-2mgg-jv7q)
 
+#### Промпт: Google OAuth через Supabase
+
+**Запрос:** вернуться к OAuth через Supabase; пользователь авторизовался в GitHub / «подтверждаю».
+
+**Результат (tracked [#40](https://github.com/Sintik1/Qa_Asistant/issues/40)):**
+- FE Google → `supabase.auth.signInWithOAuth`; Yandex Flask
+- Dashboard: Google Enabled, Redirect URLs×3, Site URL local Vite
+- Осталось: Google Console redirect = Supabase `/auth/v1/callback`
+
 #### Промпт: шаг 9 — оформление результатов
 
 **Запрос:** документация CI/CD / интеграции / security / мониторинг+логи; обновить README; сверить формат сдачи п.1–4.
@@ -533,7 +544,7 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 0 | План + каркас `cicd_integrations_documentation.md` | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | G1 A; **G2 C**; **G3 N/A**; G4 local; G5 C; G6 A; G7 skip; G8 A; G9 agent |
 | 1 | CI/CD пайплайн | [#38](https://github.com/Sintik1/Qa_Asistant/issues/38) | done (awaiting OK) | `.github/workflows/ci.yml`; **G2=B** FE → GitHub Pages |
 | 2 | Аудит безопасности | [#39](https://github.com/Sintik1/Qa_Asistant/issues/39) | done (awaiting OK) | remediations A2/B1a/B2a/B3a/C1/C2; → `docs/SECURITY_AUDIT.md` |
-| 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting OK) | Google Supabase + Yandex Flask; secrets in `.env` |
+| 3 | OAuth2 | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | **done (awaiting live Google Console URI)** | Google Enabled in Supabase; FE `signInWithOAuth`; Redirect URLs×3; Console URI = Supabase callback |
 | 4 | Аналитика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK) | counter `113444012`; live tag/hit/`auth_login` verified; → `docs/METRIKA_SETUP.md` §5.1 |
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |

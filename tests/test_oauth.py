@@ -31,9 +31,11 @@ def test_oauth_status_reports_providers_configured(client):
     assert res.status_code == 200
     body = res.get_json()
     assert body["yandex"]["env_client_configured"] is True
-    assert body["google"]["env_client_configured"] is True
-    assert body["google"]["flow"] == "flask_authorization_code"
-    assert "google/callback" in body["google"]["redirect_uri"]
+    assert body["google"]["flow"] == "supabase_auth_provider"
+    assert body["google"]["legacy_flask_env_configured"] is True
+    assert body["google"]["supabase_callback"] == (
+        "https://example.supabase.co/auth/v1/callback"
+    )
     assert "yandex/callback" in body["yandex"]["redirect_uri"]
 
 

@@ -66,6 +66,7 @@
 54. CI/CD ДЗ шаг 9 — оформление результатов — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `integration_documentation.md` + `security_audit.md` + README; формат сдачи §0)
 55. Acceptance fix — G2=B GitHub Pages auto-deploy FE — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/DEPLOY_GITHUB_PAGES.md`)
 56. Pages one-time setup (agent) — **done** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); Pages+Variables; `source-map-js@1.2.2`; CI deploy green → https://sintik1.github.io/Qa_Asistant/; → `cicd_integrations_documentation.md` §10)
+57. OAuth Google via Supabase Auth Providers — **done (awaiting Google Console redirect URI + live smoke)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); Dashboard Google Enabled + Redirect URLs; FE `signInWithOAuth`; → `docs/OAUTH_SETUP.md`)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -681,6 +682,7 @@
 | Google OAuth live `redirect_uri_mismatch` | Документирован §4.1 `OAUTH_SETUP.md`; добавить URI в Cloud Console ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Bypass pytest бил real Supabase → ProxyError 500 | `PERSIST_BACKEND=memory` в `bypass_client` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Pages deploy skipped: CI fail on `npm audit` (`source-map-js` GHSA-68fv-2mgg-jv7q) | Override `source-map-js@1.2.2`; Pages Source=Actions + Variables via browser (gh token invalid) ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Google `redirect_uri_mismatch` на Flask callback | Перенос Google на Supabase Auth Provider; Console URI = `…supabase.co/auth/v1/callback` ([#40](https://github.com/Sintik1/Qa_Asistant/issues/40)) |
 
 ---
 
@@ -789,6 +791,7 @@
 | CI/CD ДЗ шаг 9 — оформление сдачи | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): `integration_documentation.md` + `security_audit.md` + README; → §10 |
 | Acceptance: G2=B Pages auto-deploy | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): deploy job → https://sintik1.github.io/Qa_Asistant/ |
 | Pages one-time setup + audit unblock | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done: Pages+Variables; CI [run](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green; site live; → `cicd_integrations_documentation.md` §10 |
+| OAuth Google → Supabase Provider | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting Console URI + smoke): Google Enabled; Redirect URLs×3; FE signInWithOAuth; → `docs/OAUTH_SETUP.md` §1 |
 
 ---
 

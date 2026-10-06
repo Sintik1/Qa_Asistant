@@ -1,4 +1,8 @@
-"""OAuth HTTP routes — Google + Yandex via Flask Authorization Code → Supabase session."""
+"""OAuth HTTP routes.
+
+Primary Google login is FE → Supabase Auth Provider.
+Yandex (+ optional legacy Google) use Flask Authorization Code → Supabase Admin session.
+"""
 
 from __future__ import annotations
 
@@ -71,12 +75,18 @@ def oauth_status():
     """Which OAuth providers are ready (no secrets exposed)."""
     yandex = YandexOAuthConfig.from_env()
     google = GoogleOAuthConfig.from_env()
+    supabase_url = (os.environ.get("SUPABASE_URL") or "").rstrip("/")
     return jsonify(
         {
             "google": {
-                "env_client_configured": google is not None,
-                "flow": "flask_authorization_code",
-                "redirect_uri": google.redirect_uri if google else None,
+                # Primary FE path: supabase.auth.signInWithOAuth (Dashboard Providers).
+                "flow": "supabase_auth_provider",
+                "supabase_callback": (
+                    f"{supabase_url}/auth/v1/callback" if supabase_url else None
+                ),
+                # Legacy Flask Google routes still available if GOOGLE_* set.
+                "legacy_flask_env_configured": google is not None,
+                "legacy_flask_redirect_uri": google.redirect_uri if google else None,
                 "service_role_ready": service_role_configured(),
             },
             "yandex": {

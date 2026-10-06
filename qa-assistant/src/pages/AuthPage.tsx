@@ -11,7 +11,7 @@ import { apiBaseUrl, isApiConfigured } from '../api/client'
 type Mode = 'login' | 'signup'
 
 /**
- * Email/password + OAuth2 (Google via Supabase, Yandex via Flask).
+ * Email/password + OAuth2 (Google via Supabase Auth, Yandex via Flask).
  */
 export function AuthPage() {
   const { configured, loading, user, signIn, signUp, signInWithOAuth } = useAuth()
@@ -92,7 +92,7 @@ export function AuthPage() {
     <div>
       <PageHeader
         title={mode === 'login' ? 'Вход' : 'Регистрация'}
-        description="Email/пароль или OAuth2 (Google / Yandex)."
+        description="Email/пароль или OAuth2 (Google через Supabase / Yandex через Flask)."
       />
 
       <div className="mb-6 flex w-full max-w-xl flex-col gap-2">
@@ -112,15 +112,12 @@ export function AuthPage() {
         >
           {oauthBusy === 'yandex' ? 'Переход к Yandex…' : 'Войти через Yandex'}
         </Button>
-        {!isApiConfigured() ? (
-          <p className="text-xs text-slate-500">
-            OAuth требует Flask API (`VITE_API_BASE_URL`). Сейчас: не задан.
-          </p>
-        ) : (
-          <p className="text-xs text-slate-500">
-            Google/Yandex: Flask `/api/auth/oauth/…/start` → `{apiBaseUrl()}`
-          </p>
-        )}
+        <p className="text-xs text-slate-500">
+          Google: Supabase Auth Provider. Yandex:{' '}
+          {isApiConfigured()
+            ? `Flask → ${apiBaseUrl()}`
+            : 'нужен VITE_API_BASE_URL (сейчас не задан).'}
+        </p>
       </div>
 
       <p className="mb-4 max-w-xl text-sm text-slate-500">или email и пароль</p>

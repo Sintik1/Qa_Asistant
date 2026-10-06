@@ -84,11 +84,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const signInWithOAuth = useCallback(async (provider: OAuthProvider) => {
+    // Google: native Supabase Auth Provider (PKCE + detectSessionInUrl).
+    if (provider === 'google') {
+      if (!supabase) {
+        return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
+      }
+      const base = import.meta.env.BASE_URL || '/'
+      const callbackPath = `${base.endsWith('/') ? base : `${base}/`}auth/callback`
+      const redirectTo = `${window.location.origin}${callbackPath}`
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: { prompt: 'select_account' },
+        },
+      })
+      return error?.message ?? null
+    }
+
+    // Yandex: Flask Authorization Code → Supabase Admin session → hash tokens.
     const base = apiBaseUrl()
     if (!base) {
-      return `Не задан VITE_API_BASE_URL для ${provider} OAuth (Flask).`
+      return 'Не задан VITE_API_BASE_URL для Yandex OAuth (Flask).'
     }
-    window.location.assign(`${base}/api/auth/oauth/${provider}/start`)
+    window.location.assign(`${base}/api/auth/oauth/yandex/start`)
     return null
   }, [])
 
