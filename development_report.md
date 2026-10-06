@@ -771,7 +771,7 @@
 | CI/CD ДЗ шаг 4 — Яндекс.Метрика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK): → `docs/METRIKA_SETUP.md` + `cicd_integrations_documentation.md` §5/§10 |
 | CI/CD ДЗ шаг 6 — UptimeRobot + health | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/UPTIME_SETUP.md` §7 (отдельная Issue UI недоступна) |
 | CI/CD ДЗ шаг 7 — логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10 |
-| CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10 |
+| CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10; pytest 121 / vitest 87 (`test_supabase_rest`, `AuthCallbackPage.test`) |
 
 ---
 
