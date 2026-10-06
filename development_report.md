@@ -61,6 +61,7 @@
 49. CI/CD ДЗ шаг 3 — OAuth2 Google+Yandex — **done (awaiting OK)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); → `docs/OAUTH_SETUP.md` + `cicd_integrations_documentation.md` §4)
 50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10); counter `113444012`; live verify tag/hit/`auth_login` PASS (`docs/METRIKA_SETUP.md` §5.1)
 51. CI/CD ДЗ шаг 6 — мониторинг UptimeRobot + health checks — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); шаг 5 skipped; → `docs/UPTIME_SETUP.md` + `cicd_integrations_documentation.md` §7/§10)
+52. CI/CD ДЗ шаг 7 — логирование — **proposal (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); код после согласования)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
