@@ -20,7 +20,7 @@
 | 5 | Платежи (опционально) | **skipped** (G7) |
 | 6 | Мониторинг (UptimeRobot) | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 7 | Логирование | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
-| 8 | Тестирование и оптимизация | pending |
+| 8 | Тестирование и оптимизация | **done (awaiting OK)** — tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | 9 | Оформление + README | pending |
 
 > Решения по платформам (CI, хостинг, OAuth-провайдер, аналитика, платежи) фиксируются после согласования с пользователем — см. §0 и §6.
@@ -429,8 +429,20 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | SPA analytics wrapper + Vitest no-op without id | Шаг 4 (Метрика) |
 | Health checks + local watcher (G2=C) | Шаг 6 (UptimeRobot) |
 | Scenario prompts ×3 + redact before AI | Шаг 7 (логирование) |
+| Integrations QA matrix + AI perf apply | Шаг 8 (тесты + оптимизация) |
 
 ### 9.3. Примеры промптов и результатов
+
+#### Промпт: шаг 8 — тестирование и оптимизация
+
+**Запрос:** Senior QA; проверить OAuth2 / аналитику / платежи / CI; AI-оптимизация; исправить баги.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- Отчёт [`docs/INTEGRATIONS_QA_STEP8.md`](docs/INTEGRATIONS_QA_STEP8.md)
+- Pytest **114** / Vitest **85**; Yandex OAuth + Metrika live PASS
+- Google live: `redirect_uri_mismatch` (config Console) — `docs/OAUTH_SETUP.md` §4.1
+- Fixes: hermetic bypass tests, `UPLOADS_DIR`, PostgREST→503, FE code-split
+- Платежи N/A (G7)
 
 #### Промпт: шаг 7 — логирование
 
@@ -506,9 +518,9 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 5 | Платежи | — | **skipped** | G7 |
 | 6 | Мониторинг | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | UptimeRobot docs + health `checks`; → `docs/UPTIME_SETUP.md` §7; отдельная Issue UI недоступна — трек в эпике |
 | 7 | Логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | scenarios + redact + `docs/LOGGING.md` §8; отдельная Issue UI недоступна — трек в эпике |
-| 8 | Тесты + оптимизация | TBD | pending | |
+| 8 | Тесты + оптимизация | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | → `docs/INTEGRATIONS_QA_STEP8.md`; Google redirect URI config residual |
 | 9 | Docs + README | TBD | pending | |
 
 ---
 
-_Последнее обновление: 2026-10-06 — шаг 7 логирование (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._
+_Последнее обновление: 2026-10-06 — шаг 8 тестирование + оптимизация (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37))._

@@ -43,6 +43,8 @@ def bypass_client(tmp_path, monkeypatch):
     monkeypatch.setenv("UPLOADS_DIR", str(tmp_path / "uploads"))
     monkeypatch.setenv("AUTH_DEV_BYPASS", "1")
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "unit-test-secret")
+    # Non-testing app still must not hit real PostgREST (proxy/network flakiness).
+    monkeypatch.setenv("PERSIST_BACKEND", "memory")
     application = create_app(testing=False)
     application.extensions["ai_client"] = FakeAi()
     return application.test_client()

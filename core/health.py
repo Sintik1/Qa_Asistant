@@ -68,7 +68,7 @@ def _ai_check() -> dict[str, Any]:
 
 
 def build_health_payload(app: Flask) -> dict[str, Any]:
-    uploads = Path(os.getenv("UPLOAD_DIR", "uploads"))
+    uploads = Path(os.getenv("UPLOADS_DIR") or os.getenv("UPLOAD_DIR") or "uploads")
     emb = app.extensions.get("embedding_settings")
     rag = app.extensions.get("rag_service")
 

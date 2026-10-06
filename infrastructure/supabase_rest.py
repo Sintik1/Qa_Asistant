@@ -9,6 +9,8 @@ from typing import Any
 import httpx
 from flask import g, has_app_context, has_request_context
 
+from core.errors import AppError
+
 
 @dataclass(frozen=True)
 class SupabaseRestConfig:
@@ -67,17 +69,41 @@ class SupabaseRestClient:
                 headers["X-Request-Id"] = str(request_id)
         return headers
 
+    def _send(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: Any = None,
+        headers: dict[str, str] | None = None,
+    ) -> httpx.Response:
+        try:
+            return httpx.request(
+                method,
+                url,
+                params=params,
+                json=json,
+                headers=headers,
+                timeout=self._timeout,
+            )
+        except httpx.TimeoutException as exc:
+            raise AppError(code="API_UNAVAILABLE", status_code=503) from exc
+        except httpx.HTTPError as exc:
+            # Proxy/DNS/connection failures must not surface as unhandled 500.
+            raise AppError(code="API_UNAVAILABLE", status_code=503) from exc
+
     def select(
         self,
         table: str,
         *,
         params: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
-        response = httpx.get(
+        response = self._send(
+            "GET",
             f"{self._config.rest_url}/{table}",
             params=params or {},
             headers=self._headers(),
-            timeout=self._timeout,
         )
         self._raise(response, f"SELECT {table}")
         data = response.json()
@@ -88,11 +114,11 @@ class SupabaseRestClient:
         table: str,
         row: dict[str, Any] | list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
-        response = httpx.post(
+        response = self._send(
+            "POST",
             f"{self._config.rest_url}/{table}",
             json=row,
             headers=self._headers(prefer="return=representation"),
-            timeout=self._timeout,
         )
         self._raise(response, f"INSERT {table}")
         data = response.json()
@@ -105,12 +131,12 @@ class SupabaseRestClient:
         *,
         on_conflict: str,
     ) -> list[dict[str, Any]]:
-        response = httpx.post(
+        response = self._send(
+            "POST",
             f"{self._config.rest_url}/{table}",
             params={"on_conflict": on_conflict},
             json=row,
             headers=self._headers(prefer="resolution=merge-duplicates,return=representation"),
-            timeout=self._timeout,
         )
         self._raise(response, f"UPSERT {table}")
         data = response.json()
@@ -123,33 +149,33 @@ class SupabaseRestClient:
         params: dict[str, str],
         patch: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        response = httpx.patch(
+        response = self._send(
+            "PATCH",
             f"{self._config.rest_url}/{table}",
             params=params,
             json=patch,
             headers=self._headers(prefer="return=representation"),
-            timeout=self._timeout,
         )
         self._raise(response, f"PATCH {table}")
         data = response.json()
         return data if isinstance(data, list) else [data]
 
     def delete(self, table: str, *, params: dict[str, str]) -> None:
-        response = httpx.delete(
+        response = self._send(
+            "DELETE",
             f"{self._config.rest_url}/{table}",
             params=params,
             headers=self._headers(),
-            timeout=self._timeout,
         )
         self._raise(response, f"DELETE {table}")
 
     def rpc(self, fn_name: str, payload: dict[str, Any]) -> list[dict[str, Any]]:
         """Call a PostgREST / PostgreSQL function."""
-        response = httpx.post(
+        response = self._send(
+            "POST",
             f"{self._config.rest_url}/rpc/{fn_name}",
             json=payload,
             headers=self._headers(prefer="return=representation"),
-            timeout=self._timeout,
         )
         self._raise(response, f"RPC {fn_name}")
         data = response.json()
@@ -163,5 +189,13 @@ class SupabaseRestClient:
 
     @staticmethod
     def _raise(response: httpx.Response, action: str) -> None:
-        if response.status_code >= 400:
-            raise RuntimeError(f"Supabase REST {action} failed: {response.status_code} {response.text[:400]}")
+        if response.status_code < 400:
+            return
+        if response.status_code >= 500:
+            raise AppError(code="API_UNAVAILABLE", status_code=503)
+        # 4xx from PostgREST (RLS/auth) — keep actionable message without leaking body.
+        raise AppError(
+            code="FORBIDDEN" if response.status_code in {401, 403} else "VALIDATION_ERROR",
+            status_code=403 if response.status_code in {401, 403} else 422,
+            message=f"Supabase REST {action} failed: HTTP {response.status_code}",
+        )

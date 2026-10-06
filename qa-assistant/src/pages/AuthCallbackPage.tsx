@@ -5,6 +5,13 @@ import { useAuth } from '../auth/AuthContext'
 import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { PageHeader } from '../components/ui/PageHeader'
 
+function oauthErrorFromQuery(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const oauthError = params.get('oauth_error')
+  if (!oauthError) return null
+  return params.get('oauth_message') || oauthError
+}
+
 /**
  * OAuth redirect target:
  * - Google (Supabase PKCE): session restored via detectSessionInUrl
@@ -13,16 +20,10 @@ import { PageHeader } from '../components/ui/PageHeader'
 export function AuthCallbackPage() {
   const { configured, applySessionTokens, user, loading } = useAuth()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(() => oauthErrorFromQuery())
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const oauthError = params.get('oauth_error')
-    const oauthMessage = params.get('oauth_message')
-    if (oauthError) {
-      setError(oauthMessage || oauthError)
-      return
-    }
+    if (error) return
 
     const hash = window.location.hash.replace(/^#/, '')
     if (hash) {
@@ -50,7 +51,7 @@ export function AuthCallbackPage() {
       trackGoal('auth_login', { method: 'oauth' })
       navigate('/', { replace: true })
     }
-  }, [applySessionTokens, loading, navigate, user])
+  }, [applySessionTokens, error, loading, navigate, user])
 
   if (!configured) {
     return <Navigate to="/auth" replace />

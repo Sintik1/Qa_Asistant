@@ -62,6 +62,7 @@
 50. CI/CD ДЗ шаг 4 — Яндекс.Метрика — **done (awaiting OK)** (см. [#41](https://github.com/Sintik1/Qa_Asistant/issues/41); CI/CD ДЗ шаг 4 → `cicd_integrations_documentation.md` §10); counter `113444012`; live verify tag/hit/`auth_login` PASS (`docs/METRIKA_SETUP.md` §5.1)
 51. CI/CD ДЗ шаг 6 — мониторинг UptimeRobot + health checks — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); шаг 5 skipped; → `docs/UPTIME_SETUP.md` + `cicd_integrations_documentation.md` §7/§10)
 52. CI/CD ДЗ шаг 7 — логирование — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10)
+53. CI/CD ДЗ шаг 8 — тестирование интеграций + оптимизация — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/INTEGRATIONS_QA_STEP8.md` + `cicd_integrations_documentation.md` §10)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -111,10 +112,21 @@
 | SPA analytics wrapper + Vitest no-op | CI/CD ДЗ шаг 4: Яндекс.Метрика ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 | MCP Create Issue form invisible → epic comment | CI/CD ДЗ шаг 6 tracked on [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 | Scenario prompts ×3 + redact before AI | CI/CD ДЗ шаг 7: logging package A ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Integrations QA + apply AI perf fixes | CI/CD ДЗ шаг 8 ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: CI/CD ДЗ шаг 8 — тестирование и оптимизация
+
+**Запрос:** Senior QA; OAuth / Metrika / платежи / CI; AI-оптимизация; исправить баги.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- `docs/INTEGRATIONS_QA_STEP8.md`: матрица PASS/FAIL; платежи N/A
+- Fixes: memory persist in bypass tests; `UPLOADS_DIR`; PostgREST 503; FE lazy+manualChunks
+- Live: Metrika + Yandex OAuth PASS; Google `redirect_uri_mismatch` (Console)
+- Pytest 114 / Vitest 85
 
 ### Промпт: CI/CD ДЗ шаг 7 — логирование
 
@@ -654,6 +666,8 @@
 | Метрика без счётчика ломала бы CI/local | No-op без `VITE_YANDEX_METRIKA_ID`; id только public ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 | `getSettings` 401 гасил `apiReady` при живом AI | Settings optional; health.ai.configured + live re-check before generate ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)) |
 | MCP `issue_write` Create показывает форму без UI Submit | Шаг 6: комментарий в эпик [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) + код/docs |
+| Google OAuth live `redirect_uri_mismatch` | Документирован §4.1 `OAUTH_SETUP.md`; добавить URI в Cloud Console ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Bypass pytest бил real Supabase → ProxyError 500 | `PERSIST_BACKEND=memory` в `bypass_client` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 
 ---
 
@@ -663,6 +677,7 @@
 0a. Аналитика: Яндекс.Метрика через тонкий wrapper + SPA `hit`; цели как JS events; Webvisor off по умолчанию ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)).
 0c. Мониторинг при G2=C: усиленный `/api/health` + local `watch_health.py`; UptimeRobot — когда появится публичный URL ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0d. Логирование: scenario prompts + redact до AI; централизация при G2=C = local rotating file ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+0e. Шаг 8: integrations QA matrix + apply AI perf (code-split, hermetic tests, API_UNAVAILABLE mapping); Google OAuth needs Console redirect URI ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0b. RAG: индекс leaf-секций в pgvector; generate не заменять top-k — только обогащать prompt (style + multi-doc); chat — отдельный retrieve. Embeddings: Ollama `nomic-embed-text` или `hash` для тестов ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 1. Gate согласования сохранять.
 2. Для pixel-perfect лучше компонентные frames в Figma, не один screenshot.
@@ -756,6 +771,7 @@
 | CI/CD ДЗ шаг 4 — Яндекс.Метрика | [#41](https://github.com/Sintik1/Qa_Asistant/issues/41) | done (awaiting OK): → `docs/METRIKA_SETUP.md` + `cicd_integrations_documentation.md` §5/§10 |
 | CI/CD ДЗ шаг 6 — UptimeRobot + health | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/UPTIME_SETUP.md` §7 (отдельная Issue UI недоступна) |
 | CI/CD ДЗ шаг 7 — логирование | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): scenarios + redact; → `docs/LOGGING.md` + `cicd_integrations_documentation.md` §8/§10 |
+| CI/CD ДЗ шаг 8 — integrations QA + perf | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): → `docs/INTEGRATIONS_QA_STEP8.md` + §10 |
 
 ---
 

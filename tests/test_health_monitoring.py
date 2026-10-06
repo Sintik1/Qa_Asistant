@@ -20,8 +20,10 @@ def test_health_includes_checks_block():
     assert "configured" in body["checks"]["ai"]
 
 
-def test_health_keyword_for_uptime_robot():
-    """UptimeRobot keyword monitor can match a stable public string."""
+def test_health_disk_uses_uploads_dir(tmp_path, monkeypatch):
+    uploads = tmp_path / "my_uploads"
+    monkeypatch.setenv("UPLOADS_DIR", str(uploads))
+    monkeypatch.delenv("UPLOAD_DIR", raising=False)
     app = create_app(testing=True)
-    raw = app.test_client().get("/api/health").get_data(as_text=True)
-    assert '"api":"qa-assistant"' in raw.replace(" ", "") or '"api": "qa-assistant"' in raw
+    body = app.test_client().get("/api/health").get_json()
+    assert body["checks"]["disk"]["path"] == str(uploads)
