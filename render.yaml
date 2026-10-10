@@ -1,0 +1,35 @@
+# Free Render blueprint for Flask API (hybrid B).
+# Dashboard: https://dashboard.render.com → New → Blueprint → this repo
+# After deploy: set env vars (secrets) in Render dashboard; run local Ollama tunnel.
+
+services:
+  - type: web
+    name: qa-assistant-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PUBLIC_DEPLOY
+        value: "1"
+      - key: FLASK_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: ollama
+      - key: AI_OLLAMA_SIZE
+        value: "1.5b"
+      - key: PERSIST_BACKEND
+        value: supabase
+      - key: LOG_JSON
+        value: "1"
+      - key: LOG_TO_FILE
+        value: "0"
+      # Set in Render dashboard (do not commit secrets):
+      # SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_JWT_SECRET
+      # QA_ASISTANT_API_URL=https://<ollama-tunnel>/v1/chat/completions
+      # EMBEDDING_API_URL=https://<ollama-tunnel>/api/embeddings
+      # CORS_ORIGINS=https://sintik1.github.io
+      # OAUTH_PUBLIC_APP_URL=https://sintik1.github.io/Qa_Asistant
+      # OAUTH_API_PUBLIC_URL=https://<this-render-service>.onrender.com

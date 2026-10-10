@@ -134,12 +134,27 @@
   Метрика/GA          Uptime / logs        Google / Yandex
 ```
 
+### 1.1a. Hybrid B (факт, 2026-10-10)
+
+Пользователь выбрал схему **B**: публичный UI + публичный API, AI остаётся на Mac.
+
+```text
+GitHub Pages (FE) ──VITE_API_BASE_URL──► Serveo/tunnel ──► Flask :5001 (Mac)
+                                                              │
+                                                              ▼
+                                                         Ollama :11434 (Mac)
+```
+
+- Гайд: [`docs/HYBRID_LOCAL_AI.md`](docs/HYBRID_LOCAL_AI.md)
+- Хелпер: [`scripts/hybrid_b_start.sh`](scripts/hybrid_b_start.sh)
+- Опционально стабильный API: [`Dockerfile.api`](Dockerfile.api) + [`render.yaml`](render.yaml) (тогда нужен туннель к Ollama)
+
 ### 1.2. Принципы
 
 - Секреты только в GitHub Secrets / PaaS env / `.env` (не в git).
 - Тонкий HTTP-слой Flask; OAuth через Supabase Auth Client на FE + JWT на BE (как сейчас).
 - CI обязан гонять Pytest (backend) и Vitest/lint (frontend) на PR и на `main`.
-- Деплой на `main`/`master` — только после зелёных checks (если выбран auto-deploy).
+- Деплой на `main`/`master` — только после зелёных checks (если выбран auto-deploy); также `workflow_dispatch` для обновления `VITE_API_BASE_URL`.
 
 ---
 
@@ -455,6 +470,12 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 - Dashboard: Google Enabled, Redirect URLs×3, Site URL local Vite
 - Осталось: Google Console redirect = Supabase `/auth/v1/callback`
 
+#### Промпт: Hybrid B — хостинг FE/API, AI на Mac
+
+**Запрос:** схема B; произвести настройки сам; Submit Issue UI не отобразился — подтверждение через чат.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):** Ollama + Flask локально; публичный API через Serveo (Cloudflare quick tunnel ломается Clash fake-IP `198.18.0.2`); Variable `VITE_API_BASE_URL`; CORS Pages origin; docs/scripts/Docker/Render blueprint.
+
 #### Промпт: шаг 9 — оформление результатов
 
 **Запрос:** документация CI/CD / интеграции / security / мониторинг+логи; обновить README; сверить формат сдачи п.1–4.
@@ -552,7 +573,8 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 8 | Тесты + оптимизация | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | → `docs/INTEGRATIONS_QA_STEP8.md`; Google redirect URI config residual |
 | 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; **G2=B Pages deploy** |
 | — | Pages one-time setup | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done** | Pages Source=Actions; Variables `VITE_SUPABASE_*`; `source-map-js@1.2.2`; CI [#25](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green → https://sintik1.github.io/Qa_Asistant/ |
+| — | Hybrid B: public FE+API, local Ollama | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | Pages + Serveo→Flask:5001 + Ollama local; `VITE_API_BASE_URL` Variable; `docs/HYBRID_LOCAL_AI.md`; `Dockerfile.api`/`render.yaml` optional; deploy on `workflow_dispatch` |
 
 ---
 
-_Последнее обновление: 2026-10-06 — first GitHub Pages deploy green (`status.json` 200)._
+_Последнее обновление: 2026-10-10 — Hybrid B runtime (Serveo API tunnel + local Ollama) + Pages Variable wiring._

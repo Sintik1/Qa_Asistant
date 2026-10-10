@@ -81,9 +81,7 @@ def oauth_status():
             "google": {
                 # Primary FE path: supabase.auth.signInWithOAuth (Dashboard Providers).
                 "flow": "supabase_auth_provider",
-                "supabase_callback": (
-                    f"{supabase_url}/auth/v1/callback" if supabase_url else None
-                ),
+                "supabase_callback": (f"{supabase_url}/auth/v1/callback" if supabase_url else None),
                 # Legacy Flask Google routes still available if GOOGLE_* set.
                 "legacy_flask_env_configured": google is not None,
                 "legacy_flask_redirect_uri": google.redirect_uri if google else None,

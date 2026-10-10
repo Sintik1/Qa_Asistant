@@ -1,0 +1,31 @@
+# Flask API for hybrid B (public PaaS) — AI via tunnel to local Ollama.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_APP=wsgi:app \
+    PORT=8080
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
+COPY app ./app
+COPY core ./core
+COPY infrastructure ./infrastructure
+COPY integrations ./integrations
+COPY wsgi.py ./
+
+RUN mkdir -p uploads logs
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null || exit 1
+
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --workers 2 --timeout 300 wsgi:app"]

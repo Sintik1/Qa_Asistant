@@ -67,6 +67,7 @@
 55. Acceptance fix — G2=B GitHub Pages auto-deploy FE — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/DEPLOY_GITHUB_PAGES.md`)
 56. Pages one-time setup (agent) — **done** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); Pages+Variables; `source-map-js@1.2.2`; CI deploy green → https://sintik1.github.io/Qa_Asistant/; → `cicd_integrations_documentation.md` §10)
 57. OAuth Google via Supabase Auth Providers — **done (awaiting Google Console redirect URI + live smoke)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); Dashboard Google Enabled + Redirect URLs; FE `signInWithOAuth`; → `docs/OAUTH_SETUP.md`)
+58. Hybrid B — public FE+API, local Ollama — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); CI/CD ДЗ → `cicd_integrations_documentation.md` §10; → `docs/HYBRID_LOCAL_AI.md`)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -186,6 +187,16 @@
 - FE: кнопки + `/auth/callback`; BE: `/api/auth/me`, `/api/auth/oauth/*`
 - `scripts/save_oauth_secrets.py` + `docs/OAUTH_SETUP.md`
 - pytest oauth + vitest AuthPage; full suite 107 / 81
+
+### Промпт: Hybrid B — выложить FE/API, AI на компе
+
+**Запрос:** схема B; настройки сделать самому; Submit в Issue UI не отобразился — «подтверждаю».
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):**
+- Runtime: Ollama + Flask на Mac; публичный API через Serveo; Pages Variable `VITE_API_BASE_URL`; CORS `https://sintik1.github.io`
+- Артефакты: `docs/HYBRID_LOCAL_AI.md`, `scripts/hybrid_b_start.sh`, `Dockerfile.api`, `render.yaml`
+- CI: ruff format fix; Pages deploy на `workflow_dispatch`
+- CI/CD ДЗ → `cicd_integrations_documentation.md` §1.1a / §10
 
 ### Промпт: CI/CD + integrations ДЗ — план и каркас документации
 
@@ -683,11 +694,16 @@
 | Bypass pytest бил real Supabase → ProxyError 500 | `PERSIST_BACKEND=memory` в `bypass_client` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Pages deploy skipped: CI fail on `npm audit` (`source-map-js` GHSA-68fv-2mgg-jv7q) | Override `source-map-js@1.2.2`; Pages Source=Actions + Variables via browser (gh token invalid) ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Google `redirect_uri_mismatch` на Flask callback | Перенос Google на Supabase Auth Provider; Console URI = `…supabase.co/auth/v1/callback` ([#40](https://github.com/Sintik1/Qa_Asistant/issues/40)) |
+| Hybrid B: Cloudflare Tunnel 5xx / Clash fake-IP DNS `198.18.0.2` | Serveo SSH reverse tunnel к Flask; Ollama остаётся на localhost ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Ollama SIGTRAP в sandbox / Metal discover | Запуск вне sandbox + `OLLAMA_LLM_LIBRARY=cpu`, без HTTP_PROXY ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Pages deploy blocked: ruff format `oauth_routes.py` | `ruff format`; deploy `if` + `workflow_dispatch` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| MCP Issue Submit UI не виден | Подтверждение в чате + комментарий в [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
 
 ---
 
 ## 5. Выводы и рекомендации
 
+0g. Hybrid B: при Clash fake-IP не полагаться на Cloudflare quick tunnel — Serveo/Pinggy; AI-туннель не нужен, если Flask на том же Mac ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0. CI/CD ДЗ: отдельный артефакт `cicd_integrations_documentation.md` + rule; решения G1–G9 до кода; OAuth предпочтительно через Supabase Providers; платежи — optional gate ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0a. Аналитика: Яндекс.Метрика через тонкий wrapper + SPA `hit`; цели как JS events; Webvisor off по умолчанию ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)).
 0c. Мониторинг при G2=C: усиленный `/api/health` + local `watch_health.py`; UptimeRobot — когда появится публичный URL ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
@@ -792,6 +808,7 @@
 | Acceptance: G2=B Pages auto-deploy | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): deploy job → https://sintik1.github.io/Qa_Asistant/ |
 | Pages one-time setup + audit unblock | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done: Pages+Variables; CI [run](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green; site live; → `cicd_integrations_documentation.md` §10 |
 | OAuth Google → Supabase Provider | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting Console URI + smoke): Google Enabled; Redirect URLs×3; FE signInWithOAuth; → `docs/OAUTH_SETUP.md` §1 |
+| Hybrid B: public FE+API, local AI | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): Serveo→Flask + Ollama local; `VITE_API_BASE_URL`; → `docs/HYBRID_LOCAL_AI.md` + `cicd_integrations_documentation.md` §10 |
 
 ---
 

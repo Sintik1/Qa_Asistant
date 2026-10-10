@@ -90,7 +90,10 @@ jobs:
   deploy:
     name: Deploy frontend (GitHub Pages)
     needs: [frontend, backend]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    # push to main OR manual workflow_dispatch (e.g. refresh VITE_API_BASE_URL)
+    if: >-
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+      || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
