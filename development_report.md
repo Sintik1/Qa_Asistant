@@ -89,6 +89,7 @@
 77. Библиотека промптов и шаблонов — **done (awaiting OK)** (см. [#55](https://github.com/Sintik1/Qa_Asistant/issues/55); вариант A; Backend → `backend_documentation.md` §5.20 / §6)
 78. Маркер `*Тут текст требований*` — **done (awaiting OK)** (см. [#56](https://github.com/Sintik1/Qa_Asistant/issues/56); длинный файл требований больше не отклоняется лимитом шаблона 20 000; Backend → `backend_documentation.md` §5.21 / §6)
 79. Leopold `chatMulti` — **done (awaiting OK)** (см. [#57](https://github.com/Sintik1/Qa_Asistant/issues/57); вариант B: Qwen3 + `user_message`, текст промпта и `max_new_tokens` 15000 сохранены; Backend → `backend_documentation.md` §5.22 / §6)
+80. Локальный запуск одной командой `python run.py` — **done (awaiting OK)** (см. [#58](https://github.com/Sintik1/Qa_Asistant/issues/58); Flask :5001 и Vite :5173, общий Ctrl+C; Backend → `backend_documentation.md` §2.4 / §6)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -108,6 +109,7 @@
 | Ограничение scope | Не добавлять экраны/библиотеки вне ТЗ и макета |
 | Prompt template (Role/Task/Context/Format) | `prompt_templates.md` §1 → Stage 6; §5 → Stage 10 tests |
 | Сверка контракта до кода | Leopold `chatMulti`: пример OpenAPI не копировать; подстановки оставить ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)) |
+| Один процесс-родитель на два сервера | `python run.py` поднимает Flask и Vite и гасит оба по Ctrl+C ([#58](https://github.com/Sintik1/Qa_Asistant/issues/58)) |
 | Mock-first без бэкенда | `mockGenerateTestCases` + токен в localStorage |
 | Browser CDP bug hunt | `cursor-ide-browser` + `browser_cdp` (fallback: chrome-devtools MCP недоступен) |
 | Page Object + Fluent API + parametrize | Selenium E2E в `tests/`; Vitest unit в `qa-assistant/src/utils/*.test.ts` |
@@ -825,6 +827,18 @@
 
 ---
 
+### Промпт: один скрипт вместо двух терминалов
+
+**Запрос:** запускать Flask и интерфейс одной командой вида `python run.py`.
+
+**Результат ([#58](https://github.com/Sintik1/Qa_Asistant/issues/58)):**
+- `run.py` в корне поднимает Flask на `127.0.0.1:5001` и Vite на `127.0.0.1:5173`
+- Интерпретатор берётся из `.venv`. Ctrl+C останавливает оба процесса
+- Зависимости скрипт не ставит: один раз `pip install -r requirements.txt` и `npm install`
+- Pytest `tests/test_run_local.py` — 4 passed. Живые серверы тестом не запускались
+
+---
+
 ## 4. Проблемы и решения
 
 | Проблема | Решение |
@@ -935,11 +949,13 @@
 | Файл требований не заменяет `*Тут текст требований*` | Сначала файл не читался. После правки `POST /api/library/extract-text` отвечал 422, если текст длиннее 20 000 — лимит шаблона библиотеки ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
 | Генерация показывает «не удалось подключиться» | Файл уже прочитан. `POST /api/runs/…/generate` ждал Ollama `qwen2.5:1.5b` 491 с и вернул `API_UNAVAILABLE`: лимит ответа 300 с. Ollama при этом запущена ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
 | Пример `chatMulti` затирает промпт и режет CSV | Не копировать заглушки. `user_message` = наш текст, `max_new_tokens` остаётся 15000, модель из настроек ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)) |
+| Два терминала легко забыть при переносе на другой ПК | `python run.py` из корня после venv и `npm install` ([#58](https://github.com/Sintik1/Qa_Asistant/issues/58)) |
 
 ---
 
 ## 5. Выводы и рекомендации
 
+0z. Flask и Vite поднимаются одной командой `python run.py` из корня. Скрипт сам берёт `.venv`, порты 5001 и 5173, и по Ctrl+C останавливает оба процесса. Зависимости он не ставит ([#58](https://github.com/Sintik1/Qa_Asistant/issues/58)).
 0y. Leopold ходит в `chatMulti` моделью `Qwen/Qwen3-Next-80B-A3B-Instruct-FP8`. Системный промпт, текст требований и лимит 15000 токенов остаются в теле. Заглушки примера (`Сайга`, `Hi`, `string`, 1536, огромный `fileSize`) не отправляются. Промпт из поля UI попадает в user-часть запроса как `Доп. промпт`, не в `system_prompt` ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)).
 0x. Маркер `*Тут текст требований*` заменяется разобранным текстом файла, даже если документ длиннее 20 000 символов. Этот лимит остаётся только у сохранённого промпта и шаблона. Промпт без маркера не меняется ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)).
 0w. Библиотека промптов и шаблонов — отдельные таблицы на пользователя. Выбранный текст добавляется к прогону. Пока ничего не выбрано, generate остаётся прежним. В `case_chunks` библиотеку не класть ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)).
@@ -1083,6 +1099,7 @@
 | Библиотека промптов и шаблонов | [#55](https://github.com/Sintik1/Qa_Asistant/issues/55) | done (awaiting OK): вариант A, таблицы `user_prompts` и `scenario_templates`; → `backend_documentation.md` §5.20 |
 | Маркер требований в промпте | [#56](https://github.com/Sintik1/Qa_Asistant/issues/56) | done (awaiting OK): длинный файл читается; generate 502 — таймаут Ollama 300 с, не обрыв файла; → `backend_documentation.md` §5.21 |
 | Leopold chatMulti | [#57](https://github.com/Sintik1/Qa_Asistant/issues/57) | done (awaiting OK): вариант B, Qwen3, `user_message`; → `backend_documentation.md` §5.22 |
+| Один скрипт локального запуска | [#58](https://github.com/Sintik1/Qa_Asistant/issues/58) | done (awaiting OK): `python run.py`; → `backend_documentation.md` §2.4 |
 
 ---
 

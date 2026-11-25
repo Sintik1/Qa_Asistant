@@ -337,6 +337,9 @@ flask --app wsgi run -p 5001
 # 4) Frontend (другой терминал)
 cd qa-assistant && npm install && npm run dev
 # http://127.0.0.1:5173  →  /auth → регистрация/вход → генерация
+
+# Либо оба процесса одной командой после venv и npm install:
+python run.py
 ```
 
 **Проверка:** `curl -s http://127.0.0.1:5001/api/health | jq` → `persist` ≈ `supabase`, блок `.ai` заполнен.  
@@ -1060,6 +1063,7 @@ curl -s -X PUT http://127.0.0.1:5001/api/ai/provider \
 | — | Библиотека промптов и шаблонов | [#55](https://github.com/Sintik1/Qa_Asistant/issues/55) | done (awaiting OK) | вариант A: `user_prompts` + `scenario_templates`; → §5.20 |
 | — | Маркер требований в промпте | [#56](https://github.com/Sintik1/Qa_Asistant/issues/56) | done (awaiting OK) | длинный файл больше не режется лимитом 20 000; → §5.21 |
 | — | Leopold chatMulti | [#57](https://github.com/Sintik1/Qa_Asistant/issues/57) | done (awaiting OK) | вариант B: Qwen3 + `user_message`; URL `lleopold/chatMulti`; → §5.22 |
+| — | Один скрипт локального запуска | [#58](https://github.com/Sintik1/Qa_Asistant/issues/58) | done (awaiting OK) | `python run.py`: Flask 5001 + Vite 5173; → §2.4 |
 
 ---
 
