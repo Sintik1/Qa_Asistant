@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { Button } from '../ui/Button'
+import { AiProviderSwitch } from './AiProviderSwitch'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `app-shell__nav-link rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -22,14 +23,16 @@ export function AppNav() {
           Написание тест-кейсов
         </NavLink>
         <NavLink to="/chat" className={linkClass}>
-          Чат по требованиям
+          Чат по проекту
         </NavLink>
         <NavLink to="/settings" className={linkClass}>
           Настройки
         </NavLink>
       </div>
+      <div className="ml-auto flex flex-wrap items-center gap-2 px-2 py-1">
+        <AiProviderSwitch />
       {configured && user ? (
-        <div className="ml-auto flex items-center gap-2 px-2 py-1">
+        <div className="flex items-center gap-2">
           <span
             className="max-w-[12rem] truncate text-xs text-slate-600"
             title={user.email ?? undefined}
@@ -46,6 +49,7 @@ export function AppNav() {
           </Button>
         </div>
       ) : null}
+      </div>
     </nav>
   )
 }

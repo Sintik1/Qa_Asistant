@@ -32,6 +32,7 @@ export async function generateRun(
     requirements_text: string
     task_name?: string
     prompt?: string
+    template_text?: string
   },
 ): Promise<GenerateResponse> {
   return apiJson<GenerateResponse>(`/api/runs/${runId}/generate`, {

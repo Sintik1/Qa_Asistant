@@ -171,6 +171,8 @@ auth.users ──1:1── profiles ──1:1── user_settings
 | `generation_chunks` | run_id, chunk_index, preview/path, status, retry, raw_response_path | N:1 run; unique(run,index) |
 | `test_cases` | name, status, step, expected_result, sort_order, optional chunk_id | N:1 run |
 
+Библиотека промптов и шаблонов (вариант A, [#55](https://github.com/Sintik1/Qa_Asistant/issues/55)): `user_prompts` и `scenario_templates`, обе с `user_id` → `profiles` и RLS. Это именованный текст для одного прогона. `case_chunks` по-прежнему только для RAG и не заполняется при сохранении библиотеки.
+
 **Корректировки относительно черновика:**
 - `user_id` денормализован на `generation_chunks` и `test_cases` → простые RLS-политики.
 - Token Leopold **не** в таблице (только `has_api_token`).
@@ -307,7 +309,8 @@ React (Vite) ──JWT──► Supabase Auth / PostgREST / Storage
 | `SUPABASE_JWT_SECRET` | Flask | локальная проверка JWT (предпочтительно) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Flask only | обход RLS на сервере; **никогда** во FE |
 | `CORS_ORIGINS` | Flask | whitelist фронтенда |
-| `QA_ASISTANT_API_TOKEN` | Flask | Leopold/Ollama; не в БД |
+| `QA_ASISTANT_API_TOKEN` | Flask | Ollama, либо Leopold, если нет `LEOPOLD_TOKEN` |
+| `LEOPOLD_TOKEN` / `LEOPOLD_API_URL` | Flask | Нативный Leopold (`AI_PROVIDER=leopold`); те же поля, что в TestSites |
 
 `SUPABASE_SERVICE_ROLE_KEY` и `SUPABASE_JWT_SECRET` — **только** сервер, никогда во frontend / git.
 
@@ -482,7 +485,7 @@ Issue: [#23](https://github.com/Sintik1/Qa_Asistant/issues/23)
 | Режим | Когда | Модель | Env |
 |-------|-------|--------|-----|
 | **ollama** (default для учёбы) | локальная отладка | **M1 8GB → `qwen2.5:1.5b`**; опц. `3b` | `AI_PROVIDER=ollama`, `AI_OLLAMA_SIZE=1.5b` |
-| **leopold** | ТЗ / «прод» | `Qwen/Qwen2.5-72B-Instruct` | `AI_PROVIDER=leopold` + URL/token |
+| **leopold** | ТЗ / «прод» | `Qwen/Qwen3-Next-80B-A3B-Instruct-FP8` | `AI_PROVIDER=leopold` + `LEOPOLD_API_URL` (`…/api/1.0/lleopold/chatMulti`) + token |
 
 Код: `integrations/ai_client.py` (OpenAI-compatible), `integrations/leopold_client.py` (обёртка).  
 Скрипт: `scripts/setup_ollama.sh [7b|14b]`.  
@@ -494,6 +497,7 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 |-------|------|-------------|--------|
 | `GET` | `/api/health` | health + ai config (provider/model) | done |
 | `POST` | `/api/ai/ping` | smoke-вызов Ollama/Leopold | done |
+| `GET`/`PUT` | `/api/ai/provider` | текущий провайдер и переключение `ollama` ↔ `leopold` | done ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50)) |
 | `POST` | `/api/documents` | **C**reate document meta | done |
 | `POST` | `/api/documents/upload` | multipart upload + extract + Storage | done (шаг 7b) |
 | `GET` | `/api/documents` | **R**ead list | done |
@@ -505,8 +509,11 @@ Smoke: `POST /api/ai/ping`, статус в `GET /api/health` → `.ai`.
 | `GET` | `/api/runs/<id>/test-cases` | **R**ead cases | done |
 | `PATCH` | `/api/test-cases/<id>` | **U**pdate case | done |
 | `GET`/`PATCH` | `/api/settings` | settings | done |
-| `POST` | `/api/runs/<id>/generate` | AI generate → cases (+ RAG enrich) | done (шаг 6 / [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
-| `POST` | `/api/chat` | RAG Q&A по `document_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
+| `POST` | `/api/runs/<id>/generate` | AI generate → cases (+ RAG enrich). Необязательный `template_text` дописывается к примерам этого прогона | done (шаг 6 / [#36](https://github.com/Sintik1/Qa_Asistant/issues/36); шаблон — [#55](https://github.com/Sintik1/Qa_Asistant/issues/55)) |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/api/prompts` | библиотека промптов пользователя | done ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)) |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/api/scenario-templates` | библиотека шаблонов сценариев | done ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)) |
+| `POST` | `/api/library/extract-text` | текст файла требований или шаблона на один прогон, без записи документа и без лимита 20 000 | done ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55), [#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
+| `POST` | `/api/chat` | RAG Q&A: embed → pgvector match (`document_chunks` + опц. `case_chunks`) → grounded answer | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36), [#43](https://github.com/Sintik1/Qa_Asistant/issues/43)) |
 | `POST` | `/api/rag/templates` | загрузка шаблонов кейсов в `case_chunks` | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/rag/index-cases` | явный index проверенных кейсов (не auto после generate) | done ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)) |
 | `POST` | `/api/admin/analyze-logs` | AI анализ логов (шаг 7) | done |
@@ -633,6 +640,17 @@ Pytest: `tests/test_api_generate.py`, `tests/test_case_parser.py` (+ smoke/error
 **Поток:** validate file → read text (.md) / metadata stub (pdf/docx) → `POST /api/documents` → `POST /api/runs` → `POST …/generate` → CSV download как раньше.
 
 **Ограничения шага 6 (сняты в 7b):** multipart + extract — см. §4.6. Leopold token остаётся в server `.env`, UI ставит `has_api_token`.
+
+### 4.7. RAG chat ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43))
+
+```bash
+curl -s -X POST "$API/api/chat" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Какой срок рассрочки?","include_cases":true}' | jq
+```
+
+Поток: JWT → embed(question) → RPC `match_document_chunks` (+ `match_case_chunks`) → LLM только по хитам → `{ answer, citations[] }`. UI: вкладка «Чат по проекту» (`/chat`).
 
 ### 4.5. Ошибки, логи, AI-анализ (шаг 7)
 
@@ -866,6 +884,16 @@ Senior Python Developer: проектирование схемы, миграци
   - Supabase + JWT `demo.reviewer@qatest.local` + Ollama 1.5b → **PASS** (те же шаги; `document_chunks`/`case_chunks` в Table Editor)
 - Замечание: без `SUPABASE_SERVICE_ROLE_KEY` bypass-upload в Supabase даёт RLS 401; для live нужен JWT пользователя
 
+### 5.12. RAG project chat UI ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43))
+
+**Промпт:** отдельная страница чата; вопрос → поиск проектной информации в БД → наиболее подходящий ответ.
+
+**Результат:**
+- `RagService.chat`: retrieve по `document_chunks` и (по умолчанию) `case_chunks`; цитаты с `source_kind`
+- `POST /api/chat` принимает `include_cases`
+- FE `/chat`: тред, выбор документа, статус RAG, источники
+- Pytest: chat из кейсов / skip cases; Vitest: ChatPage + chat client
+
 ### 5.10. Шаг 9 — оформление сдачи
 
 **Промпт:** оформить результаты в `backend_documentation.md` (архитектура, деплой, API, примеры) и обновить README.
@@ -875,6 +903,120 @@ Senior Python Developer: проектирование схемы, миграци
 - Актуализированы §1.8, §2.4 (полный локальный стек), §3 (снят устаревший gate)
 - README: FE+BE+Supabase, быстрый старт, ссылки на docs/QA
 - Журнал §6: шаг 9 → Issue #33
+
+---
+
+### 5.13. Парсинг DOCX как в TestSites + нативный Leopold ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47))
+
+**Промпт:** взять папку `TestSites — копия` и настроить парсинг документов и интеграцию с Leopold так же, не ломая текущий бэкенд.
+
+**Результат:**
+- `core/doc_reader.py` + `core/table_format.py`: таблицы Word → `TABLE_N_START` / `COLUMNS` / `ROW_k` / `TABLE_BLOCK_*` в порядке документа; заголовки Word по-прежнему `##` для section parser
+- Промпты генерации знают, что один блок `TABLE_N_*` — одна таблица (строки = шаги)
+- `integrations/leopold_native.py`: тело запроса как в TestSites (`chat.model`, `system_prompt`, `contents`, `max_new_tokens`), текст ответа из `response` / `text` / `choices`
+- `AI_PROVIDER=leopold` сначала читает `LEOPOLD_TOKEN` + `LEOPOLD_API_URL`, и только если их нет — `QA_ASISTANT_API_TOKEN` + `QA_ASISTANT_API_URL` (эти имена в `.env` ещё заняты Ollama)
+- `AI_PROVIDER=ollama` остаётся OpenAI-совместимым клиентом
+- Контракт `POST /api/documents/upload` и `POST /api/runs/<id>/generate` не менялся
+- Pytest: doc reader, AI client, section parser, upload, generate — **35 passed**
+- Следом ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)): те же контракты в автотестах — upload/секция держат `TABLE_*`, generate шлёт их в промпт, `LeopoldNativeClient` отдаёт CSV из `response`, RAG-чат цитирует строку таблицы. UI: Vitest `ChatPage` **9 passed** (документ, кейсы, цитаты, статус RAG). Выборка pytest **55 passed**. Индекс RAG ставит `has_table`, если в чанке есть `TABLE_`
+- Не переносилось: learning/assessment/logs из `app.py` TestSites; OLE `.doc` без конвертера по-прежнему `CORRUPT_FILE`
+
+**Как включить Leopold:** в `.env` поставить `AI_PROVIDER=leopold`, `LEOPOLD_API_URL` и `LEOPOLD_TOKEN`, перезапустить Flask. Скачивание CSV по-прежнему собирается на фронте из сохранённых кейсов.
+
+---
+
+### 5.14. Confluence → RAG ([#49](https://github.com/Sintik1/Qa_Asistant/issues/49))
+
+**Промпт:** попробовать, что нужно, чтобы RAG работал по пространству Confluence.
+
+**Результат:** страницы пространства индексируются в существующие `document_chunks` пользователя, который вызвал синхронизацию. `POST /api/rag/confluence/sync`. Версия страницы в `storage_path` (`confluence/{space}/{id}@v{n}`): та же версия не пересчитывается. Цитата чата может содержать `url`. UI: кнопка на `/chat`. Секреты: `CONFLUENCE_BASE_URL`, `CONFLUENCE_EMAIL` (Cloud), `CONFLUENCE_API_TOKEN`, `CONFLUENCE_SPACE_KEY`. Инструкция: `docs/RAG_USAGE.md` §3.5. Pytest синхронизации без сети — зелёный. Вложения и общий индекс команды не входят в этот шаг.
+
+Живой прогон 2026-11-25: пространство `~712020…` (сайт `vsentyakov.atlassian.net`), 3 страницы, 5 чанков. Индекс записан пользователю Demo Reviewer (`d13aec3f-60c3-456f-9448-2e351251fb37`), потому что обход идёт от сервера без JWT, а случайный bypass-uuid не проходит внешний ключ `profiles`. Ключ `sb_secret_…` отправляется и в `apikey`, иначе PostgREST отвечает 401.
+
+---
+
+### 5.15. Переключатель Leopold ↔ локальная Ollama ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50))
+
+**Промпт:** сделать переключатель с Leopold на локалку и сразу включить локальную.
+
+**Результат:**
+- `GET /api/ai/provider` и `PUT /api/ai/provider` с телом `{"provider":"ollama"}` или `"leopold"`. Клиент в `app.extensions` пересобирается сразу; `AI_PROVIDER` пишется в `.env`, чтобы следующий запуск Flask не откатился
+- Шапка приложения: кнопки «Локально» и «Leopold»
+- Leopold больше не берёт тег Ollama из `QA_ASISTANT_MODEL` (имя без `/`). Для Leopold остаётся `Qwen/Qwen2.5-72B-Instruct`, для локальной — `qwen2.5:1.5b`
+- Эмбеддинги не переключались: индекс Confluence посчитан `hash`
+- Pytest `tests/test_ai_client.py` 11 passed; Vitest переключателя 1 passed
+- Стенд 2026-11-25: `.env` `AI_PROVIDER=ollama`, Flask перезапущен на `127.0.0.1:5001`
+
+Пример:
+
+```bash
+curl -s -X PUT http://127.0.0.1:5001/api/ai/provider \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-Id: d13aec3f-60c3-456f-9448-2e351251fb37' \
+  -d '{"provider":"ollama"}'
+```
+
+### 5.16. Чат: страница по словам вопроса ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51))
+
+**Промпт:** ответ на «Как подключить услугу Домофон» не по странице Confluence «Проект Домофон».
+
+**Причина:** эмбеддинги `hash-v1` не сравнивают смысл. Сходство акции «роутер / рассрочка» было 0.064, страницы домофона — 0.015. Локальная `qwen2.5:1.5b` ответила по верхним чужим фрагментам.
+
+**Результат:** `core/rag_lexical.py`. Чат забирает широкий пул и оставляет фрагменты, где есть основы слов вопроса (заголовок и путь раздела тоже). Если требование совпало, кейсы без этих слов в промпт не попадают. Векторы не пересчитывались. Pytest RAG 27 passed.
+
+Ответ в чате — сам текст фрагмента, слово в слово, как он лежит в индексе страницы. Модель для этого ответа не вызывается: `qwen2.5:1.5b` переписывала шаги и добавляла лишние.
+
+Текст Confluence хранится как Markdown: заголовок `#`, нумерованный список `1.`, жирный `**`. Чат рисует эту разметку (список, заголовок, ссылка), а не сырые символы. Ключ страницы `confluence/{space}/{id}@v{n}+page`: страница индексируется целиком.
+
+Вопрос «куда активатор ходит при подключении SDP» раньше попадал в «Проект Домофон», потому что выбор страницы был правилами в коде.
+
+### 5.17. Модель сама выбирает страницы ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52))
+
+**Промпт:** не хардкодить поиск, пусть ИИ находит подходящие страницы пространства и даёт ответ.
+
+**Результат:** эмбеддинги `nomic-embed-text` (Ollama, 768). Чат берёт ближайшие страницы по вектору и просит модель ответить только по ним, дословно передав список или таблицу выбранной страницы. Вызов чата идёт с температурой 0: при значении по умолчанию `qwen2.5:1.5b` дописывала шаги, которых на странице нет. Если модель назвала страницу и не процитировала ни одной её строки, в ответ подставляется текст этой страницы. Навигационная строка «Назад к списку страниц» в промпт не попадает. Сравнение обрубков слов остаётся только для тестов с `hash`. Ключ синхронизации включает имя модели, поэтому смена эмбеддингов пересобирает те же версии страниц. `EMBEDDING_PROVIDER=ollama`, `EMBEDDING_MODEL=nomic-embed-text`.
+
+Живая проверка после синхронизации 5 страниц: «куда активатор ходит при подключении SDP» — страница «Проект активатора схема связанностей» (0.721), в ответе `активатор->SDP` и `112.000.000:8080`. «Как подключить услугу Домофон» — страница «Проект Домофон» и её нумерованная инструкция из шести пунктов.
+
+### 5.18. Таблица страницы и один источник ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53))
+
+**Промпт:** в чате показать таблицу как в Confluence и не выводить под ответом требования со всех страниц.
+
+**Результат:** HTML-таблица становится Markdown-таблицей (`| … |` и строка `| --- |`). Несколько абзацев в одной ячейке остаются переводами строки. Чат рисует `<table>`. Соседние абзацы страницы не склеиваются в один: каждая строка — отдельный абзац, пустой `<p>` даёт отступ. Модель выбирает страницу, ответ — её текст, в `citations` только эта страница и без повтора текста. Ключ синхронизации заканчивается на `-blocks`, поэтому страницы пересобираются.
+
+### 5.19. Все страницы одного уровня сходства ([#54](https://github.com/Sintik1/Qa_Asistant/issues/54))
+
+**Промпт:** ответ на вопрос про Домофон и заявку на ТО нашёл только Домофон. Нужны все сходства, без списка страниц в коде.
+
+**Результат:** эмбеддинг уже ставит эти две страницы на 0.771 и 0.770. Чат берёт страницы по убыванию сходства и останавливается, когда следующий балл ниже предыдущего больше чем на 0.02. В ответ попадает текст каждой такой страницы и её сходство. «Обзор» (0.731) в эту полосу не входит.
+
+### 5.20. Библиотека промптов и шаблонов — gate ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55))
+
+**Промпт:** написать функции добавления промптов и шаблонов. Сначала предложить, где их хранить. Проверить, что выбранный способ не меняет генерацию, пока пользователь ничего не сохранил и не выбрал.
+
+**Наблюдение:** кнопки на главной выключены. Таблиц библиотеки в Supabase нет. `POST /api/rag/templates` пишет структурированные примеры в `case_chunks` и не показывает именованный список. Поле промпта уже уходит в generate как доп. инструкция. Файл шаблонов на форме в generate не передаётся.
+
+**Результат:** выбран вариант A. Таблицы `user_prompts` и `scenario_templates` с RLS. «Использовать» у промпта заполняет поле. У шаблона текст уходит в generate только если он выбран; пустое поле `template_text` не меняет промпт. Файл шаблонов читается через `POST /api/library/extract-text` и не создаёт документ. Сохранение в библиотеку не пишет в `case_chunks`.
+
+### 5.21. Маркер требований в промпте ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56))
+
+**Промпт:** файл требований не разбирается и не встаёт вместо `*Тут текст требований*`.
+
+**Причина:** выбор файла сохранял только имя. После первой правки текст стал читаться через `POST /api/library/extract-text`, но этот ответ резал любой файл лимитом библиотеки в 20 000 символов и отвечал 422. Маркер в поле оставался.
+
+**Результат:** чтение файла больше не сравнивает длину с лимитом сохранённой строки. Лимит 20 000 остаётся на запись в библиотеку и на `template_text` при generate. Текст требований заменяет `*Тут текст требований*` в поле и ещё раз при генерации, если маркер ещё в тексте. Промпт без маркера не меняется.
+
+Повторная генерация после этой замены: файл прочитан (`extract-text` 200), затем `POST /api/runs/…/generate` ответил 502 `API_UNAVAILABLE` через 491 с. Локальная Ollama `qwen2.5:1.5b` была запущена, лимит одного ответа — 300 с. На экране это то же сообщение, что и при обрыве связи.
+
+---
+
+### 5.22. Leopold `chatMulti`, модель Qwen3 ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57))
+
+**Промпт:** обновить отправку в Leopold на `api/1.0/lleopold/chatMulti` и оставить параметры, которые приложение подставляет.
+
+**Выбран вариант B.** `build_leopold_payload` шлёт контракт `chatMulti`: `user_message` равен тексту требований, он же в `contents[0].text` и `chat_history[0].content`. `system_prompt` и `temperature` те же. `max_new_tokens` = 15000. Файловые поля пустые (`storageKey` `""`, `fileSize` 0, `contentType` `text/plain`). Модель по умолчанию `Qwen/Qwen3-Next-80B-A3B-Instruct-FP8`. Имя с `/` в `QA_ASISTANT_MODEL` по-прежнему заменяет её. Пример OpenAPI (`Сайга`, `Hi`, `string`, 1536 токенов, максимальный `fileSize`) не копируется. URL в `.env`: `https://ai.rt.ru/api/1.0/lleopold/chatMulti`. Ollama не затронута.
+
+Поле промпта с главной страницы доходит до этого user-текста строкой `Доп. промпт: …`. В `chat.system_prompt` остаётся встроенная инструкция QA, не текст из поля. Пустое поле эту строку не добавляет.
 
 ---
 
@@ -902,7 +1044,23 @@ Senior Python Developer: проектирование схемы, миграци
 | 9c | Feedback проверяющего | [#35](https://github.com/Sintik1/Qa_Asistant/issues/35) | done (closed) | демо-вход, checklist, bypass, compose UI-only, screencast; `ddd6fcf` |
 | — | RAG + section parser | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | pgvector; pytest 31; vitest 3; live smoke memory+Supabase PASS |
 | — | RAG verify + autotests | [#36](https://github.com/Sintik1/Qa_Asistant/issues/36) | done (awaiting OK) | user scenarios + `live_rag_smoke.py`; → §5.11 |
+| — | RAG project chat page | [#43](https://github.com/Sintik1/Qa_Asistant/issues/43) | done (awaiting OK) | retrieve docs+cases; UI `/chat`; → §5.12 |
+| — | Auth Failed to fetch | [#44](https://github.com/Sintik1/Qa_Asistant/issues/44) | done (awaiting Clash DIRECT) | fake-IP `supabase.co` → 240.x; UI hint; не баг ключей |
+| — | Unpause + keepalive Auth | [#44](https://github.com/Sintik1/Qa_Asistant/issues/44) | done (awaiting Resume) | project paused NXDOMAIN; `scripts/supabase_keepalive.py` |
+| — | Full QA run | [#45](https://github.com/Sintik1/Qa_Asistant/issues/45) | done (awaiting OK) | pytest 124; vitest 92; live AI/JWT gaps; → `docs/FULL_QA_RUN_2026-11-23.md` |
+| — | UI tests | [#46](https://github.com/Sintik1/Qa_Asistant/issues/46) | done (awaiting OK) | Vitest 92; Selenium 11 pass, generate timeout; → `docs/UI_TEST_RUN_2026-11-23.md` |
+| — | Парсинг TestSites + Leopold | [#47](https://github.com/Sintik1/Qa_Asistant/issues/47) | done (awaiting OK) | `TABLE_*` + native chat; Ollama без изменений; pytest 35; → §5.13 |
+| — | Тесты TABLE/Leopold + RAG UI | [#48](https://github.com/Sintik1/Qa_Asistant/issues/48) | done (awaiting OK) | pytest 55; Vitest ChatPage 9; `has_table` для `TABLE_` |
+| — | Confluence → RAG | [#49](https://github.com/Sintik1/Qa_Asistant/issues/49) | synced | 3 страницы / 5 чанков у Demo Reviewer; `sb_secret` в заголовке `apikey`; → §5.14 |
+| — | Переключатель Leopold ↔ Ollama | [#50](https://github.com/Sintik1/Qa_Asistant/issues/50) | done (awaiting OK) | `PUT /api/ai/provider`; стенд на `ollama`; эмбеддинги hash; → §5.15 |
+| — | Чат по словам вопроса | [#51](https://github.com/Sintik1/Qa_Asistant/issues/51) | done (awaiting OK) | дословный текст страницы, без пересказа модели; → §5.16 |
+| — | ИИ выбирает страницы | [#52](https://github.com/Sintik1/Qa_Asistant/issues/52) | done (awaiting OK) | `nomic-embed-text`; температура 0; SDP → активатор, Домофон → инструкция; → §5.17 |
+| — | Таблица в чате | [#53](https://github.com/Sintik1/Qa_Asistant/issues/53) | done (awaiting OK) | Markdown-таблица, один источник; → §5.18 |
+| — | Полоса сходства | [#54](https://github.com/Sintik1/Qa_Asistant/issues/54) | done (awaiting OK) | Домофон и заявка на ТО вместе; → §5.19 |
+| — | Библиотека промптов и шаблонов | [#55](https://github.com/Sintik1/Qa_Asistant/issues/55) | done (awaiting OK) | вариант A: `user_prompts` + `scenario_templates`; → §5.20 |
+| — | Маркер требований в промпте | [#56](https://github.com/Sintik1/Qa_Asistant/issues/56) | done (awaiting OK) | длинный файл больше не режется лимитом 20 000; → §5.21 |
+| — | Leopold chatMulti | [#57](https://github.com/Sintik1/Qa_Asistant/issues/57) | done (awaiting OK) | вариант B: Qwen3 + `user_message`; URL `lleopold/chatMulti`; → §5.22 |
 
 ---
 
-_Последнее обновление: 2026-10-03 — RAG verify/autotests [#36](https://github.com/Sintik1/Qa_Asistant/issues/36)._
+_Последнее обновление: 2026-11-25 — Leopold `chatMulti`, модель Qwen3, подставляемые поля промпта сохранены [#57](https://github.com/Sintik1/Qa_Asistant/issues/57)._

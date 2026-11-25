@@ -8,7 +8,7 @@
 
 ## 1. Что такое RAG в этом проекте
 
-**RAG** = поиск похожих фрагментов в Postgres (pgvector) → подмешивание в промпт ИИ.
+**RAG** = поиск похожих фрагментов в Postgres (pgvector). При эмбеддингах Ollama (`nomic-embed-text`) чат берёт страницы по сходству и оставляет все, пока следующий балл не проседает больше чем на 0.02. В ответ попадает текст каждой такой страницы. Таблица Confluence рисуется таблицей, соседние абзацы не склеиваются. При `hash`-эмбеддингах (тесты) чат по-прежнему оставляет фрагмент со словами вопроса и показывает его дословно: близкий hash-вектор часто чужой документ.
 
 | Режим | Когда | Таблица поиска |
 |--------|--------|----------------|
@@ -123,6 +123,24 @@ python tools/debug_section_parse.py /path/to/file.docx --exclude 1,2 --exclude-t
 
 Смотрите `leaf_count`, `section_path`, наличие ли таблицы в `body`.
 
+### 3.5. Пространство Confluence
+
+Страницы одного пространства попадают в те же `document_chunks`, что и загруженные файлы. Индекс принадлежит пользователю, который нажал синхронизацию.
+
+В `.env` сервера (не во фронт):
+
+```bash
+CONFLUENCE_BASE_URL=https://your-site.atlassian.net/wiki
+CONFLUENCE_EMAIL=you@company.com
+CONFLUENCE_API_TOKEN=...
+CONFLUENCE_SPACE_KEY=QA
+CONFLUENCE_MAX_PAGES=25
+```
+
+Для Data Center email оставьте пустым и положите PAT в `CONFLUENCE_API_TOKEN`.
+
+Дальше: перезапустить Flask и на `/chat` нажать «Синхронизировать Confluence», либо `POST /api/rag/confluence/sync`. Повтор той же версии страницы не пересчитывает эмбеддинги. В цитате появляется ссылка на страницу. Вложения страниц пока не забираются.
+
 ---
 
 ## 4. Как добавлять тест-кейсы в RAG (`case_chunks`)
@@ -230,9 +248,11 @@ Id кейсов: ответ generate → `items[].id`, или Table Editor → `
 
 Чем качественнее шаблоны/проиндексированные кейсы и чем больше загруженных ТЗ — тем полезнее контекст.
 
-### 5.2. Chat по требованиям
+### 5.2. Chat по проекту (RAG Q&A)
 
-UI: вкладка **«Чат по требованиям»** → `/chat`.
+UI: вкладка **«Чат по проекту»** → `/chat`.
+
+Сценарий: вопрос → embedding → `match_document_chunks` (и опционально `match_case_chunks`) → ИИ отвечает **только** по найденным фрагментам. Источники видны под ответом.
 
 Или API:
 
@@ -242,11 +262,12 @@ curl -s -X POST "$API/api/chat" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "В какой системе заказ по акции недоступен?",
-    "document_id": "опциональный-uuid-документа"
+    "document_id": "опциональный-uuid-документа",
+    "include_cases": true
   }' | jq
 ```
 
-В ответе: `answer` + `citations` (path раздела, preview, similarity).
+В ответе: `answer` + `citations` (`source_kind`: `requirement` | `case`, path, preview, similarity).
 
 ---
 
@@ -414,7 +435,7 @@ delete from document_chunks where user_id = 'ВАШ_USER_UUID';
 |---------|----------------|
 | Chat: «ничего не найдено» | Был ли upload? Есть ли строки в `document_chunks`? Тот же `user_id`? |
 | Style не влияет на generate | Есть ли `case_chunks`? Не пустой ли `embedding`? |
-| Поиск «глупый» | `EMBEDDING_PROVIDER=hash` или нет модели Ollama |
+| Поиск «глупый» | `EMBEDDING_PROVIDER=hash` или нет модели Ollama. На hash чат оставляет фрагменты со словами вопроса ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)). На `nomic-embed-text` страницу выбирает вектор и модель ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)) |
 | Размеры вектора | `EMBEDDING_DIMS` должен быть **768** (как в миграции) |
 | Правили `content` в Editor | Нужна переиндексация (upload / templates / index-cases) |
 | Путаница с `generation_chunks` | Это debug прогона, не корпус RAG |
@@ -429,6 +450,7 @@ delete from document_chunks where user_id = 'ВАШ_USER_UUID';
 | `POST` | `/api/runs/<id>/generate` | generate (+ RAG enrich); **без** auto case index |
 | `POST` | `/api/rag/templates` | добавить эталоны в `case_chunks` |
 | `POST` | `/api/rag/index-cases` | добавить **проверенные** кейсы в `case_chunks` |
+| `POST` | `/api/rag/confluence/sync` | страницы пространства → `document_chunks` |
 | `POST` | `/api/chat` | Q&A по `document_chunks` |
 | `GET` | `/api/health` | блок `.rag` |
 

@@ -10,6 +10,7 @@ from core.models import (
     CreateRunCommand,
     Document,
     GenerationRun,
+    LibraryItem,
     UpdateTestCaseCommand,
     UserSettings,
 )
@@ -40,3 +41,18 @@ class TestCaseRepository(Protocol):
 class SettingsRepository(Protocol):
     def get_or_create(self, user_id: str) -> UserSettings: ...
     def update(self, user_id: str, patch: dict) -> UserSettings: ...
+
+
+class LibraryRepository(Protocol):
+    def list_for_user(self, user_id: str) -> list[LibraryItem]: ...
+    def get(self, item_id: str, user_id: str) -> LibraryItem | None: ...
+    def create(self, user_id: str, name: str, content: str) -> LibraryItem: ...
+    def update(
+        self,
+        item_id: str,
+        user_id: str,
+        *,
+        name: str | None,
+        content: str | None,
+    ) -> LibraryItem | None: ...
+    def delete(self, item_id: str, user_id: str) -> bool: ...

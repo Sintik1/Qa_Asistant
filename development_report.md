@@ -68,6 +68,27 @@
 56. Pages one-time setup (agent) — **done** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); Pages+Variables; `source-map-js@1.2.2`; CI deploy green → https://sintik1.github.io/Qa_Asistant/; → `cicd_integrations_documentation.md` §10)
 57. OAuth Google via Supabase Auth Providers — **done (awaiting Google Console redirect URI + live smoke)** (см. [#40](https://github.com/Sintik1/Qa_Asistant/issues/40); Dashboard Google Enabled + Redirect URLs; FE `signInWithOAuth`; → `docs/OAUTH_SETUP.md`)
 58. Hybrid B — public FE+API, local Ollama — **done (awaiting OK)** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); CI/CD ДЗ → `cicd_integrations_documentation.md` §10; → `docs/HYBRID_LOCAL_AI.md`)
+59. Hybrid B restart runbook — **done** (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37); → `docs/HYBRID_B_RESTART.md`; CI/CD ДЗ → `cicd_integrations_documentation.md` §10)
+60. Инвентаризация технологий проекта — **done** (см. [#42](https://github.com/Sintik1/Qa_Asistant/issues/42); сводка в чате по манифестам и docs)
+61. RAG-чат по проектным данным (вопрос → pgvector → grounded ответ) — **done (awaiting OK)** (см. [#43](https://github.com/Sintik1/Qa_Asistant/issues/43); Backend → `backend_documentation.md` §5.12 / §6)
+62. Диагностика «Failed to fetch» на `/auth` — **done (awaiting Clash DIRECT)** (см. [#44](https://github.com/Sintik1/Qa_Asistant/issues/44); Backend → `backend_documentation.md` §6)
+63. Auth не падает: причина — **paused Supabase** (NXDOMAIN) + Clash; keepalive + Restore CTA — **done (awaiting Resume в Dashboard)** (см. [#44](https://github.com/Sintik1/Qa_Asistant/issues/44))
+64. Полный QA проекта — **done (awaiting OK)** (см. [#45](https://github.com/Sintik1/Qa_Asistant/issues/45); → `docs/FULL_QA_RUN_2026-11-23.md`; pytest 124 / vitest 92 / build pass; live AI/JWT blocked)
+65. Все UI-тесты — **done (awaiting OK)** (см. [#46](https://github.com/Sintik1/Qa_Asistant/issues/46); Vitest 92; Selenium 11 pass / 1 fail generate / 1 session error; → `docs/UI_TEST_RUN_2026-11-23.md`)
+66. Парсинг DOCX как в TestSites (`TABLE_*`) + нативный Leopold — **done (awaiting OK)** (см. [#47](https://github.com/Sintik1/Qa_Asistant/issues/47); Backend → `backend_documentation.md` §5.13 / §6)
+67. Тесты под `TABLE_*`, нативный Leopold и RAG UI — **done (awaiting OK)** (см. [#48](https://github.com/Sintik1/Qa_Asistant/issues/48); pytest 55 на выборке, Vitest Chat+chat API **9**; → `backend_documentation.md` §5.13)
+68. RAG по пространству Confluence — **синхронизация выполнена** (см. [#49](https://github.com/Sintik1/Qa_Asistant/issues/49); 3 страницы, 5 чанков у `demo.reviewer`; → `docs/RAG_USAGE.md` §3.5)
+69. Переключатель Leopold ↔ локальная Ollama — **включена локальная** (см. [#50](https://github.com/Sintik1/Qa_Asistant/issues/50); `PUT /api/ai/provider`; кнопки в навигации; эмбеддинги остаются hash; → `backend_documentation.md` §5.15)
+70. Чат по словам вопроса, а не по шуму hash-вектора — **сделано** (см. [#51](https://github.com/Sintik1/Qa_Asistant/issues/51); «Домофон» выше акции с роутером; → `backend_documentation.md` §5.16)
+71. Чат показывает текст страницы дословно — **сделано** (см. [#51](https://github.com/Sintik1/Qa_Asistant/issues/51); модель больше не пересказывает найденный фрагмент)
+72. Ответ чата рисуется как Markdown со страницы Confluence — **сделано** (см. [#51](https://github.com/Sintik1/Qa_Asistant/issues/51); нумерованный список «Проект Домофон»)
+73. Поиск страниц делает модель эмбеддингов, ответ пишет ИИ — **сделано** (см. [#52](https://github.com/Sintik1/Qa_Asistant/issues/52); `nomic-embed-text`, температура ответа 0; если модель только назвала страницу, в чат идёт её текст)
+74. Таблица Confluence в чате и один источник — **сделано** (см. [#53](https://github.com/Sintik1/Qa_Asistant/issues/53); под ответом больше не перечисляются все страницы)
+75. Абзацы страницы Confluence в чате не склеиваются — **сделано** (см. [#53](https://github.com/Sintik1/Qa_Asistant/issues/53); страница «Лицей»)
+76. Чат показывает все страницы одного уровня сходства — **сделано** (см. [#54](https://github.com/Sintik1/Qa_Asistant/issues/54); вопрос про Домофон и заявку на ТО)
+77. Библиотека промптов и шаблонов — **done (awaiting OK)** (см. [#55](https://github.com/Sintik1/Qa_Asistant/issues/55); вариант A; Backend → `backend_documentation.md` §5.20 / §6)
+78. Маркер `*Тут текст требований*` — **done (awaiting OK)** (см. [#56](https://github.com/Sintik1/Qa_Asistant/issues/56); длинный файл требований больше не отклоняется лимитом шаблона 20 000; Backend → `backend_documentation.md` §5.21 / §6)
+79. Leopold `chatMulti` — **done (awaiting OK)** (см. [#57](https://github.com/Sintik1/Qa_Asistant/issues/57); вариант B: Qwen3 + `user_message`, текст промпта и `max_new_tokens` 15000 сохранены; Backend → `backend_documentation.md` §5.22 / §6)
 
 Правило процесса: не переходить к следующему шагу без согласования пользователя; при неоднозначности — уточнять, не додумывать. На **каждой** стадии обязательно: GitHub Issue + обновление этого отчёта (`.cursorrules` §10–11 + `.cursor/rules/process-tracking.mdc` with `alwaysApply: true`). На **шагах backend ДЗ** дополнительно — `backend_documentation.md` (§12); остальные правила разработки (архитектура, тесты, API, секреты, scope ТЗ/Figma) **не ослабляются**.
 
@@ -86,6 +107,7 @@
 | Проверка 3 раза | понимание → выполнение → verify (build/URL/git) |
 | Ограничение scope | Не добавлять экраны/библиотеки вне ТЗ и макета |
 | Prompt template (Role/Task/Context/Format) | `prompt_templates.md` §1 → Stage 6; §5 → Stage 10 tests |
+| Сверка контракта до кода | Leopold `chatMulti`: пример OpenAPI не копировать; подстановки оставить ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)) |
 | Mock-first без бэкенда | `mockGenerateTestCases` + токен в localStorage |
 | Browser CDP bug hunt | `cursor-ide-browser` + `browser_cdp` (fallback: chrome-devtools MCP недоступен) |
 | Page Object + Fluent API + parametrize | Selenium E2E в `tests/`; Vitest unit в `qa-assistant/src/utils/*.test.ts` |
@@ -119,10 +141,170 @@
 | Scenario prompts ×3 + redact before AI | CI/CD ДЗ шаг 7: logging package A ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Integrations QA + apply AI perf fixes | CI/CD ДЗ шаг 8 ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Submission filenames + format checklist | CI/CD ДЗ шаг 9: `integration_documentation.md` + `security_audit.md` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
+| Manifest-first stack inventory | Чтение `package.json` / `requirements*.txt` / Docker / Actions / миграций, без догадок по README ([#42](https://github.com/Sintik1/Qa_Asistant/issues/42)) |
+| RAG retrieve-then-generate | Chat: embedding вопроса → match в БД → LLM только по хитам ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43)) |
+| Runtime provider swap | `PUT /api/ai/provider` пересобирает клиент и пишет `AI_PROVIDER`, эмбеддинги не трогает ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50)) |
+| Лексический отбор поверх hash | Чат оставляет фрагменты со словами вопроса, заголовок считается ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)) |
+| DNS/TLS evidence before blaming Auth form | `scutil --dns` + resolve + curl TLS vs `VITE_SUPABASE_*` ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)) |
+| CI-equivalent + live matrix | pytest/vitest/ruff/build, then Flask probes with known env gaps ([#45](https://github.com/Sintik1/Qa_Asistant/issues/45)) |
+| Vitest UI + Selenium PO against live Vite | All frontend tests + `pytest -m "ui or security"` on :5173 ([#46](https://github.com/Sintik1/Qa_Asistant/issues/46)) |
+| Порт контракта, не второго приложения | DOCX-маркеры и payload Leopold из TestSites внутри текущего upload/generate; Ollama не трогаем ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47)) |
+| Тесты на контракт, не на живой токен | Pytest мокает HTTP Leopold и hash-RAG; UI чата — Vitest с моком `chatRequirements` ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)) |
+| Эмбеддинг выбирает страницы, модель пишет ответ | `nomic-embed-text` ранжирует пространство; чат с температурой 0 просит процитировать выбранную страницу. Пустой пересказ заменяется её текстом ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)) |
+| Страница как в Confluence | HTML-таблица → Markdown-таблица, чат рисует `<table>`. Модель выбирает страницу, под ответом остаётся только она ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)) |
+| Gate до CRUD библиотеки | Промпты и шаблоны: четыре способа хранения, реализация после выбора. Пустой выбор не меняет generate ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)) |
+| Подстановка маркера промпта | `*Тут текст требований*` заменяется текстом файла. Лимит 20 000 действует на строку библиотеки, не на файл требований ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
 
 ---
 
 ## 3. Примеры промптов и результатов
+
+### Промпт: файл требований не встал вместо маркера
+
+**Запрос:** при добавлении файла требований текст не разобрался и не заменил `*Тут текст требований*`. Повторная проверка: не добавился.
+
+**Результат ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)):** `POST /api/library/extract-text` ответил 422. Текст документа длиннее 20 000 символов, а этот потолок стоял на чтении любого файла. Чтение файла требований этот потолок больше не применяет.
+
+### Промпт: вопрос про Домофон и заявку на ТО отвечает только Домофоном
+
+**Запрос:** ответ некорректный, нужно находить все сходства, без хардкода, система должна работать сама.
+
+**Результат ([#54](https://github.com/Sintik1/Qa_Asistant/issues/54)):** поиск уже ставил «Проект Домофон» (0.771) и «Как делается заявка на ТО» (0.770) рядом. Код оставлял одну страницу. Теперь в ответ входят все страницы, пока следующий балл не ниже предыдущего больше чем на 0.02. Названия страниц в этом правиле не перечислены.
+
+### Промпт: страница «Лицей» снова не как в Confluence
+
+**Запрос:** отображение сломалось, ответ не как на странице.
+
+**Результат ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)):** чат склеивал соседние абзацы в один. Теперь строка страницы остаётся отдельным абзацем, пустой абзац даёт отступ, таблица на месте.
+
+### Промпт: таблица как в Confluence и без лишних требований
+
+**Запрос:** в браузере ответ не таблицей, а под ним перечислены требования со всех страниц.
+
+**Результат ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)):**
+- Таблица Confluence сохраняется строками `| Система | ip и порт | какие сервисы |`, сервисы в ячейке через перевод строки
+- Чат рисует эту разметку таблицей
+- Модель по-прежнему выбирает страницу, но в источники попадает только она, без текста остальных страниц
+
+### Промпт: страницу находит ИИ, а не правила в коде
+
+**Запрос:** не хардкодить выбор страницы; модель сама находит подходящие страницы пространства и отвечает.
+
+**Результат ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)):**
+- Индекс пересобран эмбеддингами `nomic-embed-text` (5 страниц). Слова вопроса в коде страницу больше не выбирают
+- «куда активатор ходит при подключении SDP»: ближайшая страница «Проект активатора схема связанностей» (0.721). Ответ — строки таблицы `активатор->SDP 112.000.000:8080`, CRM и ASRZ
+- При температуре по умолчанию `qwen2.5:1.5b` выдумывала шаги про Домофон. Чат вызывает модель с температурой 0
+- «Как подключить услугу Домофон»: модель назвала страницу и не перенесла список. В ответ подставлен текст этой страницы: «1. Создать заказ» … «6. Проверить подключние в системе»
+
+### Промпт: ответ чата не по странице «Проект Домофон»
+
+**Запрос:** вопрос «Как подключить услугу Домофон» ответился не по странице Confluence, хотя она в индексе.
+
+**Результат ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)):**
+- Хеш-эмбеддинги поставили акцию с роутером (сходство 0.064) выше «Проект Домофон» (0.015). Модель `qwen2.5:1.5b` ответила по верхним чужим фрагментам
+- Чат теперь оставляет фрагменты, где есть слова вопроса (заголовок тоже). Кейсы без этих слов не попадают в промпт, если требование уже совпало
+- Pytest RAG **27 passed**. Переиндексация не нужна
+- Следом по тому же запросу: ответ чата — это текст найденного фрагмента, без вызова модели. Вопрос «Как подключить услугу Домофон» возвращает «Инструкция подключения…» как в индексе страницы
+
+### Промпт: переключатель с Leopold на локалку
+
+**Запрос:** сделать переключатель Leopold ↔ локальная модель и сразу включить локальную.
+
+**Результат ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50)):**
+- `GET`/`PUT /api/ai/provider`: `ollama` или `leopold`. Процесс пересобирает клиент и пишет `AI_PROVIDER` в `.env`
+- В шапке кнопки «Локально» и «Leopold»
+- `QA_ASISTANT_MODEL=qwen2.5:1.5b` больше не подставляется в Leopold: у Leopold модель с `/` в имени, иначе `Qwen/Qwen2.5-72B-Instruct`
+- Эмбеддинги RAG не менялись (hash), индекс Confluence остаётся совместимым
+- Pytest `tests/test_ai_client.py` **11 passed**; Vitest переключателя **1 passed**
+- Живой стенд: `AI_PROVIDER=ollama`, Flask перезапущен на `:5001`
+
+### Промпт: попробовать, что нужно для RAG по Confluence
+
+**Запрос:** после обсуждения схемы — сделать первый рабочий контур синхронизации пространства.
+
+**Результат ([#49](https://github.com/Sintik1/Qa_Asistant/issues/49)):**
+- `integrations/confluence_client.py`: Cloud basic auth или bearer PAT, HTML → текст, лимит страниц
+- `POST /api/rag/confluence/sync` создаёт документ `confluence/{space}/{page}@v{version}` и индексирует его текущим RAG; та же версия пропускается
+- Чат: кнопка синхронизации и ссылка «Открыть в Confluence» в цитате
+- Pytest `tests/test_confluence_sync.py` и Vitest кнопки — без живого токена
+- Чтобы реально обойти пространство, в `.env` нужны `CONFLUENCE_BASE_URL`, `CONFLUENCE_API_TOKEN`, `CONFLUENCE_SPACE_KEY` (для Cloud ещё `CONFLUENCE_EMAIL`)
+
+### Промпт: перепиши тесты под парсинг/Leopold и покрой RAG, включая UI
+
+**Запрос:** переписать тесты с учётом парсинга `TABLE_*` и Leopold, написать тесты RAG и не забыть UI.
+
+**Результат ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)):**
+- Pytest: секция DOCX держит `TABLE_1_*` внутри листа; upload отдаёт маркеры; generate передаёт их в промпт; `LeopoldNativeClient` читает CSV из поля `response`; RAG индексирует таблицу (`has_table`) и чат возвращает её в цитате
+- Vitest `ChatPage`: фильтр документа, выключение кейсов, цитата «Кейс», RAG выключен/неизвестен, пустой индекс, короткая фраза не уходит
+- Прогон: pytest выборка **55 passed**; Vitest chat **9 passed**
+- Живой Leopold и Selenium против Vite в этом прогоне не запускались
+
+### Промпт: парсинг как в TestSites и интеграция с Leopold
+
+**Запрос:** посмотреть `/Users/vlad/Downloads/TestSites — копия` и настроить парсинг документов и вызов Leopold как в том проекте, не ломая текущий бэкенд.
+
+**Результат ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47)):**
+- DOCX-таблицы пишутся маркерами `TABLE_N_START` / `TABLE_N_ROW_*` / `TABLE_BLOCK_*`, заголовки Word остаются `##` для section parser
+- `AI_PROVIDER=leopold` ходит в нативный chat API (`uuid` + `chat.system_prompt` + `chat.contents`), ответ читается из поля `response`
+- Токен и URL: `LEOPOLD_TOKEN` / `LEOPOLD_API_URL` или прежние `QA_ASISTANT_*`
+- Ollama по-прежнему OpenAI-совместимый клиент
+- Pytest: `test_doc_reader` + `test_ai_client` + section/upload/generate — **35 passed**
+
+### Промпт: проведи все ui тесты
+
+**Запрос:** прогнать все UI-тесты.
+
+**Результат ([#46](https://github.com/Sintik1/Qa_Asistant/issues/46)):**
+- Vitest (все `src/**/*.test.*`) **92 passed** / 20 files
+- Selenium вне sandbox: **11 passed**, 1 fail (`test_home_generate_success`, нет CSV за 120s), 1 error (`invalid session` после падения Chrome)
+- Повтор в sandbox Cursor: Chrome/Selenium Manager не стартуют
+- Отчёт: `docs/UI_TEST_RUN_2026-11-23.md`
+
+### Промпт: проверяй и полностью тестируй весь проект
+
+**Запрос:** полный тест всего проекта.
+
+**Результат ([#45](https://github.com/Sintik1/Qa_Asistant/issues/45)):** `docs/FULL_QA_RUN_2026-11-23.md`
+- Hermetic: pytest **124**, vitest **92**, ruff, Vite build
+- Live: health/oauth/validation PASS; AI 502 (Ollama down); PostgREST 401 без JWT; Selenium без webdriver_manager
+- pip-audit: 4 CVE (dotenv/anyio/pytest)
+
+### Промпт: настрой авторизацию так, чтобы не падала
+
+**Запрос:** настрой всё так, чтобы авторизация не падала.
+
+**Результат ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)):**
+- MCP: `Project is paused`; DoH: project host **NXDOMAIN**
+- Restore только из Dashboard / Management PAT (агент в Dashboard не залогинен)
+- `scripts/supabase_keepalive.py` + `.github/workflows/supabase-keepalive.yml`
+- UI `/auth`: CTA Restore при `Failed to fetch`
+
+### Промпт: почему не работает авторизация
+
+**Запрос:** посмотри, почему не работает авторизация.
+
+**Результат ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)):**
+- Не логин/пароль и не пустые `VITE_SUPABASE_*`: ключи в `.env.local` на месте
+- DNS Mac: Clash TUN `198.18.0.2`; `*.supabase.co` → `240.0.0.162`; TLS `SSL_ERROR_SYSCALL` → UI `Failed to fetch`
+- UX: `messageForAuthError` подсказывает DIRECT для `supabase.co`
+
+### Промпт: RAG-чат по проектной информации
+
+**Запрос:** отдельная страница чата с ИИ; вопрос → поиск в БД → наиболее подходящий ответ (RAG).
+
+**Результат ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43)):**
+- `RagService.chat` ищет в `document_chunks` и `case_chunks`; цитаты `source_kind`
+- UI `/chat`: тред, выбор документа, статус RAG, источники
+- Pytest unit (кейсы / skip cases) + Vitest ChatPage/client
+- Backend ДЗ → `backend_documentation.md` §5.12 / §6
+
+### Промпт: инвентаризация технологий
+
+**Запрос:** проанализируй проект и напиши, какие технологии использовались для его создания.
+
+**Результат ([#42](https://github.com/Sintik1/Qa_Asistant/issues/42)):**
+- Сводка по слоям: React 19 / Vite 8 / TS / Tailwind 4; Flask 3 / Python 3.9–3.11; Supabase (Postgres, Auth, Storage, RLS, pgvector); Ollama/Qwen + Leopold; GitHub Actions + Pages; OAuth; Метрика; UptimeRobot
+- Источники: `package.json`, `requirements.txt`, `docker-compose.yml`, `.github/workflows/ci.yml`, `supabase/migrations/`
 
 ### Промпт: CI/CD ДЗ шаг 9 — оформление
 
@@ -187,6 +369,12 @@
 - FE: кнопки + `/auth/callback`; BE: `/api/auth/me`, `/api/auth/oauth/*`
 - `scripts/save_oauth_secrets.py` + `docs/OAUTH_SETUP.md`
 - pytest oauth + vitest AuthPage; full suite 107 / 81
+
+### Промпт: подробная инструкция после выключения Mac
+
+**Запрос:** сделать подробную инструкцию, как поднять всё заново после reboot.
+
+**Результат (tracked [#37](https://github.com/Sintik1/Qa_Asistant/issues/37)):** `docs/HYBRID_B_RESTART.md` (схема, 3 терминала, Pages Variable, проверки, troubleshooting, шпаргалка); ссылка из `docs/HYBRID_LOCAL_AI.md`.
 
 ### Промпт: Hybrid B — выложить FE/API, AI на компе
 
@@ -612,6 +800,31 @@
 
 ---
 
+### Промпт: библиотека промптов и шаблонов (варианты до кода)
+
+**Запрос:** Senior Python Developer; на странице написания тест-кейсов нельзя добавить промпт и шаблон; сначала варианты (таблицы, локальное хранение или иное); три проверки, что ответ не ломает генерацию.
+
+**Результат:**
+- Выбран вариант A. Кнопки на http://127.0.0.1:5173/ сохраняют промпт и шаблон в таблицы пользователя.
+- «Использовать» у промпта заполняет поле. У шаблона текст уходит в generate только для этого прогона и дописывается после примеров RAG.
+- Пустой выбор не добавляет `template_text`. Библиотека не пишется в `case_chunks`.
+- Issue [#55](https://github.com/Sintik1/Qa_Asistant/issues/55).
+
+---
+
+### Промпт: обновить отправку в Leopold на chatMulti
+
+**Запрос:** сменить тело запроса на `api/1.0/lleopold/chatMulti`, но оставить параметры, которые приложение уже подставляет. Сначала варианты, три проверки, код не ломать.
+
+**Результат ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)):**
+- Живой клиент — `integrations/leopold_native.py`. Ollama шлёт другой JSON и не затрагивается
+- Подставляются `model`, `system_prompt`, текст в `contents[0].text` и `chat_history[0].content`, `temperature` (сейчас 0.2)
+- Пример API содержит заглушки (`"string"`, `fileSize` = max int, промпт «Сайга», `user_message: "Hi"`, `max_new_tokens: 1536`). Их нельзя копировать
+- Выбран вариант B: `user_message` и пустые файловые поля, лимит токенов 15000, модель по умолчанию `Qwen/Qwen3-Next-80B-A3B-Instruct-FP8`
+- `LEOPOLD_API_URL` на этом стенде: `https://ai.rt.ru/api/1.0/lleopold/chatMulti`
+
+---
+
 ## 4. Проблемы и решения
 
 | Проблема | Решение |
@@ -698,11 +911,53 @@
 | Ollama SIGTRAP в sandbox / Metal discover | Запуск вне sandbox + `OLLAMA_LLM_LIBRARY=cpu`, без HTTP_PROXY ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | Pages deploy blocked: ruff format `oauth_routes.py` | `ruff format`; deploy `if` + `workflow_dispatch` ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)) |
 | MCP Issue Submit UI не виден | Подтверждение в чате + комментарий в [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) |
+| `gh` не в PATH агента | Issue [#42](https://github.com/Sintik1/Qa_Asistant/issues/42) через `~/.local/bin/gh issue create` |
+| MCP `issue_write` снова без Submit | [#43](https://github.com/Sintik1/Qa_Asistant/issues/43) через `~/.local/bin/gh` после «подтверждаю» |
+| Chat искал только требования, пустой индекс кейсов давал «не найдено» | Retrieve docs + cases; `include_cases` ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43)) |
+| `/auth` → Failed to fetch | Clash fake-IP `240.x` на `supabase.co`; DIRECT `DOMAIN-SUFFIX,supabase.co` ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)) |
+| Auth всё ещё мёртвый после Clash-диагноза | Free-проект **paused** → DNS снят; нужен Resume + keepalive ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)) |
+| live_api_full_qa падает на ReadTimeout после AI 502 | Ollama down; следующий POST documents 30s → 503 PostgREST ([#45](https://github.com/Sintik1/Qa_Asistant/issues/45)) |
+| Selenium ERROR webdriver_manager | Не в venv; CI эти тесты и так exclude ([#45](https://github.com/Sintik1/Qa_Asistant/issues/45)) |
+| Selenium generate 120s timeout | Нет кнопки «Скачать CSV»; Chrome потом InvalidSessionId ([#46](https://github.com/Sintik1/Qa_Asistant/issues/46)) |
+| Selenium в sandbox Cursor | Chrome exited / Selenium Manager без сети к chrome-for-testing ([#46](https://github.com/Sintik1/Qa_Asistant/issues/46)) |
+| Leopold в этом репо слал OpenAI `/v1/chat/completions`, TestSites — другой JSON | Отдельный `LeopoldNativeClient`; Ollama не переведён на этот payload ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47)) |
+| Pipe-таблицы DOCX модель режет по строкам | Extract как в TestSites: один `TABLE_N_*` блок на таблицу ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47)) |
+| `has_table` в RAG видел только `\|` | Индекс считает таблицей и маркеры `TABLE_` ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)) |
+| `npm` не в PATH песочницы | Vitest через `/Users/vlad/.local/node/bin` ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)) |
+| Leopold и Ollama делят `QA_ASISTANT_MODEL` | Тег `qwen2.5:1.5b` без `/` не подставляется в Leopold ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50)) |
+| Вопрос про Домофон отвечает про роутер | Hash-вектор не про смысл; лексический отбор фрагментов ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)) |
+| Вопрос про активатор и SDP отвечает страницей Домофон | Сравнение букв в коде путало «активна» и «активатор». Поиск переведён на эмбеддинги, ответ пишет модель ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)) |
+| Модель с температурой по умолчанию выдумывает шаги | Чат отвечает с температурой 0. Если цитаты нет, показывается страница, которую модель назвала ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)) |
+| Ответ про активатор не таблица, снизу требования всех страниц | Таблица Confluence хранится строками Markdown и рисуется таблицей. Под ответом остаётся только выбранная страница ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)) |
+| Страница «Лицей» в чате одним абзацем | Чат склеивал соседние строки. Теперь каждая строка страницы — отдельный абзац, пустой абзац Confluence даёт отступ ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)) |
+| Вопрос про Домофон и заявку на ТО отвечает только Домофоном | Код оставлял одну страницу. Теперь в ответ входят все страницы, пока сходство не проседает больше чем на 0.02 ([#54](https://github.com/Sintik1/Qa_Asistant/issues/54)) |
+| «Добавить промт / шаблон» недоступны | Карточки без обработчиков. Хранение не выбрано: общий JSON смешает пользователей, `case_chunks` изменит каждую генерацию ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)) |
+| Файл требований не заменяет `*Тут текст требований*` | Сначала файл не читался. После правки `POST /api/library/extract-text` отвечал 422, если текст длиннее 20 000 — лимит шаблона библиотеки ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
+| Генерация показывает «не удалось подключиться» | Файл уже прочитан. `POST /api/runs/…/generate` ждал Ollama `qwen2.5:1.5b` 491 с и вернул `API_UNAVAILABLE`: лимит ответа 300 с. Ollama при этом запущена ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)) |
+| Пример `chatMulti` затирает промпт и режет CSV | Не копировать заглушки. `user_message` = наш текст, `max_new_tokens` остаётся 15000, модель из настроек ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)) |
 
 ---
 
 ## 5. Выводы и рекомендации
 
+0y. Leopold ходит в `chatMulti` моделью `Qwen/Qwen3-Next-80B-A3B-Instruct-FP8`. Системный промпт, текст требований и лимит 15000 токенов остаются в теле. Заглушки примера (`Сайга`, `Hi`, `string`, 1536, огромный `fileSize`) не отправляются. Промпт из поля UI попадает в user-часть запроса как `Доп. промпт`, не в `system_prompt` ([#57](https://github.com/Sintik1/Qa_Asistant/issues/57)).
+0x. Маркер `*Тут текст требований*` заменяется разобранным текстом файла, даже если документ длиннее 20 000 символов. Этот лимит остаётся только у сохранённого промпта и шаблона. Промпт без маркера не меняется ([#56](https://github.com/Sintik1/Qa_Asistant/issues/56)).
+0w. Библиотека промптов и шаблонов — отдельные таблицы на пользователя. Выбранный текст добавляется к прогону. Пока ничего не выбрано, generate остаётся прежним. В `case_chunks` библиотеку не класть ([#55](https://github.com/Sintik1/Qa_Asistant/issues/55)).
+0t. Какую страницу показать, решает вектор ближайших страниц и модель ответа. Список слов в коде для этого не используется. Ответ чата идёт с температурой 0; пустое название страницы заменяется её текстом ([#52](https://github.com/Sintik1/Qa_Asistant/issues/52)).
+0u. Таблица страницы Confluence рисуется таблицей. Соседние абзацы страницы остаются отдельными строками ([#53](https://github.com/Sintik1/Qa_Asistant/issues/53)).
+0v. В ответ попадают все страницы одной полосы сходства. Названия страниц для этого в коде не перечислены ([#54](https://github.com/Sintik1/Qa_Asistant/issues/54)).
+0s. Страница Confluence сохраняется как Markdown (заголовки, нумерованные списки, выделение) и так же рисуется в чате ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)).
+0r. Ответ чата — дословный текст найденного фрагмента. Локальная модель его не пересказывает ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)).
+0q. При `hash`-эмбеддингах чат сначала оставляет фрагменты со словами вопроса. Иначе страница Confluence проигрывает случайному вектору ([#51](https://github.com/Sintik1/Qa_Asistant/issues/51)).
+0p. Чат и генерация переключаются кнопками «Локально» / «Leopold» без смены эмбеддингов. Сейчас стенд на локальной Ollama `qwen2.5:1.5b` ([#50](https://github.com/Sintik1/Qa_Asistant/issues/50)).
+0o. Confluence — ещё один источник тех же `document_chunks`, не второй поиск. Живой обход ждёт токен в `.env`; вложения и общий командный индекс не делались ([#49](https://github.com/Sintik1/Qa_Asistant/issues/49)).
+0n. Автотесты нового парсинга и RAG не ходят в сеть: Leopold и чат мокаются; UI RAG — Vitest `ChatPage`, не только бэкенд ([#48](https://github.com/Sintik1/Qa_Asistant/issues/48)).
+0m. Парсинг и Leopold из TestSites встраиваются в текущий upload/generate: маркеры таблиц + нативный payload. Весь `app.py` того проекта (обучение, assessment) не переносится. OLE `.doc` по-прежнему `CORRUPT_FILE` ([#47](https://github.com/Sintik1/Qa_Asistant/issues/47)).
+0l. UI: Vitest полностью зелёный (92); Selenium happy-path generate зависит от живого JWT+AI, не от Page Object ([#46](https://github.com/Sintik1/Qa_Asistant/issues/46)).
+0k. Полный QA: hermetic CI-слой зелёный; live generate/chat на этом Mac требуют Ollama + user JWT, не bypass UUID ([#45](https://github.com/Sintik1/Qa_Asistant/issues/45)).
+0j. Free Supabase pause снимает DNS: без Resume вход всегда `Failed to fetch`; keepalive 2×/нед. ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)).
+0i. Локальный логин Supabase ломается на Clash TUN fake-IP так же, как туннели: сначала DNS/TLS, не форма пароля ([#44](https://github.com/Sintik1/Qa_Asistant/issues/44)).
+0h. RAG-чат: вопрос всегда сначала ищет чанки в БД, модель не отвечает «из головы» без retrieve; UI `/chat` показывает источники ([#43](https://github.com/Sintik1/Qa_Asistant/issues/43)).
 0g. Hybrid B: при Clash fake-IP не полагаться на Cloudflare quick tunnel — Serveo/Pinggy; AI-туннель не нужен, если Flask на том же Mac ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0. CI/CD ДЗ: отдельный артефакт `cicd_integrations_documentation.md` + rule; решения G1–G9 до кода; OAuth предпочтительно через Supabase Providers; платежи — optional gate ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
 0a. Аналитика: Яндекс.Метрика через тонкий wrapper + SPA `hit`; цели как JS events; Webvisor off по умолчанию ([#41](https://github.com/Sintik1/Qa_Asistant/issues/41)).
@@ -748,6 +1003,7 @@
 35. Feedback: compose UI-only явно; демо-login + Table Editor checklist; `AUTH_DEV_BYPASS` hard-disable на PaaS; деплой/скринкаст — опция ([#35](https://github.com/Sintik1/Qa_Asistant/issues/35)).
 36. RAG: pytest user-scenarios + `live_rag_smoke.py` (memory и Supabase JWT); для cloud live нужен JWT или `SUPABASE_SERVICE_ROLE_KEY`, не только bypass ([#36](https://github.com/Sintik1/Qa_Asistant/issues/36)).
 37. CI/CD ДЗ: фиксировать в `cicd_integrations_documentation.md` + Issues; MCP Issue без Submit → `~/.local/bin/gh`; новые MCP только после OK ([#37](https://github.com/Sintik1/Qa_Asistant/issues/37)).
+38. Стек описывать по манифестам и миграциям, не только по README: FE (Vite/React/TS/Tailwind), BE (Flask), BaaS (Supabase+pgvector), AI (Ollama/Leopold), CI (Actions+Pages) ([#42](https://github.com/Sintik1/Qa_Asistant/issues/42)).
 
 ---
 
@@ -809,6 +1065,24 @@
 | Pages one-time setup + audit unblock | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done: Pages+Variables; CI [run](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green; site live; → `cicd_integrations_documentation.md` §10 |
 | OAuth Google → Supabase Provider | [#40](https://github.com/Sintik1/Qa_Asistant/issues/40) | done (awaiting Console URI + smoke): Google Enabled; Redirect URLs×3; FE signInWithOAuth; → `docs/OAUTH_SETUP.md` §1 |
 | Hybrid B: public FE+API, local AI | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done (awaiting OK): Serveo→Flask + Ollama local; `VITE_API_BASE_URL`; → `docs/HYBRID_LOCAL_AI.md` + `cicd_integrations_documentation.md` §10 |
+| Hybrid B restart runbook | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | done: пошаговый подъём после reboot → [`docs/HYBRID_B_RESTART.md`](docs/HYBRID_B_RESTART.md) |
+| Инвентаризация технологий проекта | [#42](https://github.com/Sintik1/Qa_Asistant/issues/42) | done: сводка в чате по манифестам и docs |
+| RAG project chat (retrieve → answer) | [#43](https://github.com/Sintik1/Qa_Asistant/issues/43) | done (awaiting OK): docs+cases retrieve; `/chat`; → `backend_documentation.md` §5.12 |
+| Auth Failed to fetch (Clash DNS) | [#44](https://github.com/Sintik1/Qa_Asistant/issues/44) | done (awaiting DIRECT): supabase.co → 240.x; hint in UI; → `docs/OAUTH_SETUP.md` §3.1 |
+| Unpause + keepalive so Auth stays up | [#44](https://github.com/Sintik1/Qa_Asistant/issues/44) | done (awaiting Dashboard Resume): paused NXDOMAIN; workflow + script |
+| Full project QA run | [#45](https://github.com/Sintik1/Qa_Asistant/issues/45) | done (awaiting OK): pytest 124 / vitest 92; → `docs/FULL_QA_RUN_2026-11-23.md` |
+| All UI tests (Vitest + Selenium) | [#46](https://github.com/Sintik1/Qa_Asistant/issues/46) | done (awaiting OK): vitest 92; selenium 11/13; → `docs/UI_TEST_RUN_2026-11-23.md` |
+| Парсинг TestSites + нативный Leopold | [#47](https://github.com/Sintik1/Qa_Asistant/issues/47) | done (awaiting OK): `TABLE_*` + `LeopoldNativeClient`; pytest 35; → `backend_documentation.md` §5.13 |
+| Тесты TABLE/Leopold + RAG UI | [#48](https://github.com/Sintik1/Qa_Asistant/issues/48) | done (awaiting OK): pytest 55, Vitest chat 9; `has_table` для `TABLE_` |
+| RAG по пространству Confluence | [#49](https://github.com/Sintik1/Qa_Asistant/issues/49) | done (awaiting token): sync в `document_chunks`; кнопка в `/chat`; → `docs/RAG_USAGE.md` §3.5 |
+| Переключатель Leopold ↔ Ollama | [#50](https://github.com/Sintik1/Qa_Asistant/issues/50) | done (awaiting OK): `PUT /api/ai/provider`; стенд на `ollama`; → `backend_documentation.md` §5.15 |
+| Чат: страница по словам вопроса | [#51](https://github.com/Sintik1/Qa_Asistant/issues/51) | done (awaiting OK): дословный Markdown страницы в чате; → `backend_documentation.md` §5.16 |
+| ИИ выбирает страницы пространства | [#52](https://github.com/Sintik1/Qa_Asistant/issues/52) | done (awaiting OK): `nomic-embed-text`, температура 0, цитата или текст названной страницы; живой SDP → активатор, Домофон → инструкция; → `backend_documentation.md` §5.17 |
+| Таблица Confluence в чате | [#53](https://github.com/Sintik1/Qa_Asistant/issues/53) | done (awaiting OK): markdown-таблица и один источник под ответом; → `backend_documentation.md` §5.18 |
+| Все страницы одного сходства | [#54](https://github.com/Sintik1/Qa_Asistant/issues/54) | done (awaiting OK): полоса 0.02, Домофон и заявка на ТО вместе; → `backend_documentation.md` §5.19 |
+| Библиотека промптов и шаблонов | [#55](https://github.com/Sintik1/Qa_Asistant/issues/55) | done (awaiting OK): вариант A, таблицы `user_prompts` и `scenario_templates`; → `backend_documentation.md` §5.20 |
+| Маркер требований в промпте | [#56](https://github.com/Sintik1/Qa_Asistant/issues/56) | done (awaiting OK): длинный файл читается; generate 502 — таймаут Ollama 300 с, не обрыв файла; → `backend_documentation.md` §5.21 |
+| Leopold chatMulti | [#57](https://github.com/Sintik1/Qa_Asistant/issues/57) | done (awaiting OK): вариант B, Qwen3, `user_message`; → `backend_documentation.md` §5.22 |
 
 ---
 

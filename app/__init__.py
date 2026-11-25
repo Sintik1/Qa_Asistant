@@ -12,6 +12,7 @@ from flask_cors import CORS
 
 from app.auth import verify_supabase_access_token
 from core.errors import AppError, ForbiddenError, UnauthorizedError
+from core.library_service import LibraryService
 from core.messages import ERROR_MESSAGES
 from core.rag_service import RagService
 from core.services import (
@@ -22,6 +23,7 @@ from core.services import (
     TestCaseService,
 )
 from infrastructure.document_storage import build_document_storage
+from infrastructure.library_store import MemoryLibraryRepository, SupabaseLibraryRepository
 from infrastructure.logging_setup import configure_logging, get_logger
 from infrastructure.memory_store import (
     MemoryDocumentRepository,
@@ -107,33 +109,30 @@ def _error_body(code: str, status_code: int, message: str | None = None) -> dict
     return body
 
 
+def _memory_repositories() -> tuple[object, object, object, object, object, object, object, object]:
+    return (
+        MemoryDocumentRepository(),
+        MemoryRunRepository(),
+        MemoryTestCaseRepository(),
+        MemorySettingsRepository(),
+        MemoryDocumentChunkRepository(),
+        MemoryCaseChunkRepository(),
+        MemoryLibraryRepository(),
+        MemoryLibraryRepository(),
+    )
+
+
 def _build_repositories(
     testing: bool,
-) -> tuple[object, object, object, object, object | None, object | None, str]:
-    """Return docs/runs/cases/settings/doc_chunks/case_chunks + persist mode."""
+) -> tuple[object, object, object, object, object | None, object | None, object, object, str]:
+    """Return docs/runs/cases/settings/doc_chunks/case_chunks/prompts/templates + persist mode."""
     backend = (os.getenv("PERSIST_BACKEND") or "auto").strip().lower()
     if testing or backend == "memory":
-        return (
-            MemoryDocumentRepository(),
-            MemoryRunRepository(),
-            MemoryTestCaseRepository(),
-            MemorySettingsRepository(),
-            MemoryDocumentChunkRepository(),
-            MemoryCaseChunkRepository(),
-            "memory",
-        )
+        return (*_memory_repositories(), "memory")
 
     config = SupabaseRestConfig.from_env()
     if config is None or backend not in {"supabase", "auto"}:
-        return (
-            MemoryDocumentRepository(),
-            MemoryRunRepository(),
-            MemoryTestCaseRepository(),
-            MemorySettingsRepository(),
-            MemoryDocumentChunkRepository(),
-            MemoryCaseChunkRepository(),
-            "memory",
-        )
+        return (*_memory_repositories(), "memory")
 
     client = SupabaseRestClient(config)
     return (
@@ -143,6 +142,8 @@ def _build_repositories(
         SupabaseSettingsRepository(client),
         SupabaseDocumentChunkRepository(client),
         SupabaseCaseChunkRepository(client),
+        SupabaseLibraryRepository(client, "user_prompts"),
+        SupabaseLibraryRepository(client, "scenario_templates"),
         "supabase",
     )
 
@@ -187,6 +188,8 @@ def create_app(testing: bool = False) -> Flask:
         settings_repo,
         doc_chunks_repo,
         case_chunks_repo,
+        prompt_repo,
+        template_repo,
         persist_mode,
     ) = _build_repositories(testing)
     doc_storage = build_document_storage(testing=testing)
@@ -215,6 +218,11 @@ def create_app(testing: bool = False) -> Flask:
     app.extensions["run_service"] = RunService(runs_repo, docs_repo)
     app.extensions["testcase_service"] = TestCaseService(cases_repo, runs_repo, rag_service)
     app.extensions["settings_service"] = SettingsService(settings_repo)
+    app.extensions["prompt_library_service"] = LibraryService(prompt_repo, kind_label="Промпт")
+    app.extensions["template_library_service"] = LibraryService(
+        template_repo,
+        kind_label="Шаблон",
+    )
     app.extensions["rag_service"] = rag_service
     app.extensions["generation_service"] = GenerationService(
         runs_repo,

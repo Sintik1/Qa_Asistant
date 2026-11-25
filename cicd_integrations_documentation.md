@@ -574,7 +574,8 @@ INTERVAL_SEC=30 WATCH_LOOPS=0 python scripts/watch_health.py
 | 9 | Docs + README | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | `integration_documentation.md` + `security_audit.md` + README; **G2=B Pages deploy** |
 | — | Pages one-time setup | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done** | Pages Source=Actions; Variables `VITE_SUPABASE_*`; `source-map-js@1.2.2`; CI [#25](https://github.com/Sintik1/Qa_Asistant/actions/runs/37422990061) green → https://sintik1.github.io/Qa_Asistant/ |
 | — | Hybrid B: public FE+API, local Ollama | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done (awaiting OK)** | Pages + Serveo→Flask:5001 + Ollama local; `VITE_API_BASE_URL` Variable; `docs/HYBRID_LOCAL_AI.md`; `Dockerfile.api`/`render.yaml` optional; deploy on `workflow_dispatch` |
+| — | Hybrid B restart runbook | [#37](https://github.com/Sintik1/Qa_Asistant/issues/37) | **done** | Подробная инструкция после reboot → [`docs/HYBRID_B_RESTART.md`](docs/HYBRID_B_RESTART.md) |
 
 ---
 
-_Последнее обновление: 2026-10-10 — Hybrid B runtime (Serveo API tunnel + local Ollama) + Pages Variable wiring._
+_Последнее обновление: 2026-10-10 — Hybrid B restart runbook (`docs/HYBRID_B_RESTART.md`)._

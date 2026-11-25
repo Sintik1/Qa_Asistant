@@ -31,6 +31,26 @@ def test_extract_docx():
     assert result.extension == ".docx"
 
 
+def test_extract_docx_table_uses_testsites_markers():
+    buf = io.BytesIO()
+    doc = Document()
+    doc.add_heading("Каталог", level=2)
+    doc.add_paragraph("Поля карточки")
+    table = doc.add_table(rows=2, cols=2)
+    table.rows[0].cells[0].text = "Поле"
+    table.rows[0].cells[1].text = "Тип"
+    table.rows[1].cells[0].text = "Email"
+    table.rows[1].cells[1].text = "string"
+    doc.save(buf)
+    result = extract_text("spec.docx", buf.getvalue())
+    assert "TABLE_1_START" in result.text
+    assert "TABLE_1_COLUMNS: Поле || Тип" in result.text
+    assert "TABLE_1_ROW_1: Email || string" in result.text
+    assert "TABLE_BLOCK_BEGIN_1" in result.text
+    assert "TABLE_BLOCK_END_1" in result.text
+    assert "## Каталог" in result.text or "Каталог" in result.text
+
+
 def test_invalid_format_exe():
     with pytest.raises(ValidationError) as exc:
         extract_text("virus.exe", b"MZ")

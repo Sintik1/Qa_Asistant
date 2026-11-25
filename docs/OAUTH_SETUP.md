@@ -98,6 +98,7 @@ cd qa-assistant && npm test -- AuthPage.test.tsx
 | `redirect_to` not allowed | Supabase → URL Configuration → Redirect URLs включает текущий FE callback |
 | Provider disabled | Dashboard → Auth → Providers → Google Enabled |
 | Pages deploy | Redirect URL с base path: `https://sintik1.github.io/Qa_Asistant/auth/callback` |
+| **`Failed to fetch`** на `/auth` | Сначала: проект **paused** (Free, ~7 дней idle) → DNS NXDOMAIN. Dashboard → [Restore](https://supabase.com/dashboard/project/revyywfeeqdmlgrbakpj). Потом Clash DIRECT `supabase.co`. Keepalive: `python3 scripts/supabase_keepalive.py` + workflow `supabase-keepalive.yml`. [#44](https://github.com/Sintik1/Qa_Asistant/issues/44) |
 
 Yandex: callback должен совпадать с `…/api/auth/oauth/yandex/callback` в кабинете oauth.yandex.ru.
 

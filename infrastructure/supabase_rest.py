@@ -55,9 +55,13 @@ class SupabaseRestClient:
         return self._config.anon_key
 
     def _headers(self, *, prefer: str | None = None) -> dict[str, str]:
+        bearer = self._auth_bearer()
+        # New Supabase secret keys (sb_secret_…) are not JWTs. PostgREST
+        # accepts them only when the same value is also the apikey header.
+        api_key = bearer if bearer.startswith("sb_") else self._config.anon_key
         headers = {
-            "apikey": self._config.anon_key,
-            "Authorization": f"Bearer {self._auth_bearer()}",
+            "apikey": api_key,
+            "Authorization": f"Bearer {bearer}",
             "Content-Type": "application/json",
         }
         if prefer:

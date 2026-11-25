@@ -123,6 +123,28 @@ class CreateRunCommand:
 
 
 @dataclass
+class LibraryItem:
+    """Named prompt or scenario template owned by one user."""
+
+    id: str
+    user_id: str
+    name: str
+    content: str
+    created_at: str | None = None
+    updated_at: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "name": self.name,
+            "content": self.content,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
+
+
+@dataclass
 class UpdateTestCaseCommand:
     name: str | None = None
     status: str | None = None

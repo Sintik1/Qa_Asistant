@@ -108,7 +108,10 @@ def _hash_embedding(text: str, dims: int) -> list[float]:
 
 @dataclass
 class HashEmbeddingClient:
+    """Offline vectors for tests. They do not compare meaning."""
+
     dims: int = DEFAULT_DIMS
+    semantic: bool = False
 
     def embed(self, text: str) -> list[float]:
         return _hash_embedding(text or "", self.dims)
@@ -119,7 +122,10 @@ class HashEmbeddingClient:
 
 @dataclass
 class OllamaEmbeddingClient:
+    """Local embedding model. Retrieval uses vector similarity, not word lists."""
+
     settings: EmbeddingSettings
+    semantic: bool = True
 
     @property
     def dims(self) -> int:
@@ -149,6 +155,7 @@ class OllamaEmbeddingClient:
 @dataclass
 class OpenAICompatEmbeddingClient:
     settings: EmbeddingSettings
+    semantic: bool = True
 
     @property
     def dims(self) -> int:

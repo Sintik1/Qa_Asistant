@@ -21,8 +21,6 @@ def driver():
     pytest.importorskip("selenium")
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.chrome.service import Service
-    from webdriver_manager.chrome import ChromeDriverManager
 
     options = Options()
     options.add_argument("--headless=new")
@@ -37,12 +35,20 @@ def driver():
     }
     options.add_experimental_option("prefs", prefs)
 
-    service = Service(ChromeDriverManager().install())
-    browser = webdriver.Chrome(service=service, options=options)
+    # Selenium Manager (bundled with Selenium 4.6+) — no webdriver_manager.
+    browser = webdriver.Chrome(options=options)
     browser.set_page_load_timeout(30)
     browser.implicitly_wait(0)  # explicit waits only — anti-flaky
     yield browser
     browser.quit()
+
+
+@pytest.fixture
+def logged_in(driver, base_url: str):
+    from pages.auth_page import AuthPage
+
+    AuthPage(driver, base_url).ensure_logged_in()
+    return driver
 
 
 @pytest.fixture

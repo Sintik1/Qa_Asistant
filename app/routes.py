@@ -6,11 +6,12 @@ import os
 
 from flask import Blueprint, current_app, g, jsonify, request
 
+from core.doc_reader import extract_text
 from core.errors import AppError, ForbiddenError, ValidationError
 from core.health import build_health_payload
 from core.log_analyzer import analyze_log_file, analyze_log_text
 from core.models import CreateDocumentCommand, CreateRunCommand, UpdateTestCaseCommand
-from integrations.ai_client import build_ai_client
+from integrations.ai_client import activate_ai_provider, build_ai_client, persist_ai_provider
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -44,6 +45,45 @@ def health():
     """
     payload = build_health_payload(current_app)
     return jsonify(payload)
+
+
+@api_bp.get("/ai/provider")
+def get_ai_provider():
+    """Current chat model: ollama (local) or leopold."""
+    settings = _svc("ai_settings")
+    client = _svc("ai_client")
+    return jsonify(
+        {
+            "provider": settings.provider,
+            "model": settings.model,
+            "configured": client is not None,
+        }
+    )
+
+
+@api_bp.put("/ai/provider")
+def put_ai_provider():
+    """Switch Leopold ↔ local Ollama without restarting by hand."""
+    data = request.get_json(silent=True) or {}
+    provider = str(data.get("provider") or "").strip().lower()
+    try:
+        settings, client = activate_ai_provider(provider)
+    except ValueError:
+        raise ValidationError(
+            code="VALIDATION_ERROR",
+            message="provider must be ollama or leopold",
+        ) from None
+    current_app.extensions["ai_settings"] = settings
+    current_app.extensions["ai_client"] = client
+    if not current_app.config.get("TESTING"):
+        persist_ai_provider(settings.provider)
+    return jsonify(
+        {
+            "provider": settings.provider,
+            "model": settings.model,
+            "configured": client is not None,
+        }
+    )
 
 
 @api_bp.post("/ai/ping")
@@ -180,6 +220,9 @@ def generate_run(run_id: str):
 
     data = request.get_json(silent=True) or {}
     requirements_text = (data.get("requirements_text") or "").strip() or None
+    template_text = data.get("template_text")
+    if template_text is not None and not isinstance(template_text, str):
+        raise ValidationError(code="VALIDATION_ERROR", message="template_text must be a string")
 
     # Build per-request so tests can swap app.extensions["ai_client"].
     gen_svc = GenerationService(
@@ -196,6 +239,7 @@ def generate_run(run_id: str):
         requirements_text=requirements_text,
         task_name=data.get("task_name"),
         prompt=data.get("prompt"),
+        template_text=template_text if isinstance(template_text, str) else None,
     )
     return jsonify(
         {
@@ -207,12 +251,15 @@ def generate_run(run_id: str):
 
 @api_bp.post("/chat")
 def chat_requirements():
-    """RAG chat over indexed document chunks."""
+    """RAG chat: embed question → match chunks in DB → grounded LLM answer."""
     data = request.get_json(silent=True) or {}
     question = (data.get("question") or data.get("message") or "").strip()
     if len(question) < 2:
         raise ValidationError(code="VALIDATION_ERROR", message="question is required")
     document_id = (data.get("document_id") or "").strip() or None
+    include_cases = data.get("include_cases", True)
+    if isinstance(include_cases, str):
+        include_cases = include_cases.strip().lower() not in {"0", "false", "no"}
     rag = current_app.extensions.get("rag_service")
     ai = current_app.extensions.get("ai_client")
     if rag is None:
@@ -223,8 +270,39 @@ def chat_requirements():
         user_id=g.user_id,
         question=question,
         document_id=document_id,
+        include_cases=bool(include_cases),
         ai_generate=ai.generate,
     )
+    return jsonify(result)
+
+
+@api_bp.post("/rag/confluence/sync")
+def sync_confluence_space():
+    """Pull one Confluence space into this user's document index."""
+    from core.confluence_sync import ConfluenceSyncService
+    from integrations.confluence_client import ConfluenceClient, load_confluence_settings
+
+    rag = current_app.extensions.get("rag_service")
+    if rag is None or not getattr(rag, "enabled", False):
+        raise AppError(code="INTERNAL_ERROR", status_code=500, message="RAG unavailable")
+    client = current_app.extensions.get("confluence_client")
+    if client is None:
+        settings = load_confluence_settings()
+        if settings is None:
+            raise AppError(
+                code="VALIDATION_ERROR",
+                status_code=503,
+                message=(
+                    "Confluence не настроен: задайте CONFLUENCE_BASE_URL, "
+                    "CONFLUENCE_API_TOKEN и CONFLUENCE_SPACE_KEY"
+                ),
+            )
+        client = ConfluenceClient(settings)
+    result = ConfluenceSyncService(
+        current_app.extensions["docs_repo"],
+        rag,
+        client,
+    ).sync_space(g.user_id)
     return jsonify(result)
 
 
@@ -313,6 +391,94 @@ def update_test_case(case_id: str):
         ),
     )
     return jsonify(case.to_dict())
+
+
+def _library_payload() -> tuple[str, str]:
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        raise ValidationError(code="VALIDATION_ERROR", message="JSON body required")
+    return str(data.get("name") or ""), str(data.get("content") or "")
+
+
+@api_bp.get("/prompts")
+def list_prompts():
+    items = _svc("prompt_library_service").list_for_user(g.user_id)
+    return jsonify({"items": [item.to_dict() for item in items]})
+
+
+@api_bp.post("/prompts")
+def create_prompt():
+    name, content = _library_payload()
+    item = _svc("prompt_library_service").create(g.user_id, name, content)
+    return jsonify(item.to_dict()), 201
+
+
+@api_bp.patch("/prompts/<item_id>")
+def update_prompt(item_id: str):
+    data = request.get_json(silent=True) or {}
+    if "name" not in data and "content" not in data:
+        raise ValidationError(code="VALIDATION_ERROR", message="Нет полей для обновления")
+    item = _svc("prompt_library_service").update(
+        item_id,
+        g.user_id,
+        name=data.get("name") if "name" in data else None,
+        content=data.get("content") if "content" in data else None,
+    )
+    return jsonify(item.to_dict())
+
+
+@api_bp.delete("/prompts/<item_id>")
+def delete_prompt(item_id: str):
+    _svc("prompt_library_service").delete(item_id, g.user_id)
+    return "", 204
+
+
+@api_bp.get("/scenario-templates")
+def list_scenario_templates():
+    items = _svc("template_library_service").list_for_user(g.user_id)
+    return jsonify({"items": [item.to_dict() for item in items]})
+
+
+@api_bp.post("/scenario-templates")
+def create_scenario_template():
+    name, content = _library_payload()
+    item = _svc("template_library_service").create(g.user_id, name, content)
+    return jsonify(item.to_dict()), 201
+
+
+@api_bp.patch("/scenario-templates/<item_id>")
+def update_scenario_template(item_id: str):
+    data = request.get_json(silent=True) or {}
+    if "name" not in data and "content" not in data:
+        raise ValidationError(code="VALIDATION_ERROR", message="Нет полей для обновления")
+    item = _svc("template_library_service").update(
+        item_id,
+        g.user_id,
+        name=data.get("name") if "name" in data else None,
+        content=data.get("content") if "content" in data else None,
+    )
+    return jsonify(item.to_dict())
+
+
+@api_bp.delete("/scenario-templates/<item_id>")
+def delete_scenario_template(item_id: str):
+    _svc("template_library_service").delete(item_id, g.user_id)
+    return "", 204
+
+
+@api_bp.post("/library/extract-text")
+def extract_library_file():
+    """Read a template file for this run. Does not store a document or a library row."""
+    if "file" not in request.files:
+        raise ValidationError(code="VALIDATION_ERROR", message="multipart field 'file' is required")
+    upload = request.files["file"]
+    filename = (upload.filename or "").strip()
+    if not filename:
+        raise ValidationError(code="VALIDATION_ERROR", message="filename is required")
+    # Requirements documents are often longer than a saved library row.
+    # The 20_000 cap stays on library writes and on template_text at generate.
+    extracted = extract_text(filename, upload.read())
+    return jsonify({"text": extracted.text, "char_count": extracted.char_count})
 
 
 @api_bp.get("/settings")

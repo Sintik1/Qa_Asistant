@@ -4,6 +4,8 @@
 
 Проверяющий открывает UI в интернете; генерация работает, пока ноутбук онлайн и туннель жив.
 
+**После выключения Mac — полная пошаговая инструкция:** [`HYBRID_B_RESTART.md`](HYBRID_B_RESTART.md) (терминалы, Serveo, Variable, деплой Pages, troubleshooting).
+
 ## Компоненты
 
 | Слой | Где | Примечание |
@@ -60,7 +62,7 @@ OAUTH_API_PUBLIC_URL=https://<api-tunnel-host>
 ## Известные ограничения
 
 1. **Quick tunnel URL меняется** при каждом перезапуске Serveo/cloudflared → нужно обновить `VITE_API_BASE_URL` и передеплоить FE (или использовать named tunnel / Render).
-2. **Clash / VPN fake-IP (`198.18.0.2`)** ломает Cloudflare quick tunnels (`argotunnel.com` → `240.x`). Обход: Serveo/Pinggy/`bore`, либо отключить fake-IP для `*.argotunnel.com`.
+2. **Clash / VPN fake-IP (`198.18.0.2`)** ломает Cloudflare quick tunnels (`argotunnel.com` → `240.x`) **и логин Supabase** (`*.supabase.co` → `240.x`, в UI `Failed to fetch`). Обход: Serveo/Pinggy/`bore`; в Clash DIRECT `DOMAIN-SUFFIX,supabase.co` и `*.argotunnel.com`.
 3. Ollama в sandbox Cursor часто падает на Metal discover (`SIGTRAP`) — запускать с `required_permissions/all` или вручную в обычном Terminal.
 4. Пока Mac спит / туннель упал — публичный UI не достучится до API.
 

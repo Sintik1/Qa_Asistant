@@ -31,6 +31,7 @@ export interface GenerationContext {
   taskName?: string
   prompt?: string
   requirementsFileName?: string
+  templateText?: string
 }
 
 interface UseTestCaseGenerationResult {
@@ -208,10 +209,12 @@ export function useTestCaseGeneration(): UseTestCaseGenerationResult {
           ...chunkSettingsToApi(settings),
         })
 
+        const templateText = context.templateText?.trim()
         const generated = await generateRun(run.id, {
           requirements_text: requirementsText,
           task_name: context.taskName,
           prompt: context.prompt,
+          ...(templateText ? { template_text: templateText } : {}),
         })
 
         const cases = mapApiCases(generated.items)

@@ -55,6 +55,12 @@ export interface ApiHealth {
     configured: boolean
     hint?: string
   }
+  rag?: {
+    enabled: boolean
+    embedding_provider?: string | null
+    embedding_model?: string | null
+    embedding_dims?: number | null
+  }
 }
 
 export interface GenerateResponse {

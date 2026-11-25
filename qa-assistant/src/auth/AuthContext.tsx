@@ -10,6 +10,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 import { apiBaseUrl } from '../api/client'
+import { messageForAuthError } from './authNetworkError'
 
 type OAuthProvider = 'google' | 'yandex'
 
@@ -62,13 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return error?.message ?? null
+    return messageForAuthError(error?.message)
   }, [])
 
   const signUp = useCallback(async (email: string, password: string) => {
     if (!supabase) return 'Supabase Auth не настроен (проверьте VITE_SUPABASE_*).'
     const { error } = await supabase.auth.signUp({ email, password })
-    return error?.message ?? null
+    return messageForAuthError(error?.message)
   }, [])
 
   const applySessionTokens = useCallback(
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         access_token: accessToken,
         refresh_token: refreshToken,
       })
-      return error?.message ?? null
+      return messageForAuthError(error?.message)
     },
     [],
   )
@@ -99,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           queryParams: { prompt: 'select_account' },
         },
       })
-      return error?.message ?? null
+      return messageForAuthError(error?.message)
     }
 
     // Yandex: Flask Authorization Code → Supabase Admin session → hash tokens.

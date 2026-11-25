@@ -121,15 +121,25 @@ def _extract_pdf(data: bytes) -> tuple[str, int | None]:
 
 
 def _extract_docx(data: bytes) -> tuple[str, int | None]:
-    """Extract DOCX in order; map Word heading styles → markdown ``#`` prefixes."""
+    """Extract DOCX in document order.
+
+    Headings stay as markdown prefixes for the section parser.
+    Tables become ``TABLE_N_*`` blocks (same contract as TestSites): one table,
+    columns and rows, not a pipe-grid that the model splits into separate cases.
+    """
     from docx import Document
     from docx.oxml.ns import qn
     from docx.table import Table
     from docx.text.paragraph import Paragraph
 
+    from core.table_format import format_docx_table, infer_table_caption
+
     document = Document(io.BytesIO(data))
     blocks: list[str] = []
     para_count = 0
+    last_paragraph = ""
+    section_title = ""
+    table_number = 0
 
     body = document.element.body
     for child in body.iterchildren():
@@ -143,10 +153,16 @@ def _extract_docx(data: bytes) -> tuple[str, int | None]:
             if para.style is not None and para.style.name:
                 style_name = para.style.name
             prefix = _docx_heading_prefix(style_name)
-            blocks.append(f"{prefix}{text.strip()}" if prefix else text)
+            stripped = text.strip()
+            if prefix:
+                section_title = stripped
+            blocks.append(f"{prefix}{stripped}" if prefix else stripped)
+            last_paragraph = stripped
         elif child.tag == qn("w:tbl"):
+            table_number += 1
             table = Table(child, document)
-            rendered = _render_docx_table(table)
+            title = infer_table_caption(last_paragraph, table_number, section_title)
+            rendered = format_docx_table(table, table_number, title)
             if rendered:
                 blocks.append(rendered)
 
@@ -184,21 +200,6 @@ def _docx_heading_prefix(style_name: str) -> str:
                 break
         return "#" * level + " "
     return ""
-
-
-def _render_docx_table(table: object) -> str:
-    """Render a Word table as pipe rows (kept inline with surrounding section text)."""
-    rows_out: list[str] = []
-    for row in table.rows:  # type: ignore[attr-defined]
-        cells = [(c.text or "").replace("\n", " ").strip() for c in row.cells]
-        # Deduplicate horizontally merged repeated cells from python-docx
-        deduped: list[str] = []
-        for cell in cells:
-            if not deduped or deduped[-1] != cell:
-                deduped.append(cell)
-        if any(deduped):
-            rows_out.append("| " + " | ".join(deduped) + " |")
-    return "\n".join(rows_out)
 
 
 def _extract_doc(data: bytes) -> tuple[str, int | None]:

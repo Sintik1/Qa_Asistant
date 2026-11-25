@@ -7,9 +7,12 @@ import io
 from docx import Document
 
 from core.doc_reader import extract_text
-from core.prompt_builder import build_leaf_user_prompt, iter_generation_prompts
+from core.prompt_builder import (
+    append_selected_template,
+    build_leaf_user_prompt,
+    iter_generation_prompts,
+)
 from core.section_parser import ParseOptions, parse_requirements_document
-
 
 SAMPLE = """
 Вводный текст до разделов.
@@ -117,6 +120,42 @@ def test_flat_fallback_without_sections():
     assert prompts[0][2] is None
 
 
+def test_blank_selected_template_does_not_change_prompts():
+    parsed = parse_requirements_document(SAMPLE)
+    plain = iter_generation_prompts(
+        parsed,
+        task_name="Задача",
+        extra_prompt="Смотри негативные шаги",
+        raw_text_fallback=SAMPLE,
+    )
+    blank = iter_generation_prompts(
+        parsed,
+        task_name="Задача",
+        extra_prompt="Смотри негативные шаги",
+        selected_template="   ",
+        raw_text_fallback=SAMPLE,
+    )
+    assert plain == blank
+    assert append_selected_template("Примеры RAG", None) == "Примеры RAG"
+    assert append_selected_template(None, "  ") is None
+
+
+def test_selected_template_is_appended_after_existing_examples():
+    parsed = parse_requirements_document(SAMPLE)
+    prompts = iter_generation_prompts(
+        parsed,
+        template_examples_by_leaf={leaf.number: "RAG-пример" for leaf in parsed.leaves},
+        selected_template="Name CRM\nStep Проверить тариф",
+        raw_text_fallback=SAMPLE,
+    )
+    assert prompts
+    for _system, user, _number in prompts:
+        rag_at = user.index("RAG-пример")
+        picked_at = user.index("Выбранный шаблон сценариев:")
+        assert rag_at < picked_at
+        assert "Name CRM" in user
+
+
 def test_docx_keeps_table_inside_section_order():
     buf = io.BytesIO()
     doc = Document()
@@ -133,12 +172,20 @@ def test_docx_keeps_table_inside_section_order():
 
     extracted = extract_text("spec.docx", buf.getvalue())
     assert extracted.text.lstrip().startswith("#")
+    assert "TABLE_1_START" in extracted.text
+    assert "TABLE_1_COLUMNS: Поле || Тип" in extracted.text
+    assert "TABLE_1_ROW_1: Name || text" in extracted.text
     parsed = parse_requirements_document(extracted.text)
     crm = next(leaf for leaf in parsed.leaves if leaf.number == "3")
-    assert "Поле" in crm.body and "Name" in crm.body
+    assert "TABLE_1_START" in crm.body
+    assert "TABLE_1_ROW_1: Name || text" in crm.body
     catalog = next(leaf for leaf in parsed.leaves if leaf.number == "3.1")
-    assert "Поле" not in catalog.body
+    assert "TABLE_1_" not in catalog.body
     assert catalog.items[0].text.startswith("Добавить")
+    prompts = iter_generation_prompts(parsed, raw_text_fallback=extracted.text)
+    crm_prompt = next(user for _sys, user, number in prompts if number == "3")
+    assert "TABLE_1_ROW_1" in crm_prompt
+    assert "TABLE_N_START" in prompts[0][0]
 
 
 def test_plain_numbering_without_heading_styles():

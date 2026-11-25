@@ -7,6 +7,8 @@ export type ChatCitation = {
   title?: string | null
   similarity?: number | null
   preview?: string
+  source_kind?: 'requirement' | 'case' | string
+  url?: string | null
 }
 
 export type ChatResponse = {
@@ -17,9 +19,26 @@ export type ChatResponse = {
 export async function chatRequirements(input: {
   question: string
   document_id?: string
+  include_cases?: boolean
 }): Promise<ChatResponse> {
+  const payload: Record<string, unknown> = { question: input.question }
+  if (input.document_id) payload.document_id = input.document_id
+  if (typeof input.include_cases === 'boolean') {
+    payload.include_cases = input.include_cases
+  }
   return apiJson<ChatResponse>('/api/chat', {
     method: 'POST',
-    body: JSON.stringify(input),
+    body: JSON.stringify(payload),
   })
+}
+
+export type ConfluenceSyncResult = {
+  space: string
+  pages: number
+  indexed: number
+  skipped: number
+}
+
+export function syncConfluenceSpace(): Promise<ConfluenceSyncResult> {
+  return apiJson<ConfluenceSyncResult>('/api/rag/confluence/sync', { method: 'POST' })
 }

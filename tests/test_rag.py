@@ -53,6 +53,100 @@ def test_index_on_upload_and_chat():
     assert "рассроч" in body["answer"].lower()
     assert isinstance(body["citations"], list)
     assert len(body["citations"]) >= 1
+    assert body["citations"][0].get("source_kind") == "requirement"
+
+
+def test_upload_docx_table_is_retrieved_in_chat():
+    application = create_app(testing=True)
+    client = application.test_client()
+    headers = {"X-User-Id": "ffffffff-ffff-4fff-8fff-ffffffffffff"}
+
+    class FakeAi:
+        def generate(self, system_prompt: str, user_content: str) -> str:
+            assert "TABLE_1_ROW_1: Email || string" in user_content
+            assert "type=requirement" in user_content
+            return "Тип поля Email — string."
+
+    application.extensions["ai_client"] = FakeAi()
+    buf = BytesIO()
+    from docx import Document
+
+    doc = Document()
+    doc.add_heading("3. Каталог", level=1)
+    doc.add_paragraph("Поля карточки товара")
+    table = doc.add_table(rows=2, cols=2)
+    table.rows[0].cells[0].text = "Поле"
+    table.rows[0].cells[1].text = "Тип"
+    table.rows[1].cells[0].text = "Email"
+    table.rows[1].cells[1].text = "string"
+    doc.save(buf)
+    buf.seek(0)
+    up = client.post(
+        "/api/documents/upload",
+        data={"file": (buf, "catalog.docx")},
+        content_type="multipart/form-data",
+        headers=headers,
+    )
+    assert up.status_code == 201, up.get_json()
+    assert "TABLE_1_ROW_1: Email || string" in up.get_json()["text"]
+    doc_id = up.get_json()["document"]["id"]
+
+    chat = client.post(
+        "/api/chat",
+        json={"question": "Какой тип у поля Email?", "document_id": doc_id, "include_cases": False},
+        headers=headers,
+    )
+    assert chat.status_code == 200, chat.get_json()
+    body = chat.get_json()
+    assert "string" in body["answer"]
+    assert body["citations"][0]["source_kind"] == "requirement"
+    assert "TABLE_1_ROW_1" in body["citations"][0]["preview"]
+
+
+def test_chat_from_templates_when_no_documents():
+    application = create_app(testing=True)
+    client = application.test_client()
+    headers = {"X-User-Id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd"}
+
+    class FakeAi:
+        def generate(self, system_prompt: str, user_content: str) -> str:
+            assert "type=case" in user_content
+            return "По шаблону: рассрочка 24 месяца."
+
+    application.extensions["ai_client"] = FakeAi()
+    tpl = client.post(
+        "/api/rag/templates",
+        json={
+            "items": [
+                {
+                    "name": "Рассрочка 24",
+                    "step": "Выбрать 24 месяца",
+                    "expected_result": "Рассрочка активна",
+                    "source_type": "template",
+                }
+            ]
+        },
+        headers=headers,
+    )
+    assert tpl.status_code == 200, tpl.get_json()
+
+    chat = client.post(
+        "/api/chat",
+        json={"question": "Какой срок рассрочки?", "include_cases": True},
+        headers=headers,
+    )
+    assert chat.status_code == 200, chat.get_json()
+    body = chat.get_json()
+    assert "24" in body["answer"]
+    assert body["citations"][0]["source_kind"] == "case"
+
+    skipped = client.post(
+        "/api/chat",
+        json={"question": "Какой срок рассрочки?", "include_cases": False},
+        headers=headers,
+    )
+    assert skipped.status_code == 200
+    assert "не найдено" in skipped.get_json()["answer"].lower()
 
 
 def test_templates_and_style_enrich_generate():

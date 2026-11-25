@@ -24,6 +24,25 @@ export async function getHealth(): Promise<ApiHealth> {
   return apiJson<ApiHealth>('/api/health')
 }
 
+export type AiProviderName = 'ollama' | 'leopold'
+
+export type AiProviderStatus = {
+  provider: AiProviderName
+  model: string
+  configured: boolean
+}
+
+export function getAiProvider(): Promise<AiProviderStatus> {
+  return apiJson<AiProviderStatus>('/api/ai/provider')
+}
+
+export function setAiProvider(provider: AiProviderName): Promise<AiProviderStatus> {
+  return apiJson<AiProviderStatus>('/api/ai/provider', {
+    method: 'PUT',
+    body: JSON.stringify({ provider }),
+  })
+}
+
 export function settingsToChunk(settings: ApiUserSettings): ChunkSettings {
   return {
     chunkSize: settings.chunk_size,

@@ -31,4 +31,17 @@ describe('chatRequirements', () => {
     expect(res.answer).toContain('24')
     expect(res.citations).toHaveLength(1)
   })
+
+  it('posts include_cases when set', async () => {
+    apiJson.mockResolvedValue({ answer: 'ok', citations: [] })
+    const { chatRequirements } = await import('./chat')
+    await chatRequirements({ question: 'Есть ли шаблон?', include_cases: false })
+    expect(apiJson).toHaveBeenCalledWith('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({
+        question: 'Есть ли шаблон?',
+        include_cases: false,
+      }),
+    })
+  })
 })

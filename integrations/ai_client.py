@@ -10,7 +10,7 @@ import httpx
 
 from core.errors import AppError
 
-LEOPOLD_DEFAULT_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+LEOPOLD_DEFAULT_MODEL = "Qwen/Qwen3-Next-80B-A3B-Instruct-FP8"
 OLLAMA_DEFAULT_MODEL_1_5B = "qwen2.5:1.5b"
 OLLAMA_DEFAULT_MODEL_3B = "qwen2.5:3b"
 OLLAMA_DEFAULT_MODEL_7B = "qwen2.5:7b"
@@ -41,7 +41,13 @@ class OpenAICompatibleClient:
 
     settings: AiSettings
 
-    def generate(self, system_prompt: str, user_content: str) -> str:
+    def generate(
+        self,
+        system_prompt: str,
+        user_content: str,
+        *,
+        temperature: float | None = None,
+    ) -> str:
         headers = {"Content-Type": "application/json"}
         if self.settings.api_token:
             headers["Authorization"] = f"Bearer {self.settings.api_token}"
@@ -54,6 +60,8 @@ class OpenAICompatibleClient:
             ],
             "stream": False,
         }
+        if temperature is not None:
+            payload["temperature"] = temperature
         try:
             with httpx.Client(timeout=self.settings.timeout_sec) as client:
                 response = client.post(self.settings.api_url, headers=headers, json=payload)
@@ -105,9 +113,19 @@ def load_ai_settings() -> AiSettings:
     timeout = float(os.getenv("AI_TIMEOUT_SEC", "300"))
 
     if provider == "leopold":
-        url = os.getenv("QA_ASISTANT_API_URL", "").strip()
-        token = os.getenv("QA_ASISTANT_API_TOKEN", "").strip()
-        model = os.getenv("QA_ASISTANT_MODEL", LEOPOLD_DEFAULT_MODEL).strip() or LEOPOLD_DEFAULT_MODEL
+        # LEOPOLD_* wins: QA_ASISTANT_* is also the Ollama URL/token in this repo.
+        url = (
+            os.getenv("LEOPOLD_API_URL", "").strip()
+            or os.getenv("QA_ASISTANT_API_URL", "").strip()
+        )
+        token = (
+            os.getenv("LEOPOLD_TOKEN", "").strip()
+            or os.getenv("QA_ASISTANT_API_TOKEN", "").strip()
+        )
+        # QA_ASISTANT_MODEL is the Ollama tag in this repo (qwen2.5:1.5b).
+        # Leopold needs a provider model id, not that tag.
+        model_env = os.getenv("QA_ASISTANT_MODEL", "").strip()
+        model = model_env if "/" in model_env else LEOPOLD_DEFAULT_MODEL
         return AiSettings(
             provider="leopold",
             api_url=url,
@@ -129,10 +147,43 @@ def load_ai_settings() -> AiSettings:
     )
 
 
-def build_ai_client(settings: AiSettings | None = None) -> OpenAICompatibleClient | None:
+def activate_ai_provider(provider: str) -> tuple[AiSettings, AiClient | None]:
+    """Switch the process to ollama or leopold and return the new client."""
+    name = (provider or "").strip().lower()
+    if name not in {"ollama", "leopold"}:
+        raise ValueError(name)
+    os.environ["AI_PROVIDER"] = name
+    settings = load_ai_settings()
+    return settings, build_ai_client(settings)
+
+
+def persist_ai_provider(provider: str, env_path: str | None = None) -> None:
+    """Remember the switch in `.env` so the next process start keeps it."""
+    import re
+    from pathlib import Path
+
+    path = Path(env_path) if env_path else Path(__file__).resolve().parents[1] / ".env"
+    if not path.is_file():
+        return
+    text = path.read_text(encoding="utf-8")
+    line = f"AI_PROVIDER={provider}"
+    if re.search(r"(?m)^AI_PROVIDER=", text):
+        text = re.sub(r"(?m)^AI_PROVIDER=.*$", line, text, count=1)
+    else:
+        if text and not text.endswith("\n"):
+            text += "\n"
+        text += line + "\n"
+    path.write_text(text, encoding="utf-8")
+
+
+def build_ai_client(settings: AiSettings | None = None) -> AiClient | None:
     cfg = settings or load_ai_settings()
-    if cfg.provider == "leopold" and (not cfg.api_url or not cfg.api_token):
-        return None
+    if cfg.provider == "leopold":
+        if not cfg.api_url or not cfg.api_token:
+            return None
+        from integrations.leopold_native import LeopoldNativeClient
+
+        return LeopoldNativeClient(cfg)
     if not cfg.api_url or not cfg.model:
         return None
     return OpenAICompatibleClient(cfg)
@@ -149,6 +200,6 @@ def ai_status_dict() -> dict[str, Any]:
         "hint": (
             "8GB Mac: qwen2.5:1.5b (default). Optional: 3b. Avoid 7b/14b."
             if settings.provider == "ollama"
-            else "Set QA_ASISTANT_API_URL + QA_ASISTANT_API_TOKEN for Leopold"
+            else "Set LEOPOLD_API_URL + LEOPOLD_TOKEN (or QA_ASISTANT_API_URL + QA_ASISTANT_API_TOKEN)"
         ),
     }

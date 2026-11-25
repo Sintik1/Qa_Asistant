@@ -7,6 +7,7 @@ import { ErrorMessage } from '../components/ui/ErrorMessage'
 import { PageHeader } from '../components/ui/PageHeader'
 import { INPUT_CLASS } from '../utils/formStyles'
 import { apiBaseUrl, isApiConfigured } from '../api/client'
+import { supabaseDashboardProjectUrl } from '../auth/authNetworkError'
 
 type Mode = 'login' | 'signup'
 
@@ -23,6 +24,9 @@ export function AuthPage() {
   const [info, setInfo] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [oauthBusy, setOauthBusy] = useState<'google' | 'yandex' | null>(null)
+  const dashboardUrl = supabaseDashboardProjectUrl(
+    import.meta.env.VITE_SUPABASE_URL as string | undefined,
+  )
 
   if (!loading && user) {
     return <Navigate to="/" replace />
@@ -156,7 +160,19 @@ export function AuthPage() {
           />
         </div>
 
-        {error ? <ErrorMessage message={error} /> : null}
+        {error ? (
+          <ErrorMessage
+            message={error}
+            actionLabel={dashboardUrl ? 'Restore / Resume в Dashboard' : undefined}
+            onAction={
+              dashboardUrl
+                ? () => {
+                    window.open(dashboardUrl, '_blank', 'noopener,noreferrer')
+                  }
+                : undefined
+            }
+          />
+        ) : null}
         {info ? (
           <p className="text-sm text-green-700" role="status">
             {info}

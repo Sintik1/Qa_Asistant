@@ -5,7 +5,7 @@ import { UploadSection } from '../components/upload/UploadSection'
 import { TaskNameField } from '../components/form/TaskNameField'
 import { PromptField } from '../components/form/PromptField'
 import { ProjectSelect } from '../components/form/ProjectSelect'
-import { ManagementCard } from '../components/management/ManagementCard'
+import { LibraryPanel } from '../components/management/LibraryPanel'
 import { ChunkSettingsForm } from '../components/generation/ChunkSettingsForm'
 import { GenerationAlerts } from '../components/generation/GenerationAlerts'
 import { GenerationResults } from '../components/generation/GenerationResults'
@@ -18,7 +18,15 @@ import {
   DEFAULT_PROJECT_ID,
   ERROR_MESSAGES,
 } from '../utils/constants'
-import { getHealth, isApiConfigured } from '../api'
+import { extractLibraryFile, getHealth, isApiConfigured } from '../api'
+import { ApiRequestError } from '../api/errors'
+import type { LibraryItem } from '../api/library'
+import { combineTemplateSources, TEMPLATE_TEXT_MAX } from '../utils/templateText'
+import {
+  fillPromptPlaceholders,
+  promptHasRequirementsMarker,
+} from '../utils/fillPromptPlaceholders'
+import { validateUploadFile } from '../utils/fileValidation'
 
 /**
  * Главный экран: загрузка → API-генерация → экспорт CSV/DOCX
@@ -31,6 +39,9 @@ export function HomePage() {
   const generation = useTestCaseGeneration()
   const [taskName, setTaskName] = useState('')
   const [prompt, setPrompt] = useState('')
+  const [requirementsText, setRequirementsText] = useState('')
+  const [promptNote, setPromptNote] = useState<string | null>(null)
+  const [selectedTemplate, setSelectedTemplate] = useState<LibraryItem | null>(null)
   const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -40,16 +51,57 @@ export function HomePage() {
   const showChunkControls =
     generation.showChunkPanel || generation.status === 'success'
 
-  const generationContext = {
-    taskName,
-    prompt,
-    requirementsFileName: requirements.file?.name,
+  const buildGenerationContext = async () => {
+    let fileText = ''
+    if (templates.file) {
+      const extracted = await extractLibraryFile(templates.file.file)
+      fileText = extracted.text
+    }
+    const templateText = combineTemplateSources(selectedTemplate?.content ?? '', fileText)
+    if (templateText.length > TEMPLATE_TEXT_MAX) {
+      throw new Error(`Текст шаблона длиннее ${TEMPLATE_TEXT_MAX} символов`)
+    }
+    return {
+      taskName,
+      prompt,
+      requirementsFileName: requirements.file?.name,
+      ...(templateText ? { templateText } : {}),
+    }
   }
 
-  const handleRequirementsChange = (file: File | null) => {
+  const applyRequirementsText = (nextPrompt: string, extracted: string, template = '') => {
+    const filled = fillPromptPlaceholders(nextPrompt, extracted, template)
+    setPrompt(filled)
+    if (promptHasRequirementsMarker(nextPrompt)) {
+      setPromptNote('Текст файла требований вставлен вместо «*Тут текст требований*».')
+    } else if (extracted) {
+      setPromptNote(
+        'В промпте нет маркера «*Тут текст требований*». Выберите промпт с этим маркером, и текст файла встанет на его место.',
+      )
+    }
+  }
+
+  const handleRequirementsChange = async (file: File | null) => {
     requirements.setFromFile(file)
     generation.clearError()
     setFormError(null)
+    setPromptNote(null)
+    if (!file) {
+      setRequirementsText('')
+      return
+    }
+    if (!validateUploadFile(file).ok) {
+      setRequirementsText('')
+      return
+    }
+    try {
+      const extracted = await extractLibraryFile(file)
+      setRequirementsText(extracted.text)
+      applyRequirementsText(prompt, extracted.text, selectedTemplate?.content ?? '')
+    } catch (error) {
+      setRequirementsText('')
+      setFormError(errorText(error))
+    }
   }
 
   const ensureTokenReady = async (): Promise<boolean> => {
@@ -83,7 +135,11 @@ export function HomePage() {
 
     if (!(await ensureTokenReady())) return
 
-    await generation.generate(requirements.file, generationContext)
+    try {
+      await generation.generate(requirements.file, await buildGenerationContext())
+    } catch (error) {
+      setFormError(errorText(error))
+    }
   }
 
   const handleRegenerate = async () => {
@@ -91,7 +147,11 @@ export function HomePage() {
     setFormError(null)
     generation.clearError()
     if (!(await ensureTokenReady())) return
-    await generation.generate(requirements.file, generationContext)
+    try {
+      await generation.generate(requirements.file, await buildGenerationContext())
+    } catch (error) {
+      setFormError(errorText(error))
+    }
   }
 
   return (
@@ -120,7 +180,14 @@ export function HomePage() {
           <TaskNameField value={taskName} onChange={setTaskName} />
         </UploadSection>
 
-        <PromptField value={prompt} onChange={setPrompt} />
+        <PromptField
+          value={prompt}
+          onChange={(value) => {
+            setPrompt(value)
+            setPromptNote(null)
+          }}
+        />
+        {promptNote ? <p className="text-xs text-slate-600">{promptNote}</p> : null}
 
         <ProjectSelect
           value={projectId}
@@ -128,11 +195,39 @@ export function HomePage() {
           onChange={setProjectId}
         />
 
-        <ManagementCard title="Управление промтами" addLabel="Добавить промт" />
-        <ManagementCard
+        <LibraryPanel
+          title="Управление промтами"
+          addLabel="Добавить промт"
+          kind="prompt"
+          onUse={(item) =>
+            applyRequirementsText(
+              item.content,
+              requirementsText,
+              selectedTemplate?.content ?? '',
+            )
+          }
+        />
+        <LibraryPanel
           title="Управление шаблонами"
           addLabel="Добавить шаблон"
+          kind="template"
+          selectedId={selectedTemplate?.id}
+          onUse={(item) => {
+            setSelectedTemplate(item)
+            setPrompt((current) =>
+              fillPromptPlaceholders(current, requirementsText, item.content),
+            )
+          }}
+          onClearSelection={() => setSelectedTemplate(null)}
+          onDeleted={(id) => {
+            if (selectedTemplate?.id === id) setSelectedTemplate(null)
+          }}
         />
+        {selectedTemplate ? (
+          <p className="text-xs text-slate-600">
+            Для генерации выбран шаблон: {selectedTemplate.name}
+          </p>
+        ) : null}
 
         {showChunkControls ? (
           <ChunkSettingsForm
@@ -201,4 +296,10 @@ export function HomePage() {
       </form>
     </div>
   )
+}
+
+function errorText(error: unknown): string {
+  if (error instanceof ApiRequestError && error.message) return error.message
+  if (error instanceof Error && error.message) return error.message
+  return 'Не удалось прочитать шаблон'
 }

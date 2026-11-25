@@ -1,4 +1,4 @@
-"""Leopold API client — TZ production path via OpenAI-compatible HTTP."""
+"""Leopold API client — native chat payload (same contract as TestSites)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ DEFAULT_MODEL = LEOPOLD_DEFAULT_MODEL
 
 
 class LeopoldClient:
-    """Leopold chat client (default model Qwen/Qwen2.5-72B-Instruct)."""
+    """Leopold chat client (default model Qwen/Qwen3-Next-80B-A3B-Instruct-FP8)."""
 
     def __init__(self, client: OpenAICompatibleClient) -> None:
         self._client = client

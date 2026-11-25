@@ -9,6 +9,7 @@ from typing import Protocol
 from core.case_parser import parse_cases_from_ai_text
 from core.doc_reader import extract_text, validate_upload_meta
 from core.errors import AppError, NotFoundError, ValidationError
+from core.library_service import CONTENT_MAX
 from core.messages import ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from core.models import (
     CaseRow,
@@ -24,6 +25,7 @@ from core.prompt_builder import (
     SECTION_SYSTEM_PROMPT,
     iter_generation_prompts,
 )
+from core.prompt_placeholders import fill_prompt_placeholders
 from core.rag_service import RagService
 from core.repositories import DocumentRepository, RunRepository, SettingsRepository, TestCaseRepository
 from core.section_parser import ParsedDocument, ParseOptions, parse_requirements_document
@@ -285,6 +287,7 @@ class GenerationService:
         requirements_text: str | None = None,
         task_name: str | None = None,
         prompt: str | None = None,
+        template_text: str | None = None,
     ) -> tuple[GenerationRun, list[CaseRow]]:
         run = self._runs.get(run_id, user_id)
         if run is None:
@@ -300,6 +303,18 @@ class GenerationService:
             raise ValidationError(code="EMPTY_FILE")
         if len(text) < 8:
             raise ValidationError(code="NO_REQUIREMENTS")
+
+        selected_template = (template_text or "").strip() or None
+        prompt = fill_prompt_placeholders(
+            prompt,
+            requirements_text=text,
+            template_text=selected_template,
+        )
+        if selected_template and len(selected_template) > CONTENT_MAX:
+            raise ValidationError(
+                code="VALIDATION_ERROR",
+                message=f"Текст шаблона длиннее {CONTENT_MAX} символов",
+            )
 
         if self._ai is None:
             raise AppError(code="MISSING_TOKEN", status_code=503)
@@ -330,6 +345,7 @@ class GenerationService:
                     document_id=run.document_id,
                     task_name=task_name,
                     extra_prompt=prompt,
+                    selected_template=selected_template,
                 )
                 prompts.append((SECTION_SYSTEM_PROMPT, user_prompt, leaf.number))
         else:
@@ -337,6 +353,7 @@ class GenerationService:
                 parsed_doc,
                 task_name=task_name,
                 extra_prompt=prompt,
+                selected_template=selected_template,
                 raw_text_fallback=text,
             )
 

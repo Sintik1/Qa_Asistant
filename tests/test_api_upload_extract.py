@@ -53,6 +53,34 @@ def test_upload_docx(client):
     assert "valid cart" in res.get_json()["text"]
 
 
+def test_upload_docx_table_markers(client):
+    """DOCX tables leave the API as TestSites TABLE_* blocks, still inside the section."""
+    c, _ = client
+    buf = io.BytesIO()
+    doc = Document()
+    doc.add_heading("3. Каталог", level=1)
+    doc.add_paragraph("Поля карточки")
+    table = doc.add_table(rows=2, cols=2)
+    table.rows[0].cells[0].text = "Поле"
+    table.rows[0].cells[1].text = "Тип"
+    table.rows[1].cells[0].text = "Email"
+    table.rows[1].cells[1].text = "string"
+    doc.save(buf)
+    buf.seek(0)
+    res = c.post(
+        "/api/documents/upload",
+        data={"file": (buf, "catalog.docx")},
+        content_type="multipart/form-data",
+        headers={"X-User-Id": "u-upload-table"},
+    )
+    assert res.status_code == 201
+    text = res.get_json()["text"]
+    assert "TABLE_1_START" in text
+    assert "TABLE_1_ROW_1: Email || string" in text
+    assert "TABLE_BLOCK_END_1" in text
+    assert "# 3. Каталог" in text or "3. Каталог" in text
+
+
 def test_upload_invalid_format(client):
     c, _ = client
     res = c.post(

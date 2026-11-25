@@ -106,7 +106,11 @@ class LeafSection:
             "items": [{"index": i.index, "text": i.text} for i in self.items],
             "body_preview": self.body[:500],
             "body_chars": len(self.body),
-            "has_table": "|" in self.body or "<table" in self.body.lower(),
+            "has_table": (
+                "|" in self.body
+                or "TABLE_" in self.body
+                or "<table" in self.body.lower()
+            ),
             "has_code_fence": "```" in self.body,
         }
 

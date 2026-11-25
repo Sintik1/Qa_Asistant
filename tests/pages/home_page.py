@@ -62,7 +62,7 @@ class HomePage(BasePage):
         return self
 
     def expect_results(self) -> "HomePage":
-        WebDriverWait(self.driver, 20).until(
+        WebDriverWait(self.driver, 120).until(
             EC.presence_of_element_located(self.DOWNLOAD_CSV),
         )
         return self

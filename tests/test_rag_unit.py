@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from core.rag_lexical import lexical_overlap
 from core.rag_models import IndexCaseChunkCommand, IndexDocumentChunkCommand
 from core.rag_service import RagService
 from core.section_parser import parse_requirements_document
@@ -145,6 +146,248 @@ def test_chat_returns_citations(monkeypatch):
     assert "24" in out["answer"]
     assert out["citations"]
     assert out["citations"][0]["document_id"] == "d1"
+    assert out["citations"][0]["source_kind"] == "requirement"
+
+
+def test_chat_retrieves_indexed_cases_when_no_documents():
+    docs = MemoryDocumentChunkRepository()
+    cases = MemoryCaseChunkRepository()
+    emb = HashEmbeddingClient(dims=32)
+    rag = RagService(doc_chunks=docs, case_chunks=cases, embedder=emb, chat_top_k=3)
+    cases.upsert_many(
+        [
+            IndexCaseChunkCommand(
+                user_id="u1",
+                source_type="approved_case",
+                name="Рассрочка 24 мес",
+                content="Рассрочка 24 месяца для Wi-Fi роутера",
+                embedding=emb.embed("рассрочка 24 месяца роутер"),
+                step="Выбрать рассрочку 24 месяца",
+                expected_result="Рассрочка активна",
+                test_case_id="case-1",
+            )
+        ]
+    )
+
+    def fake_ai(system: str, user: str) -> str:
+        assert "type=case" in user
+        assert "24" in user
+        return "По кейсу: рассрочка 24 месяца."
+
+    out = rag.chat(user_id="u1", question="Какой срок рассрочки?", ai_generate=fake_ai)
+    assert "24" in out["answer"]
+    assert out["citations"][0]["source_kind"] == "case"
+    assert out["citations"][0]["section_path"] == "Рассрочка 24 мес"
+
+
+def test_chat_can_skip_cases():
+    docs = MemoryDocumentChunkRepository()
+    cases = MemoryCaseChunkRepository()
+    emb = HashEmbeddingClient(dims=32)
+    rag = RagService(doc_chunks=docs, case_chunks=cases, embedder=emb)
+    cases.upsert_many(
+        [
+            IndexCaseChunkCommand(
+                user_id="u1",
+                source_type="template",
+                name="only-case",
+                content="секретный кейс",
+                embedding=emb.embed("секретный кейс"),
+            )
+        ]
+    )
+    out = rag.chat(
+        user_id="u1",
+        question="что в кейсе?",
+        include_cases=False,
+        ai_generate=lambda _s, _u: "should not run",
+    )
+    assert "не найдено" in out["answer"].lower()
+    assert out["citations"] == []
+
+
+def test_index_keeps_table_markers_and_flags_table():
+    docs = MemoryDocumentChunkRepository()
+    rag = RagService(
+        doc_chunks=docs,
+        case_chunks=MemoryCaseChunkRepository(),
+        embedder=HashEmbeddingClient(dims=16),
+    )
+    text = (
+        "## 3. Каталог\n"
+        "Поля карточки\n"
+        "TABLE_BLOCK_BEGIN_1\n"
+        "TABLE_1_START\n"
+        "TABLE_1_COLUMNS: Поле || Тип\n"
+        "TABLE_1_ROW_1: Email || string\n"
+        "TABLE_BLOCK_END_1\n"
+    )
+    assert rag.index_document_text(user_id="u1", document_id="doc-table", text=text) == 1
+    stored = next(iter(docs._items.values()))[0]  # noqa: SLF001
+    assert "TABLE_1_ROW_1: Email || string" in stored.content
+    assert stored.metadata.get("has_table") is True
+
+    def fake_ai(system_prompt: str, user_content: str) -> str:
+        assert "TABLE_1_ROW_1: Email || string" in user_content
+        return "Поле Email имеет тип string."
+
+    out = rag.chat(
+        user_id="u1",
+        question="Какой тип у поля Email?",
+        document_id="doc-table",
+        ai_generate=fake_ai,
+    )
+    assert "string" in out["answer"]
+    assert out["citations"][0]["source_kind"] == "requirement"
+    assert "TABLE_1_ROW_1" in out["citations"][0]["preview"]
+
+
+def test_semantic_chat_keeps_every_page_in_the_same_similarity_band():
+    class Semantic:
+        semantic = True
+
+        def embed(self, text: str) -> list[float]:
+            low = (text or "").lower()
+            if "домофон" in low and "заяв" in low:
+                return [1.0, 1.0]
+            if "домофон" in low:
+                return [1.0, 0.99]
+            if "заяв" in low:
+                return [0.99, 1.0]
+            return [0.0, 0.2]
+
+    docs = MemoryDocumentChunkRepository()
+    rag = RagService(
+        doc_chunks=docs,
+        case_chunks=MemoryCaseChunkRepository(),
+        embedder=Semantic(),
+        chat_top_k=4,
+    )
+    rag.index_document_text(
+        user_id="u1",
+        document_id="domofon",
+        text="# Проект Домофон\n\n1. Создать заказ\n",
+        as_single_chunk=True,
+    )
+    rag.index_document_text(
+        user_id="u1",
+        document_id="to",
+        text="# Как делается заявка на ТО\n\n1. Создать заявку на ТО\n",
+        as_single_chunk=True,
+    )
+    rag.index_document_text(
+        user_id="u1",
+        document_id="overview",
+        text="# Обзор\n\nПоздоровайтесь с коллегами\n",
+        as_single_chunk=True,
+    )
+
+    out = rag.chat(
+        user_id="u1",
+        question="как подключить Домофон и создать заявку на ТО",
+        ai_generate=lambda *_args, **_kwargs: "не используется",
+    )
+    ids = [item["document_id"] for item in out["citations"]]
+    assert ids == ["domofon", "to"] or ids == ["to", "domofon"]
+    assert "Создать заказ" in out["answer"]
+    assert "Создать заявку на ТО" in out["answer"]
+    assert "Поздоровайтесь" not in out["answer"]
+
+
+def test_semantic_chat_shows_the_page_when_the_model_only_names_it():
+    class Semantic:
+        semantic = True
+
+        def embed(self, text: str) -> list[float]:
+            low = (text or "").lower()
+            if "домофон" in low:
+                return [1.0, 0.0]
+            return [0.0, 1.0]
+
+    docs = MemoryDocumentChunkRepository()
+    rag = RagService(
+        doc_chunks=docs,
+        case_chunks=MemoryCaseChunkRepository(),
+        embedder=Semantic(),
+        chat_top_k=2,
+    )
+    rag.index_document_text(
+        user_id="u1",
+        document_id="domofon",
+        text="# Проект Домофон\n\n1. Создать заказ\n2. Отправить на исполнение\n",
+        as_single_chunk=True,
+    )
+
+    out = rag.chat(
+        user_id="u1",
+        question="Как подключить услугу Домофон",
+        ai_generate=lambda *_args, **_kwargs: "не используется",
+    )
+    assert "1. Создать заказ" in out["answer"]
+    assert out["citations"][0]["document_id"] == "domofon"
+
+
+def test_activator_page_beats_domofon_on_sdp_question():
+    question = "куда активатор ходит при подключении SDP"
+    domofon = (
+        "Инструкция подключения\n"
+        "Проверить что подписка активна\n"
+        "Проверить подключние в системе"
+    )
+    activator = "активатор->SDP\n112.000.000:8080\nАктивация"
+    assert lexical_overlap(question, activator) > lexical_overlap(question, domofon)
+
+
+def test_chat_prefers_page_that_shares_question_words():
+    docs = MemoryDocumentChunkRepository()
+    cases = MemoryCaseChunkRepository()
+    emb = HashEmbeddingClient(dims=32)
+    rag = RagService(doc_chunks=docs, case_chunks=cases, embedder=emb, chat_top_k=4)
+    rag.index_document_text(
+        user_id="u1",
+        document_id="router",
+        text="## Основные требования\nАкция: роутер с рассрочкой на 24 месяца.\n",
+    )
+    rag.index_document_text(
+        user_id="u1",
+        document_id="domofon",
+        text=(
+            "## Проект Домофон\n"
+            "Инструкция подключения. Создать заказ. Отправить на исполнение. "
+            "Проверить что подписка активна.\n"
+        ),
+    )
+    cases.upsert_many(
+        [
+            IndexCaseChunkCommand(
+                user_id="u1",
+                source_type="approved_case",
+                name="Заказ по акции",
+                content="Заказ нового оборудования по акции недоступен. Рассрочка.",
+                embedding=emb.embed("акция рассрочка роутер"),
+                step="Проверить акцию",
+                expected_result="Запрещено",
+                test_case_id="case-router",
+            )
+        ]
+    )
+
+    def fail_ai(system: str, user: str) -> str:
+        raise AssertionError(f"chat must quote the page, not call the model: {user[:80]}")
+
+    out = rag.chat(
+        user_id="u1",
+        question="Как подключить услугу Домофон",
+        ai_generate=fail_ai,
+    )
+    assert out["answer"] == (
+        "Инструкция подключения. Создать заказ. Отправить на исполнение. "
+        "Проверить что подписка активна."
+    )
+    assert "рассрочк" not in out["answer"].lower()
+    assert out["citations"][0]["document_id"] == "domofon"
+    assert all(item["document_id"] == "domofon" for item in out["citations"])
+    assert lexical_overlap("подключить", "Инструкция подключения") >= 1
 
 
 def test_replace_for_document_clears_old_chunks():

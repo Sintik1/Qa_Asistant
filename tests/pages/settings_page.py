@@ -1,46 +1,40 @@
-"""Settings page Page Object — Fluent API."""
+"""Settings page Page Object — Fluent API (server token flag, no secret in UI)."""
 
 from __future__ import annotations
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 
 from .base_page import BasePage
 
 
 class SettingsPage(BasePage):
-    TOKEN = (By.ID, "api-token")
-    SAVE = (
+    MARK_CONFIGURED = (
         By.XPATH,
-        "//button[@type='submit' and contains(., 'Сохранить токен')]",
+        "//button[@type='submit' and contains(., 'Отметить токен настроенным')]",
     )
+    CLEAR_FLAG = (By.XPATH, "//button[contains(., 'Сбросить флаг')]")
     STATUS = (By.CSS_SELECTOR, "[role='status']")
     ALERT = (By.CSS_SELECTOR, "[role='alert']")
     NAV_HOME = (By.LINK_TEXT, "Написание тест-кейсов")
 
     def open_settings(self) -> "SettingsPage":
         self.open("/settings")
-        self.wait_visible(self.TOKEN)
+        self.wait_clickable(self.MARK_CONFIGURED)
         return self
 
-    def set_token(self, value: str) -> "SettingsPage":
-        self.fill(self.TOKEN, value)
-        return self
-
-    def save(self) -> "SettingsPage":
-        self.wait_clickable(self.SAVE).click()
+    def mark_token_configured(self) -> "SettingsPage":
+        self.wait_clickable(self.MARK_CONFIGURED).click()
         return self
 
     def expect_saved(self) -> "SettingsPage":
-        self.wait_text(self.STATUS, "Токен сохранён")
-        return self
-
-    def expect_missing_token_error(self) -> "SettingsPage":
-        self.wait_text(self.ALERT, "Введите API-токен")
+        WebDriverWait(self.driver, 15).until(
+            lambda d: "Флаг has_api_token" in d.page_source
+            or "отмечен как настроенный" in d.page_source
+            or bool(d.find_elements(*self.ALERT))
+        )
         return self
 
     def go_home(self) -> "SettingsPage":
         self.wait_clickable(self.NAV_HOME).click()
         return self
-
-    def token_value(self) -> str:
-        return self.wait_visible(self.TOKEN).get_attribute("value") or ""

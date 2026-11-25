@@ -12,7 +12,7 @@ description: >-
 ## Stack
 
 - Python 3.11+ / 3.14+ (per TZ), Flask 3.x, Pytest, Docker
-- AI: Leopold API (`Qwen/Qwen2.5-72B-Instruct`) via `integrations/`
+- AI: Leopold API (`Qwen/Qwen3-Next-80B-A3B-Instruct-FP8`) via `integrations/`
 - Secrets: `.env` only (`QA_ASISTANT_API_URL`, token, chunk settings)
 
 ## Target layout (when backend is added)

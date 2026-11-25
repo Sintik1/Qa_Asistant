@@ -16,6 +16,13 @@ export {
 } from './runs'
 export { getSettings, patchSettings, getHealth, settingsToChunk } from './settings'
 export { chatRequirements } from './chat'
+export {
+  listLibrary,
+  createLibraryItem,
+  deleteLibraryItem,
+  extractLibraryFile,
+} from './library'
+export type { LibraryItem, LibraryKind } from './library'
 export type { ChatCitation, ChatResponse } from './chat'
 export type {
   ApiDocument,
